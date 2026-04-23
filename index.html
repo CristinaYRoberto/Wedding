@@ -920,8 +920,8 @@
         <p class="event-type" data-es="CEREMONIA RELIGIOSA" data-en="RELIGIOUS CEREMONY">CEREMONIA RELIGIOSA</p>
         <h3 class="event-name" data-es="Misa de Matrimonio" data-en="Wedding Mass">Misa de Matrimonio</h3>
         <p class="event-time">12:00 PM</p>
-        <p class="event-venue">Catedral de Hermosillo<br>Hermosillo, Sonora</p>
-        <a href="https://maps.app.goo.gl/YP5qQpQrmvKPxaF79" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
+        <p class="event-venue">Catedral de Hermosillo<br>Blvr. Miguel Hidalgo S/N<br>Centro Norte, 83000 Hermosillo, Son.</p>
+        <a href="https://maps.app.goo.gl/SFEHyiZqfgwzFr6AA" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
       <div class="event-card">
         <div class="event-icon">🥂</div>
@@ -1297,20 +1297,80 @@ updateCountdown();
 /* ── FAQ ── */
 const faqData = {
   es: [
-    { q: '¿Hay estacionamiento disponible?', a: 'Sí, tanto la Catedral como el Salón Las Cascadas cuentan con estacionamiento gratuito para los invitados.' },
-    { q: '¿Se permiten niños?', a: 'La boda es exclusiva para adultos. Agradecemos tu comprensión y esperamos que disfrutes de una noche especial.' },
-    { q: '¿Puedo llevar acompañante?', a: 'El número de invitados por confirmación aparece en tu invitación. Por favor confirma el total de personas al momento de responder.' },
-    { q: '¿Cuál es el código de vestimenta?', a: 'La vestimenta es formal. Traje o smoking para caballeros; vestido largo o cóctel para damas.' },
-    { q: '¿Hasta cuándo puedo confirmar?', a: 'Agradecemos confirmar tu asistencia antes del 01 de Septiembre de 2026.' },
-    { q: '¿Habrá lista de regalos?', a: 'Próximamente publicaremos la mesa de regalos. También aceptamos efectivo con mucho gusto.' },
+    {
+      q: '¿Dónde se realiza la ceremonia religiosa?',
+      a: 'La misa se celebrará en la Catedral de Hermosillo, ubicada en Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. El inicio es a las 12:00 PM. Te recomendamos llegar con 15 minutos de anticipación.'
+    },
+    {
+      q: '¿Dónde es la recepción y a qué hora?',
+      a: 'La recepción tendrá lugar en el Salón Las Cascadas, ubicado en Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, a partir de las 7:00 PM. Puedes consultar la ubicación exacta en el mapa de esta página.'
+    },
+    {
+      q: '¿Hay estacionamiento disponible?',
+      a: 'Sí. La Catedral cuenta con estacionamiento en la zona del centro y calles aledañas. El Salón Las Cascadas dispone de estacionamiento privado gratuito para los invitados.'
+    },
+    {
+      q: '¿Se permiten niños?',
+      a: 'La celebración es exclusiva para adultos. Agradecemos de antemano tu comprensión y esperamos que disfrutes de una noche especial sin preocupaciones.'
+    },
+    {
+      q: '¿Cuál es el código de vestimenta?',
+      a: 'Vestimenta formal. Para caballeros: traje o smoking. Para damas: vestido largo o de cóctel. Les pedimos considerar la paleta de colores de la boda como inspiración.'
+    },
+    {
+      q: '¿Puedo llevar acompañante?',
+      a: 'El número de invitados por mesa está cuidadosamente planificado. Por favor confirma únicamente el número de personas indicado en tu invitación. Si tienes alguna duda, escríbenos con gusto.'
+    },
+    {
+      q: '¿Hasta cuándo puedo confirmar mi asistencia?',
+      a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.'
+    },
+    {
+      q: '¿Cómo puedo hacer llegar un regalo?',
+      a: 'Contamos con mesa de regalos en línea, opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Mesa de Regalos" en esta misma página para ver todos los detalles.'
+    },
+    {
+      q: '¿Habrá opciones vegetarianas en el menú?',
+      a: 'Sí, el menú incluirá opciones vegetarianas. Si tienes alguna restricción alimentaria adicional, por favor indícalo al momento de confirmar tu asistencia y lo tomaremos en cuenta.'
+    },
   ],
   en: [
-    { q: 'Is parking available?', a: 'Yes, both the Cathedral and Salón Las Cascadas have free parking available for guests.' },
-    { q: 'Are children allowed?', a: 'This is an adults-only celebration. We appreciate your understanding and hope you enjoy a special evening.' },
-    { q: 'Can I bring a plus-one?', a: 'The number of guests per invitation is indicated on your invite. Please specify the total headcount when you RSVP.' },
-    { q: 'What is the dress code?', a: 'Formal attire is required. Suits or tuxedos for gentlemen; floor-length or cocktail dresses for ladies.' },
-    { q: 'What is the RSVP deadline?', a: 'Please confirm your attendance by September 1, 2026.' },
-    { q: 'Is there a gift registry?', a: 'We will publish our registry soon. Cash gifts are also very welcome.' },
+    {
+      q: 'Where is the religious ceremony?',
+      a: 'The wedding mass will be held at the Catedral de Hermosillo, located at Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. It begins at 12:00 PM. We recommend arriving 15 minutes early.'
+    },
+    {
+      q: 'Where is the reception and what time does it start?',
+      a: 'The reception will take place at Salón Las Cascadas, located at Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, starting at 7:00 PM. You can find the exact location on the map included on this page.'
+    },
+    {
+      q: 'Is parking available?',
+      a: 'Yes. The Cathedral has street parking available in the surrounding downtown area. Salón Las Cascadas offers complimentary private parking for all guests.'
+    },
+    {
+      q: 'Are children allowed?',
+      a: 'This is an adults-only celebration. We truly appreciate your understanding and hope you enjoy a wonderful, carefree evening.'
+    },
+    {
+      q: 'What is the dress code?',
+      a: 'Formal attire is required. Suits or tuxedos for gentlemen; floor-length or cocktail dresses for ladies. We invite you to take inspiration from the wedding color palette.'
+    },
+    {
+      q: 'Can I bring a plus-one?',
+      a: 'Seating has been carefully arranged. Please confirm only the number of guests specified on your invitation. If you have any questions, feel free to reach out and we will be happy to help.'
+    },
+    {
+      q: 'What is the RSVP deadline?',
+      a: 'Please confirm your attendance by September 1, 2026. After that date we cannot guarantee a spot, as the guest list will be finalized.'
+    },
+    {
+      q: 'How can I send a gift?',
+      a: 'We have an online gift registry, a bank transfer option, and a cash box at the reception. Please visit the "Gift Registry" section on this page for full details.'
+    },
+    {
+      q: 'Will there be vegetarian options?',
+      a: 'Yes, the menu includes vegetarian options. If you have any additional dietary restrictions, please let us know when you RSVP and we will do our best to accommodate you.'
+    },
   ]
 };
 
