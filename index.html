@@ -617,6 +617,215 @@
     transform: translateY(0);
   }
 
+  /* ── GIFTS ── */
+  #gifts { background: var(--warm-white); }
+  .gifts-intro {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--muted);
+    text-align: center;
+    max-width: 580px;
+    margin: 0 auto 3.5rem;
+    line-height: 1.9;
+  }
+  .gifts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  @media(max-width: 700px) { .gifts-grid { grid-template-columns: 1fr; max-width: 420px; } }
+  .gift-card {
+    border: 1px solid rgba(184,154,106,.25);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    background: var(--cream);
+    position: relative;
+    transition: transform .3s, box-shadow .3s;
+  }
+  .gift-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.07);
+  }
+  .gift-card-icon {
+    width: 52px; height: 52px;
+    border: 1px solid rgba(184,154,106,.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.2rem;
+    font-size: 1.4rem;
+  }
+  .gift-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: .7rem;
+    letter-spacing: .18em;
+    color: var(--charcoal);
+    margin-bottom: .8rem;
+  }
+  .gift-card-desc {
+    font-size: .82rem;
+    color: var(--muted);
+    line-height: 1.75;
+    margin-bottom: 1.4rem;
+  }
+  .gift-card-detail {
+    background: var(--light-sage);
+    padding: .9rem 1rem;
+    font-family: 'Cinzel', serif;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    color: var(--sage);
+    line-height: 1.7;
+    word-break: break-all;
+  }
+  .gifts-note {
+    text-align: center;
+    margin-top: 3rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: .95rem;
+    font-style: italic;
+    color: var(--muted);
+    opacity: .8;
+  }
+
+  /* ── MENU MODAL ── */
+  #menu { background: var(--charcoal); }
+  #menu .section-title { color: #fff; }
+  #menu .section-eyebrow { color: var(--gold); }
+  .menu-lock-box {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .menu-lock-icon {
+    width: 72px; height: 72px;
+    border: 1px solid rgba(184,154,106,.35);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2rem;
+    font-size: 1.8rem;
+    position: relative;
+  }
+  .menu-lock-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px solid rgba(184,154,106,.15);
+  }
+  .menu-lock-desc {
+    font-size: .9rem;
+    color: rgba(255,255,255,.45);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+  }
+  .menu-pin-row {
+    display: flex;
+    gap: .6rem;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+  }
+  .menu-pin-input {
+    width: 52px; height: 60px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(184,154,106,.25);
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    text-align: center;
+    outline: none;
+    transition: border-color .3s;
+    caret-color: var(--gold);
+  }
+  .menu-pin-input:focus { border-color: var(--gold); }
+  .menu-pin-error {
+    font-family: 'Cinzel', serif;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    color: #c47b7b;
+    min-height: 1.2em;
+    margin-bottom: 1rem;
+  }
+  /* Menu content (hidden until unlocked) */
+  #menu-content {
+    display: none;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  #menu-content.unlocked { display: block; }
+  .menu-header-note {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: rgba(255,255,255,.45);
+    text-align: center;
+    font-size: 1rem;
+    margin-bottom: 3rem;
+  }
+  .menu-course {
+    margin-bottom: 3rem;
+  }
+  .menu-course-label {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .3em;
+    color: var(--gold);
+    border-bottom: 1px solid rgba(184,154,106,.2);
+    padding-bottom: .8rem;
+    margin-bottom: 1.5rem;
+  }
+  .menu-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  @media(max-width: 560px) { .menu-items { grid-template-columns: 1fr; } }
+  .menu-item {
+    padding: 1.4rem 1.6rem;
+    border: 1px solid rgba(184,154,106,.12);
+    background: rgba(255,255,255,.03);
+    transition: background .3s;
+  }
+  .menu-item:hover { background: rgba(255,255,255,.06); }
+  .menu-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: .3rem;
+  }
+  .menu-item-desc {
+    font-size: .78rem;
+    color: rgba(255,255,255,.4);
+    line-height: 1.6;
+  }
+  .menu-item-tag {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: .5rem;
+    letter-spacing: .12em;
+    padding: .2rem .6rem;
+    border: 1px solid rgba(122,140,110,.4);
+    color: var(--sage);
+    margin-top: .6rem;
+  }
+  .menu-relock {
+    text-align: center;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(184,154,106,.15);
+  }
+  .menu-relock button {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .15em;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,.25);
+    cursor: pointer;
+    transition: color .3s;
+  }
+  .menu-relock button:hover { color: rgba(255,255,255,.5); }
+
   /* ── MOBILE NAV ── */
   @media(max-width: 768px) {
     nav ul { display: none; }
@@ -636,6 +845,8 @@
   <ul>
     <li><a href="#events" data-es="Eventos" data-en="Events">Eventos</a></li>
     <li><a href="#story" data-es="Nuestra Historia" data-en="Our Story">Nuestra Historia</a></li>
+    <li><a href="#gifts" data-es="Regalos" data-en="Gifts">Regalos</a></li>
+    <li><a href="#menu" data-es="Menú" data-en="Menu">Menú</a></li>
     <li><a href="#gallery" data-es="Galería" data-en="Gallery">Galería</a></li>
     <li><a href="#faq" data-es="FAQ" data-en="FAQ">FAQ</a></li>
     <li><a href="#rsvp" data-es="Confirmar" data-en="RSVP">Confirmar</a></li>
@@ -806,6 +1017,156 @@
         <p style="margin-top:3rem; font-size:.8rem; color:var(--muted); line-height:1.7" data-es="Estos son los colores de la boda. No es necesario coordinar, sólo úsalos como inspiración." data-en="These are the wedding colors. No need to match exactly — use them as inspiration.">
           Estos son los colores de la boda. No es necesario coordinar, sólo úsalos como inspiración.
         </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GIFTS -->
+<section id="gifts">
+  <div class="section-inner">
+    <p class="section-eyebrow reveal" data-es="REGALOS" data-en="GIFTS">REGALOS</p>
+    <h2 class="section-title reveal" data-es="Mesa de Regalos" data-en="Gift Registry">Mesa de Regalos</h2>
+    <div class="divider reveal"></div>
+    <p class="gifts-intro reveal" data-es="Su presencia es el regalo más valioso para nosotros. Si desean hacernos llegar un obsequio adicional, con todo cariño les compartimos algunas opciones a su elección." data-en="Your presence is the greatest gift we could receive. If you wish to offer an additional gesture, we share the following options with love and gratitude.">
+      Su presencia es el regalo más valioso para nosotros. Si desean hacernos llegar un obsequio adicional, con todo cariño les compartimos algunas opciones a su elección.
+    </p>
+    <div class="gifts-grid reveal">
+
+      <!-- CARD 1: Registry -->
+      <div class="gift-card">
+        <div class="gift-card-icon">🎁</div>
+        <p class="gift-card-title" data-es="MESA DE REGALOS" data-en="GIFT REGISTRY">MESA DE REGALOS</p>
+        <p class="gift-card-desc" data-es="Hemos seleccionado artículos para comenzar nuestro hogar. Puedes consultar nuestra lista en línea." data-en="We've curated a selection of items for our new home. Browse our online registry at your convenience.">
+          Hemos seleccionado artículos para comenzar nuestro hogar. Puedes consultar nuestra lista en línea.
+        </p>
+        <!-- Replace href with your actual registry URL (Liverpool, Amazon, etc.) -->
+        <a href="#" class="gift-card-detail" target="_blank" style="display:block; text-decoration:none; transition: opacity .3s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'" data-es="VER LISTA DE REGALOS →" data-en="VIEW REGISTRY →">VER LISTA DE REGALOS →</a>
+      </div>
+
+      <!-- CARD 2: Cash / Transfer -->
+      <div class="gift-card">
+        <div class="gift-card-icon">💳</div>
+        <p class="gift-card-title" data-es="TRANSFERENCIA" data-en="BANK TRANSFER">TRANSFERENCIA</p>
+        <p class="gift-card-desc" data-es="Si prefieres hacernos llegar un obsequio en efectivo o por transferencia, con mucho gusto lo recibimos." data-en="If you prefer to send a monetary gift via bank transfer, we gratefully welcome it.">
+          Si prefieres hacernos llegar un obsequio en efectivo o por transferencia, con mucho gusto lo recibimos.
+        </p>
+        <div class="gift-card-detail">
+          <!-- Replace with your actual bank details -->
+          <span data-es="BANCO · BBVA" data-en="BANK · BBVA">BANCO · BBVA</span><br>
+          <span data-es="A NOMBRE DE:" data-en="ACCOUNT NAME:">A NOMBRE DE:</span><br>
+          Cristina Borquez<br>
+          <span data-es="CLABE: 012 XXX XXXX XXXX XX X" data-en="CLABE: 012 XXX XXXX XXXX XX X">CLABE: 012 XXX XXXX XXXX XX X</span>
+        </div>
+      </div>
+
+      <!-- CARD 3: Cash at event -->
+      <div class="gift-card">
+        <div class="gift-card-icon">✉️</div>
+        <p class="gift-card-title" data-es="EFECTIVO" data-en="CASH">EFECTIVO</p>
+        <p class="gift-card-desc" data-es="También contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración." data-en="A discreet gift box will be available at the reception for those who prefer to present their gift in person on the day.">
+          También contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.
+        </p>
+        <div class="gift-card-detail" data-es="DISPONIBLE EN LA RECEPCIÓN · 7 PM" data-en="AVAILABLE AT RECEPTION · 7 PM">DISPONIBLE EN LA RECEPCIÓN · 7 PM</div>
+      </div>
+
+    </div>
+    <p class="gifts-note reveal" data-es="Cualquier opción que elijan será recibida con el mismo amor y gratitud." data-en="Whichever option you choose will be received with equal love and gratitude.">
+      Cualquier opción que elijan será recibida con el mismo amor y gratitud.
+    </p>
+  </div>
+</section>
+
+<!-- MENU (locked until event day) -->
+<section id="menu">
+  <div class="section-inner">
+    <p class="section-eyebrow reveal" data-es="NOCHE DE GALA" data-en="GALA EVENING">NOCHE DE GALA</p>
+    <h2 class="section-title reveal" data-es="Menú de la Cena" data-en="Dinner Menu">Menú de la Cena</h2>
+    <div class="divider reveal" style="background:var(--gold)"></div>
+
+    <!-- Lock screen -->
+    <div class="menu-lock-box reveal" id="menu-lock">
+      <div class="menu-lock-icon">
+        <div class="menu-lock-ring"></div>
+        🔒
+      </div>
+      <p class="menu-lock-desc" data-es="El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo." data-en="The menu will be revealed on the day of the celebration. Enter the code you will receive upon arrival at the reception to unlock it.">
+        El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo.
+      </p>
+      <div class="menu-pin-row">
+        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin0" oninput="pinInput(0)" onkeydown="pinKey(event,0)">
+        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin1" oninput="pinInput(1)" onkeydown="pinKey(event,1)">
+        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin2" oninput="pinInput(2)" onkeydown="pinKey(event,2)">
+        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin3" oninput="pinInput(3)" onkeydown="pinKey(event,3)">
+      </div>
+      <p class="menu-pin-error" id="pin-error"></p>
+      <p style="font-family:'Cinzel',serif; font-size:.58rem; letter-spacing:.18em; color:rgba(255,255,255,.2)" data-es="CÓDIGO DE 4 DÍGITOS" data-en="4-DIGIT CODE">CÓDIGO DE 4 DÍGITOS</p>
+    </div>
+
+    <!-- Menu content (revealed after correct PIN) -->
+    <div id="menu-content">
+      <p class="menu-header-note" data-es="Bienvenidos a la mesa · 03 de Octubre de 2026" data-en="Welcome to the table · October 3, 2026">Bienvenidos a la mesa · 03 de Octubre de 2026</p>
+
+      <div class="menu-course">
+        <p class="menu-course-label" data-es="BIENVENIDA" data-en="WELCOME">BIENVENIDA</p>
+        <div class="menu-items">
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Cóctel de Bienvenida" data-en="Welcome Cocktail">Cóctel de Bienvenida</p>
+            <p class="menu-item-desc" data-es="Selección de bebidas de autor, vinos y aguas frescas" data-en="Selection of signature cocktails, wines and fresh waters">Selección de bebidas de autor, vinos y aguas frescas</p>
+          </div>
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Estación de Quesos" data-en="Cheese Station">Estación de Quesos</p>
+            <p class="menu-item-desc" data-es="Quesos artesanales, mermeladas y frutos secos" data-en="Artisan cheeses, jams and dried fruits">Quesos artesanales, mermeladas y frutos secos</p>
+            <span class="menu-item-tag" data-es="VEGETARIANO" data-en="VEGETARIAN">VEGETARIANO</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-course">
+        <p class="menu-course-label" data-es="ENTRADA" data-en="STARTER">ENTRADA</p>
+        <div class="menu-items">
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Ensalada de Temporada" data-en="Seasonal Salad">Ensalada de Temporada</p>
+            <p class="menu-item-desc" data-es="Mixta con vinagreta de miel mostaza y queso de cabra" data-en="Mixed greens with honey mustard vinaigrette and goat cheese">Mixta con vinagreta de miel mostaza y queso de cabra</p>
+            <span class="menu-item-tag" data-es="VEGETARIANO" data-en="VEGETARIAN">VEGETARIANO</span>
+          </div>
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Crema del Día" data-en="Soup of the Day">Crema del Día</p>
+            <p class="menu-item-desc" data-es="Servida con pan artesanal y mantequilla de hierbas" data-en="Served with artisan bread and herb butter">Servida con pan artesanal y mantequilla de hierbas</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-course">
+        <p class="menu-course-label" data-es="PLATO FUERTE" data-en="MAIN COURSE">PLATO FUERTE</p>
+        <div class="menu-items">
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Filete de Res" data-en="Beef Tenderloin">Filete de Res</p>
+            <p class="menu-item-desc" data-es="Al punto con reducción de vino tinto, papas gratinadas y vegetales salteados" data-en="Cooked to order with red wine reduction, gratin potatoes and sautéed vegetables">Al punto con reducción de vino tinto, papas gratinadas y vegetales salteados</p>
+          </div>
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Pechuga Rellena" data-en="Stuffed Chicken Breast">Pechuga Rellena</p>
+            <p class="menu-item-desc" data-es="Con espinacas y queso manchego, salsa de champiñones y arroz pilaf" data-en="Stuffed with spinach and manchego cheese, mushroom sauce and pilaf rice">Con espinacas y queso manchego, salsa de champiñones y arroz pilaf</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-course">
+        <p class="menu-course-label" data-es="POSTRE" data-en="DESSERT">POSTRE</p>
+        <div class="menu-items">
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Pastel de Bodas" data-en="Wedding Cake">Pastel de Bodas</p>
+            <p class="menu-item-desc" data-es="Diseñado especialmente para esta celebración" data-en="Specially designed for this celebration">Diseñado especialmente para esta celebración</p>
+          </div>
+          <div class="menu-item">
+            <p class="menu-item-name" data-es="Mesa de Dulces" data-en="Dessert Table">Mesa de Dulces</p>
+            <p class="menu-item-desc" data-es="Postres de temporada, chocolates y delicias artesanales" data-en="Seasonal pastries, chocolates and artisan sweets">Postres de temporada, chocolates y delicias artesanales</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-relock">
+        <button onclick="lockMenu()" data-es="↑ Cerrar menú" data-en="↑ Close menu">↑ Cerrar menú</button>
       </div>
     </div>
   </div>
@@ -1012,6 +1373,50 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.12 });
 reveals.forEach(el => observer.observe(el));
+
+/* ── MENU PIN ── */
+// Change this PIN to whatever code you'll tell guests on the day
+const MENU_PIN = '1003'; // e.g. day + month: Oct 3 = 1003
+
+function pinInput(index) {
+  const val = document.getElementById('pin' + index).value;
+  if (val.length === 1 && index < 3) {
+    document.getElementById('pin' + (index + 1)).focus();
+  }
+  checkPin();
+}
+
+function pinKey(e, index) {
+  if (e.key === 'Backspace' && !document.getElementById('pin' + index).value && index > 0) {
+    document.getElementById('pin' + (index - 1)).focus();
+  }
+}
+
+function checkPin() {
+  const entered = [0,1,2,3].map(i => document.getElementById('pin' + i).value).join('');
+  if (entered.length < 4) return;
+  if (entered === MENU_PIN) {
+    unlockMenu();
+  } else {
+    document.getElementById('pin-error').textContent =
+      currentLang === 'es' ? 'Código incorrecto. Inténtalo de nuevo.' : 'Incorrect code. Please try again.';
+    [0,1,2,3].forEach(i => { document.getElementById('pin' + i).value = ''; });
+    document.getElementById('pin0').focus();
+  }
+}
+
+function unlockMenu() {
+  document.getElementById('menu-lock').style.display = 'none';
+  document.getElementById('menu-content').classList.add('unlocked');
+  setLang(currentLang);
+}
+
+function lockMenu() {
+  document.getElementById('menu-lock').style.display = 'block';
+  document.getElementById('menu-content').classList.remove('unlocked');
+  [0,1,2,3].forEach(i => { document.getElementById('pin' + i).value = ''; });
+  document.getElementById('pin-error').textContent = '';
+}
 </script>
 
 <!--
