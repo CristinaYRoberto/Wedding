@@ -6,6 +6,57 @@
 <title>Cristina & Roberto · 03.Oct.2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<!-- Firebase SDK (ESM) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  /*
+  ════════════════════════════════════════════════════════════════
+  🔧 PASO 1 — CONFIGURAR FIREBASE (5 minutos)
+  ────────────────────────────────────────────────────────────────
+  1. Ve a https://console.firebase.google.com
+  2. "Agregar proyecto" → nombre: boda-cristina-roberto → continuar
+  3. Dashboard → icono Web (</>)  → registrar app → copia firebaseConfig
+  4. Menú lateral → Firestore Database → Crear → Modo producción → siguiente → listo
+  5. Firestore → Reglas → reemplaza todo con esto y publica:
+
+     rules_version = '2';
+     service cloud.firestore {
+       match /databases/{database}/documents {
+         match /rsvps/{id}    { allow create: true; allow read: false; }
+         match /messages/{id} { allow create: true; allow read: true;  }
+       }
+     }
+
+  6. Reemplaza los 6 valores de abajo con los de tu proyecto
+  ════════════════════════════════════════════════════════════════
+  */
+  const firebaseConfig = {
+    apiKey:            "TU_API_KEY",
+    authDomain:        "TU_PROJECT.firebaseapp.com",
+    projectId:         "TU_PROJECT_ID",
+    storageBucket:     "TU_PROJECT.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId:             "TU_APP_ID"
+  };
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    window._db           = db;
+    window._fbCollection = collection;
+    window._fbAddDoc     = addDoc;
+    window._fbOnSnapshot = onSnapshot;
+    window._fbQuery      = query;
+    window._fbOrderBy    = orderBy;
+    window._fbTimestamp  = serverTimestamp;
+    window._fbGetDocs    = getDocs;
+    window._firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+  } catch(e) { console.warn('Firebase no configurado aún:', e.message); }
+</script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
     --cream: #f5f0e8;
@@ -830,6 +881,234 @@
   @media(max-width: 768px) {
     nav ul { display: none; }
   }
+
+  /* ── BUZÓN DE MENSAJES ── */
+  #messages { background: var(--cream); }
+  .msg-intro {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 560px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.9;
+  }
+  .msg-form-wrap {
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .msg-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media(max-width:520px){ .msg-form-row { grid-template-columns:1fr; } }
+  .msg-input, .msg-textarea {
+    background: var(--warm-white);
+    border: 1px solid rgba(184,154,106,.25);
+    padding: .8rem 1rem;
+    font-family: 'Lato', sans-serif;
+    font-size: .9rem;
+    color: var(--charcoal);
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 0;
+  }
+  .msg-input:focus, .msg-textarea:focus { border-color: var(--gold); }
+  .msg-textarea { min-height: 90px; resize: vertical; }
+  .msg-submit-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .msg-char-count { font-size: .75rem; color: var(--muted); }
+  /* WhatsApp confirm button */
+  .btn-whatsapp {
+    background: #25D366;
+    color: #fff;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .15em;
+    padding: .85rem 1.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: background .3s;
+    text-decoration: none;
+  }
+  .btn-whatsapp:hover { background: #128C7E; }
+  .btn-whatsapp svg { width:16px;height:16px;fill:#fff;flex-shrink:0; }
+  /* Messages wall */
+  .msg-wall {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .msg-card {
+    background: var(--warm-white);
+    border: 1px solid rgba(184,154,106,.2);
+    padding: 1.5rem 1.6rem;
+    position: relative;
+    animation: fadeUp .5s ease both;
+  }
+  .msg-card::before {
+    content: '"';
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.5rem;
+    color: rgba(184,154,106,.2);
+    position: absolute;
+    top: .2rem; left: .8rem;
+    line-height: 1;
+  }
+  .msg-card-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--charcoal);
+    margin-bottom: .8rem;
+    padding-top: 1rem;
+  }
+  .msg-card-author {
+    font-family: 'Cinzel', serif;
+    font-size: .58rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+  }
+  .msg-empty {
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 1rem;
+    padding: 2rem 0;
+    grid-column: 1/-1;
+  }
+  .msg-status {
+    font-family: 'Cinzel', serif;
+    font-size: .65rem;
+    letter-spacing: .1em;
+    color: var(--gold);
+    text-align: center;
+    min-height: 1.2em;
+  }
+
+  /* ── ADMIN PANEL ── */
+  #admin-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 2rem 1rem;
+  }
+  #admin-panel.open { display: block; }
+  .admin-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--charcoal);
+    border: 1px solid rgba(184,154,106,.3);
+    padding: 2.5rem;
+  }
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(184,154,106,.2);
+    padding-bottom: 1.5rem;
+  }
+  .admin-title {
+    font-family: 'Cinzel', serif;
+    font-size: .75rem;
+    letter-spacing: .25em;
+    color: var(--gold);
+  }
+  .admin-close {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.2);
+    color: rgba(255,255,255,.6);
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .1em;
+    padding: .4rem 1rem;
+    cursor: pointer;
+    transition: all .3s;
+  }
+  .admin-close:hover { border-color: var(--gold); color: var(--gold); }
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media(max-width:600px){ .admin-stats{ grid-template-columns:1fr 1fr; } }
+  .stat-box {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(184,154,106,.15);
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: .55rem;
+    letter-spacing: .2em;
+    color: rgba(255,255,255,.4);
+    margin-top: .4rem;
+  }
+  .admin-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+    color: rgba(255,255,255,.75);
+  }
+  .admin-table th {
+    font-family: 'Cinzel', serif;
+    font-size: .55rem;
+    letter-spacing: .15em;
+    color: var(--gold);
+    text-align: left;
+    padding: .6rem .8rem;
+    border-bottom: 1px solid rgba(184,154,106,.2);
+    white-space: nowrap;
+  }
+  .admin-table td {
+    padding: .65rem .8rem;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    vertical-align: top;
+  }
+  .admin-table tr:hover td { background: rgba(255,255,255,.03); }
+  .badge-si { color: #7ab87a; }
+  .badge-no { color: #b87a7a; }
+  .admin-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .admin-btn {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .15em;
+    padding: .65rem 1.5rem;
+    cursor: pointer;
+    transition: all .3s;
+    border: 1px solid rgba(184,154,106,.4);
+    background: transparent;
+    color: var(--gold);
+  }
+  .admin-btn:hover { background: var(--gold); color: #fff; }
+  .admin-loading {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: rgba(255,255,255,.3);
+    text-align: center;
+    padding: 2rem;
+    font-size: 1rem;
+  }
 </style>
 </head>
 <body>
@@ -847,6 +1126,7 @@
     <li><a href="#story" data-es="Nuestra Historia" data-en="Our Story">Nuestra Historia</a></li>
     <li><a href="#gifts" data-es="Regalos" data-en="Gifts">Regalos</a></li>
     <li><a href="#menu" data-es="Menú" data-en="Menu">Menú</a></li>
+    <li><a href="#messages" data-es="Mensajes" data-en="Messages">Mensajes</a></li>
     <li><a href="#gallery" data-es="Galería" data-en="Gallery">Galería</a></li>
     <li><a href="#faq" data-es="FAQ" data-en="FAQ">FAQ</a></li>
     <li><a href="#rsvp" data-es="Confirmar" data-en="RSVP">Confirmar</a></li>
@@ -866,6 +1146,11 @@
   <p class="hero-date" data-es="03 · OCTUBRE · 2026" data-en="OCTOBER 3 · 2026">03 · OCTUBRE · 2026</p>
   <div class="hero-cta">
     <a href="#rsvp" class="btn btn-primary" data-es="CONFIRMAR ASISTENCIA" data-en="RSVP NOW">CONFIRMAR ASISTENCIA</a>
+    <!-- WhatsApp confirm button -->
+    <a id="wa-hero-btn" href="#" class="btn-whatsapp" target="_blank" rel="noopener" data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
+      <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
+    </a>
     <a href="invitation.pdf" class="btn btn-outline" download data-es="DESCARGAR INVITACIÓN" data-en="DOWNLOAD INVITATION">DESCARGAR INVITACIÓN</a>
   </div>
 </section>
@@ -1240,15 +1525,120 @@
   </div>
 </section>
 
+<!-- MESSAGES WALL -->
+<section id="messages">
+  <div class="section-inner">
+    <p class="section-eyebrow reveal" data-es="BUZÓN DE MENSAJES" data-en="MESSAGE WALL">BUZÓN DE MENSAJES</p>
+    <h2 class="section-title reveal" data-es="Déjanos un mensaje" data-en="Leave us a message">Déjanos un mensaje</h2>
+    <div class="divider reveal"></div>
+    <p class="msg-intro reveal" data-es="Tus palabras son el regalo más preciado. Cuéntanos un recuerdo, un deseo, o simplemente escríbenos con cariño." data-en="Your words are the most treasured gift. Share a memory, a wish, or simply write to us from the heart.">
+      Tus palabras son el regalo más preciado. Cuéntanos un recuerdo, un deseo, o simplemente escríbenos con cariño.
+    </p>
+    <div class="msg-form-wrap reveal">
+      <div class="msg-form-row">
+        <input class="msg-input" id="msg-name" type="text" placeholder="Tu nombre" maxlength="60">
+        <input class="msg-input" id="msg-relation" type="text" placeholder="¿Cómo los conoces? (amigo, familiar…)" maxlength="60">
+      </div>
+      <textarea class="msg-textarea" id="msg-text" placeholder="Escribe tu mensaje aquí…" maxlength="300" oninput="document.getElementById('msg-chars').textContent=(300-this.value.length)+' caracteres restantes'"></textarea>
+      <div class="msg-submit-row">
+        <button class="btn btn-primary" onclick="submitMessage()" data-es="ENVIAR MENSAJE" data-en="SEND MESSAGE">ENVIAR MENSAJE</button>
+        <span class="msg-char-count" id="msg-chars">300 caracteres restantes</span>
+      </div>
+      <p class="msg-status" id="msg-status"></p>
+    </div>
+    <div class="msg-wall" id="msg-wall">
+      <p class="msg-empty" data-es="Sé el primero en escribir…" data-en="Be the first to write…">Sé el primero en escribir…</p>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN PANEL (hidden — URL ?admin=CR2026 o 5 taps en el monograma) -->
+<div id="admin-panel">
+  <div class="admin-inner">
+    <div class="admin-header">
+      <p class="admin-title">PANEL DE ADMINISTRACIÓN · C&R 2026</p>
+      <button class="admin-close" onclick="closeAdmin()">CERRAR ✕</button>
+    </div>
+    <div class="admin-stats" id="admin-stats">
+      <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-label">CONFIRMACIONES</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-si">—</div><div class="stat-label">ASISTEN</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-no">—</div><div class="stat-label">NO ASISTEN</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-guests">—</div><div class="stat-label">TOTAL PERSONAS</div></div>
+    </div>
+    <div class="admin-table-wrap">
+      <p class="admin-loading" id="admin-loading">Cargando datos…</p>
+      <table class="admin-table" id="admin-table" style="display:none">
+        <thead>
+          <tr>
+            <th>NOMBRE</th><th>APELLIDO</th><th>EMAIL</th>
+            <th>ASISTENCIA</th><th>PERSONAS</th><th>DIETA</th><th>FECHA</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+    <div class="admin-actions">
+      <button class="admin-btn" onclick="exportCSV()">↓ EXPORTAR CSV</button>
+      <button class="admin-btn" onclick="loadAdminData()">↺ ACTUALIZAR</button>
+      <button class="admin-btn" onclick="closeAdmin()">✕ CERRAR</button>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
-  <div class="footer-monogram">C & R</div>
+  <div class="footer-monogram" id="footer-monogram" style="cursor:default">C &amp; R</div>
   <p data-es="03 · OCTUBRE · 2026 · HERMOSILLO, SONORA" data-en="OCTOBER 3 · 2026 · HERMOSILLO, SONORA">03 · OCTUBRE · 2026 · HERMOSILLO, SONORA</p>
   <br>
   <p style="margin-top:.5rem; opacity:.4" data-es="Cristina Borquez & José Roberto Moreno" data-en="Cristina Borquez & José Roberto Moreno">Cristina Borquez & José Roberto Moreno</p>
 </footer>
 
 <script>
+/* ════════════════════════════════════════════════════════════════
+   🔧 PASO 2 — CONFIGURAR EMAILJS (10 min)
+   ────────────────────────────────────────────────────────────────
+   1. Ve a https://emailjs.com → crear cuenta gratuita (200 emails/mes)
+   2. Email Services → Add Service → Gmail → conecta tu cuenta
+   3. Email Templates → Create Template → usa estas variables:
+         {{from_name}}  {{email}}  {{asistencia}}  {{personas}}
+         {{dieta}}      {{mensaje}} {{timestamp}}
+      Subject: 🎊 Nueva confirmación - {{from_name}} ({{asistencia}})
+   4. Account → copia tu Public Key
+   5. Reemplaza los 3 valores de abajo
+   ════════════════════════════════════════════════════════════════ */
+const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';   // ← Account → Public Key
+const EMAILJS_SERVICE_ID  = 'TU_SERVICE_ID';   // ← Email Services → Service ID
+const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';  // ← Email Templates → Template ID
+
+/* 🔧 PASO 3 — TU NÚMERO DE WHATSAPP
+   Formato: código país + número sin espacios ni +
+   México ejemplo: 526621234567  (52 = México, 662 = Hermosillo) */
+const WA_NUMBER = '52XXXXXXXXXX'; // ← reemplaza con tu número real
+
+/* 🔧 CLAVE SECRETA DEL ADMIN PANEL
+   Accede con: tudominio.com/?admin=CR2026
+   O con 5 taps rápidos en el monograma C & R del footer */
+const ADMIN_KEY = 'CR2026'; // ← cambia esto
+
+/* ── Init EmailJS ── */
+if (typeof emailjs !== 'undefined') {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+/* ── WHATSAPP LINKS ── */
+function buildWALink(nombre, apellido, personas, asistencia) {
+  const texto = encodeURIComponent(
+    `Hola! Soy ${nombre} ${apellido}.\n` +
+    `✅ Confirmo ${asistencia === 'si' ? '*SÍ* asistiré' : '*NO* podré asistir'} a la boda de Cristina y Roberto.\n` +
+    `👥 Personas: ${personas}`
+  );
+  return `https://wa.me/${WA_NUMBER}?text=${texto}`;
+}
+
+/* Hero WA button — mensaje genérico */
+document.getElementById('wa-hero-btn').href =
+  `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, quiero confirmar mi asistencia a la boda de Cristina y Roberto 💒')}`;
+
 /* ── LANGUAGE ── */
 let currentLang = 'es';
 
@@ -1259,11 +1649,10 @@ function setLang(lang) {
   });
   document.querySelectorAll('[data-es]').forEach(el => {
     const text = el.getAttribute('data-' + lang);
-    if (text) {
-      if (el.tagName === 'INPUT' || el.tagName === 'OPTION') el.textContent = text;
-      else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'LABEL') el.textContent = text;
-      else el.innerHTML = text;
-    }
+    if (!text) return;
+    if (el.tagName === 'INPUT' || el.tagName === 'OPTION') el.textContent = text;
+    else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'LABEL') el.textContent = text;
+    else el.innerHTML = text;
   });
   buildFAQ();
   document.documentElement.lang = lang;
@@ -1277,19 +1666,12 @@ window.addEventListener('scroll', () => {
 /* ── COUNTDOWN ── */
 function updateCountdown() {
   const target = new Date('2026-10-03T12:00:00-07:00');
-  const now = new Date();
-  const diff = target - now;
-  if (diff <= 0) {
-    document.getElementById('cd-days').textContent = '0';
-    document.getElementById('cd-hours').textContent = '0';
-    document.getElementById('cd-mins').textContent = '0';
-    document.getElementById('cd-secs').textContent = '0';
-    return;
-  }
-  document.getElementById('cd-days').textContent = String(Math.floor(diff / 86400000)).padStart(2,'0');
-  document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
-  document.getElementById('cd-mins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
-  document.getElementById('cd-secs').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,'0');
+  const diff = target - new Date();
+  if (diff <= 0) { ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent='0'); return; }
+  document.getElementById('cd-days').textContent  = String(Math.floor(diff/86400000)).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+  document.getElementById('cd-mins').textContent  = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cd-secs').textContent  = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
 }
 setInterval(updateCountdown, 1000);
 updateCountdown();
@@ -1297,93 +1679,36 @@ updateCountdown();
 /* ── FAQ ── */
 const faqData = {
   es: [
-    {
-      q: '¿Dónde se realiza la ceremonia religiosa?',
-      a: 'La misa se celebrará en la Catedral de Hermosillo, ubicada en Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. El inicio es a las 12:00 PM. Te recomendamos llegar con 15 minutos de anticipación.'
-    },
-    {
-      q: '¿Dónde es la recepción y a qué hora?',
-      a: 'La recepción tendrá lugar en el Salón Las Cascadas, ubicado en Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, a partir de las 7:00 PM. Puedes consultar la ubicación exacta en el mapa de esta página.'
-    },
-    {
-      q: '¿Hay estacionamiento disponible?',
-      a: 'Sí. La Catedral cuenta con estacionamiento en la zona del centro y calles aledañas. El Salón Las Cascadas dispone de estacionamiento privado gratuito para los invitados.'
-    },
-    {
-      q: '¿Se permiten niños?',
-      a: 'La celebración es exclusiva para adultos. Agradecemos de antemano tu comprensión y esperamos que disfrutes de una noche especial sin preocupaciones.'
-    },
-    {
-      q: '¿Cuál es el código de vestimenta?',
-      a: 'Vestimenta formal. Para caballeros: traje o smoking. Para damas: vestido largo o de cóctel. Les pedimos considerar la paleta de colores de la boda como inspiración.'
-    },
-    {
-      q: '¿Puedo llevar acompañante?',
-      a: 'El número de invitados por mesa está cuidadosamente planificado. Por favor confirma únicamente el número de personas indicado en tu invitación. Si tienes alguna duda, escríbenos con gusto.'
-    },
-    {
-      q: '¿Hasta cuándo puedo confirmar mi asistencia?',
-      a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.'
-    },
-    {
-      q: '¿Cómo puedo hacer llegar un regalo?',
-      a: 'Contamos con mesa de regalos en línea, opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Mesa de Regalos" en esta misma página para ver todos los detalles.'
-    },
-    {
-      q: '¿Habrá opciones vegetarianas en el menú?',
-      a: 'Sí, el menú incluirá opciones vegetarianas. Si tienes alguna restricción alimentaria adicional, por favor indícalo al momento de confirmar tu asistencia y lo tomaremos en cuenta.'
-    },
+    { q: '¿Dónde se realiza la ceremonia religiosa?', a: 'La misa se celebrará en la Catedral de Hermosillo, ubicada en Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. El inicio es a las 12:00 PM. Te recomendamos llegar con 15 minutos de anticipación.' },
+    { q: '¿Dónde es la recepción y a qué hora?', a: 'La recepción tendrá lugar en el Salón Las Cascadas, ubicado en Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, a partir de las 7:00 PM. Puedes consultar la ubicación exacta en el mapa de esta página.' },
+    { q: '¿Hay estacionamiento disponible?', a: 'Sí. La Catedral cuenta con estacionamiento en la zona del centro y calles aledañas. El Salón Las Cascadas dispone de estacionamiento privado gratuito para los invitados.' },
+    { q: '¿Se permiten niños?', a: 'La celebración es exclusiva para adultos. Agradecemos de antemano tu comprensión y esperamos que disfrutes de una noche especial sin preocupaciones.' },
+    { q: '¿Cuál es el código de vestimenta?', a: 'Vestimenta formal. Para caballeros: traje o smoking. Para damas: vestido largo o de cóctel. Les pedimos considerar la paleta de colores de la boda como inspiración.' },
+    { q: '¿Puedo llevar acompañante?', a: 'El número de invitados por mesa está cuidadosamente planificado. Por favor confirma únicamente el número de personas indicado en tu invitación. Si tienes alguna duda, escríbenos con gusto.' },
+    { q: '¿Hasta cuándo puedo confirmar mi asistencia?', a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.' },
+    { q: '¿Cómo puedo hacer llegar un regalo?', a: 'Contamos con mesa de regalos en línea, opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Mesa de Regalos" en esta misma página para ver todos los detalles.' },
+    { q: '¿Habrá opciones vegetarianas en el menú?', a: 'Sí, el menú incluirá opciones vegetarianas. Si tienes alguna restricción alimentaria adicional, por favor indícalo al momento de confirmar tu asistencia y lo tomaremos en cuenta.' },
   ],
   en: [
-    {
-      q: 'Where is the religious ceremony?',
-      a: 'The wedding mass will be held at the Catedral de Hermosillo, located at Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. It begins at 12:00 PM. We recommend arriving 15 minutes early.'
-    },
-    {
-      q: 'Where is the reception and what time does it start?',
-      a: 'The reception will take place at Salón Las Cascadas, located at Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, starting at 7:00 PM. You can find the exact location on the map included on this page.'
-    },
-    {
-      q: 'Is parking available?',
-      a: 'Yes. The Cathedral has street parking available in the surrounding downtown area. Salón Las Cascadas offers complimentary private parking for all guests.'
-    },
-    {
-      q: 'Are children allowed?',
-      a: 'This is an adults-only celebration. We truly appreciate your understanding and hope you enjoy a wonderful, carefree evening.'
-    },
-    {
-      q: 'What is the dress code?',
-      a: 'Formal attire is required. Suits or tuxedos for gentlemen; floor-length or cocktail dresses for ladies. We invite you to take inspiration from the wedding color palette.'
-    },
-    {
-      q: 'Can I bring a plus-one?',
-      a: 'Seating has been carefully arranged. Please confirm only the number of guests specified on your invitation. If you have any questions, feel free to reach out and we will be happy to help.'
-    },
-    {
-      q: 'What is the RSVP deadline?',
-      a: 'Please confirm your attendance by September 1, 2026. After that date we cannot guarantee a spot, as the guest list will be finalized.'
-    },
-    {
-      q: 'How can I send a gift?',
-      a: 'We have an online gift registry, a bank transfer option, and a cash box at the reception. Please visit the "Gift Registry" section on this page for full details.'
-    },
-    {
-      q: 'Will there be vegetarian options?',
-      a: 'Yes, the menu includes vegetarian options. If you have any additional dietary restrictions, please let us know when you RSVP and we will do our best to accommodate you.'
-    },
+    { q: 'Where is the religious ceremony?', a: 'The wedding mass will be held at the Catedral de Hermosillo, located at Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. It begins at 12:00 PM. We recommend arriving 15 minutes early.' },
+    { q: 'Where is the reception and what time does it start?', a: 'The reception will take place at Salón Las Cascadas, located at Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, starting at 7:00 PM. You can find the exact location on the map included on this page.' },
+    { q: 'Is parking available?', a: 'Yes. The Cathedral has street parking available in the surrounding downtown area. Salón Las Cascadas offers complimentary private parking for all guests.' },
+    { q: 'Are children allowed?', a: 'This is an adults-only celebration. We truly appreciate your understanding and hope you enjoy a wonderful, carefree evening.' },
+    { q: 'What is the dress code?', a: 'Formal attire is required. Suits or tuxedos for gentlemen; floor-length or cocktail dresses for ladies. We invite you to take inspiration from the wedding color palette.' },
+    { q: 'Can I bring a plus-one?', a: 'Seating has been carefully arranged. Please confirm only the number of guests specified on your invitation. If you have any questions, feel free to reach out and we will be happy to help.' },
+    { q: 'What is the RSVP deadline?', a: 'Please confirm your attendance by September 1, 2026. After that date we cannot guarantee a spot, as the guest list will be finalized.' },
+    { q: 'How can I send a gift?', a: 'We have an online gift registry, a bank transfer option, and a cash box at the reception. Please visit the "Gift Registry" section on this page for full details.' },
+    { q: 'Will there be vegetarian options?', a: 'Yes, the menu includes vegetarian options. If you have any additional dietary restrictions, please let us know when you RSVP and we will do our best to accommodate you.' },
   ]
 };
-
 function buildFAQ() {
   const list = document.getElementById('faq-list');
   list.innerHTML = '';
-  faqData[currentLang].forEach((item, i) => {
+  faqData[currentLang].forEach(item => {
     const div = document.createElement('div');
     div.className = 'faq-item';
     div.innerHTML = `<div class="faq-q">${item.q}<span class="faq-icon">+</span></div><div class="faq-a">${item.a}</div>`;
-    div.querySelector('.faq-q').addEventListener('click', () => {
-      div.classList.toggle('open');
-    });
+    div.querySelector('.faq-q').addEventListener('click', () => div.classList.toggle('open'));
     list.appendChild(div);
   });
 }
@@ -1392,40 +1717,258 @@ buildFAQ();
 /* ── RSVP FORM ── */
 async function submitRSVP(e) {
   e.preventDefault();
-  const form = document.getElementById('rsvp-form');
+  const form   = document.getElementById('rsvp-form');
   const status = document.getElementById('rsvp-status');
-  const data = Object.fromEntries(new FormData(form));
-  status.textContent = currentLang === 'es' ? 'Enviando...' : 'Sending...';
+  const data   = Object.fromEntries(new FormData(form));
+  data.timestamp = new Date().toISOString();
 
-  // ── STORAGE OPTION ──────────────────────────────────────────────────
-  // Option A (recommended for GitHub Pages): Formspree
-  //   1. Go to https://formspree.io → create a free account → new form
-  //   2. Replace YOUR_FORM_ID below with your actual Formspree form ID
-  //   3. Uncomment the Formspree block and remove the mock block
-  //
-  // try {
-  //   const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-  //     method: 'POST',
-  //     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(data)
-  //   });
-  //   if (res.ok) { showSuccess(); } else { throw new Error(); }
-  // } catch { status.textContent = currentLang === 'es' ? 'Error. Inténtalo de nuevo.' : 'Error. Please try again.'; }
+  status.textContent = currentLang === 'es' ? 'Enviando…' : 'Sending…';
 
-  // Option B: Google Sheets via Google Apps Script
-  //   See README comments at bottom of this file.
+  let dbOk = false, emailOk = false;
 
-  // Mock (remove when you connect a real backend):
-  await new Promise(r => setTimeout(r, 1000));
-  showSuccess();
+  /* 1. Guardar en Firebase Firestore */
+  if (window._firebaseReady && window._db) {
+    try {
+      await window._fbAddDoc(window._fbCollection(window._db, 'rsvps'), {
+        ...data,
+        timestamp: window._fbTimestamp()
+      });
+      dbOk = true;
+    } catch(err) { console.error('Firestore error:', err); }
+  }
+
+  /* 2. Enviar email con EmailJS */
+  if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'TU_PUBLIC_KEY') {
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        from_name:  `${data.nombre} ${data.apellido}`,
+        email:      data.email,
+        asistencia: data.asistencia === 'si' ? '✅ Sí asistirá' : '❌ No asistirá',
+        personas:   data.personas,
+        dieta:      data.dieta || 'Ninguna',
+        mensaje:    data.mensaje || '—',
+        timestamp:  data.timestamp
+      });
+      emailOk = true;
+    } catch(err) { console.error('EmailJS error:', err); }
+  }
+
+  /* 3. Abrir WhatsApp automáticamente si confirmó asistencia */
+  if (data.asistencia === 'si') {
+    const waUrl = buildWALink(data.nombre, data.apellido, data.personas, data.asistencia);
+    setTimeout(() => window.open(waUrl, '_blank'), 800);
+  }
+
+  showRSVPSuccess();
 }
 
-function showSuccess() {
+function showRSVPSuccess() {
   document.getElementById('rsvp-form').style.display = 'none';
   const s = document.getElementById('rsvp-success');
   s.style.display = 'block';
-  setLang(currentLang); // re-apply translations
+  setLang(currentLang);
 }
+
+/* ── MESSAGES WALL ── */
+async function submitMessage() {
+  const name     = document.getElementById('msg-name').value.trim();
+  const relation = document.getElementById('msg-relation').value.trim();
+  const text     = document.getElementById('msg-text').value.trim();
+  const status   = document.getElementById('msg-status');
+
+  if (!name || !text) {
+    status.textContent = currentLang === 'es' ? 'Por favor escribe tu nombre y mensaje.' : 'Please enter your name and message.';
+    return;
+  }
+  status.textContent = currentLang === 'es' ? 'Enviando…' : 'Sending…';
+
+  if (window._firebaseReady && window._db) {
+    try {
+      await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
+        name, relation, text,
+        timestamp: window._fbTimestamp()
+      });
+      document.getElementById('msg-name').value     = '';
+      document.getElementById('msg-relation').value = '';
+      document.getElementById('msg-text').value     = '';
+      document.getElementById('msg-chars').textContent = '300 caracteres restantes';
+      status.textContent = currentLang === 'es' ? '¡Mensaje enviado con amor! 💛' : 'Message sent with love! 💛';
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    } catch(err) {
+      status.textContent = currentLang === 'es' ? 'Error al enviar. Intenta de nuevo.' : 'Error sending. Please try again.';
+    }
+  } else {
+    /* Fallback offline: muestra localmente */
+    renderMessage({ name, relation, text, ts: new Date() });
+    status.textContent = currentLang === 'es' ? '¡Mensaje enviado! (modo offline)' : 'Message sent! (offline mode)';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+}
+
+function renderMessage(msg) {
+  const wall = document.getElementById('msg-wall');
+  const empty = wall.querySelector('.msg-empty');
+  if (empty) empty.remove();
+  const card = document.createElement('div');
+  card.className = 'msg-card';
+  const rel = msg.relation ? `<span style="opacity:.6"> · ${msg.relation}</span>` : '';
+  card.innerHTML = `
+    <p class="msg-card-text">${msg.text.replace(/</g,'&lt;')}</p>
+    <p class="msg-card-author">${msg.name.replace(/</g,'&lt;')}${rel}</p>`;
+  wall.insertBefore(card, wall.firstChild);
+}
+
+/* Listen to messages in real-time */
+function initMessagesListener() {
+  if (!window._firebaseReady || !window._db) return;
+  const q = window._fbQuery(
+    window._fbCollection(window._db, 'messages'),
+    window._fbOrderBy('timestamp', 'desc')
+  );
+  window._fbOnSnapshot(q, snap => {
+    const wall = document.getElementById('msg-wall');
+    wall.innerHTML = '';
+    if (snap.empty) {
+      wall.innerHTML = `<p class="msg-empty">${currentLang==='es'?'Sé el primero en escribir…':'Be the first to write…'}</p>`;
+      return;
+    }
+    snap.forEach(doc => {
+      const d = doc.data();
+      renderMessage({ name: d.name, relation: d.relation, text: d.text });
+    });
+  });
+}
+
+document.addEventListener('firebaseReady', initMessagesListener);
+if (window._firebaseReady) initMessagesListener();
+
+/* ── MENU PIN ── */
+const MENU_PIN = '1003';
+function pinInput(index) {
+  const val = document.getElementById('pin' + index).value;
+  if (val.length === 1 && index < 3) document.getElementById('pin'+(index+1)).focus();
+  checkPin();
+}
+function pinKey(e, index) {
+  if (e.key === 'Backspace' && !document.getElementById('pin'+index).value && index > 0)
+    document.getElementById('pin'+(index-1)).focus();
+}
+function checkPin() {
+  const entered = [0,1,2,3].map(i => document.getElementById('pin'+i).value).join('');
+  if (entered.length < 4) return;
+  if (entered === MENU_PIN) {
+    unlockMenu();
+  } else {
+    document.getElementById('pin-error').textContent =
+      currentLang === 'es' ? 'Código incorrecto. Inténtalo de nuevo.' : 'Incorrect code. Please try again.';
+    [0,1,2,3].forEach(i => { document.getElementById('pin'+i).value = ''; });
+    document.getElementById('pin0').focus();
+  }
+}
+function unlockMenu() {
+  document.getElementById('menu-lock').style.display = 'none';
+  document.getElementById('menu-content').classList.add('unlocked');
+  setLang(currentLang);
+}
+function lockMenu() {
+  document.getElementById('menu-lock').style.display = 'block';
+  document.getElementById('menu-content').classList.remove('unlocked');
+  [0,1,2,3].forEach(i => { document.getElementById('pin'+i).value = ''; });
+  document.getElementById('pin-error').textContent = '';
+}
+
+/* ── ADMIN PANEL ── */
+let adminTaps = 0, adminTimer = null;
+
+/* Trigger 1: URL ?admin=CLAVE */
+if (new URLSearchParams(location.search).get('admin') === ADMIN_KEY) openAdmin();
+
+/* Trigger 2: 5 taps rápidos en el monograma del footer */
+document.getElementById('footer-monogram').addEventListener('click', () => {
+  adminTaps++;
+  clearTimeout(adminTimer);
+  adminTimer = setTimeout(() => { adminTaps = 0; }, 2000);
+  if (adminTaps >= 5) { adminTaps = 0; openAdmin(); }
+});
+
+function openAdmin() {
+  document.getElementById('admin-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  loadAdminData();
+}
+function closeAdmin() {
+  document.getElementById('admin-panel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function loadAdminData() {
+  const loading = document.getElementById('admin-loading');
+  const table   = document.getElementById('admin-table');
+  const tbody   = document.getElementById('admin-tbody');
+  loading.style.display = 'block';
+  table.style.display   = 'none';
+
+  if (!window._firebaseReady || !window._db) {
+    loading.textContent = '⚠️ Firebase no configurado aún. Revisa los comentarios en el código.';
+    return;
+  }
+
+  try {
+    const q    = window._fbQuery(window._fbCollection(window._db,'rsvps'), window._fbOrderBy('timestamp','desc'));
+    const snap = await window._fbGetDocs(q);
+    const rows = [];
+    snap.forEach(doc => rows.push(doc.data()));
+
+    const totalSi    = rows.filter(r => r.asistencia === 'si').length;
+    const totalNo    = rows.filter(r => r.asistencia === 'no').length;
+    const totalGuest = rows.filter(r => r.asistencia === 'si').reduce((s,r) => s + parseInt(r.personas||1), 0);
+
+    document.getElementById('stat-total').textContent  = rows.length;
+    document.getElementById('stat-si').textContent     = totalSi;
+    document.getElementById('stat-no').textContent     = totalNo;
+    document.getElementById('stat-guests').textContent = totalGuest;
+
+    tbody.innerHTML = rows.map(r => {
+      const ts = r.timestamp?.toDate ? r.timestamp.toDate().toLocaleDateString('es-MX') : '—';
+      return `<tr>
+        <td>${r.nombre||'—'}</td>
+        <td>${r.apellido||'—'}</td>
+        <td style="font-size:.75rem">${r.email||'—'}</td>
+        <td class="${r.asistencia==='si'?'badge-si':'badge-no'}">${r.asistencia==='si'?'✅ Sí':'❌ No'}</td>
+        <td style="text-align:center">${r.personas||1}</td>
+        <td style="font-size:.75rem">${r.dieta||'—'}</td>
+        <td style="font-size:.72rem">${ts}</td>
+      </tr>`;
+    }).join('');
+
+    loading.style.display = 'none';
+    table.style.display   = 'table';
+    window._adminRows = rows;
+  } catch(err) {
+    loading.textContent = 'Error al cargar: ' + err.message;
+  }
+}
+
+function exportCSV() {
+  const rows = window._adminRows || [];
+  if (!rows.length) { alert('No hay datos para exportar.'); return; }
+  const headers = ['Nombre','Apellido','Email','Asistencia','Personas','Dieta','Mensaje','Fecha'];
+  const csvRows = rows.map(r => [
+    r.nombre, r.apellido, r.email,
+    r.asistencia === 'si' ? 'Sí' : 'No',
+    r.personas, r.dieta||'', r.mensaje||'',
+    r.timestamp?.toDate ? r.timestamp.toDate().toLocaleString('es-MX') : ''
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv  = [headers.join(','), ...csvRows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'rsvps-boda-cr2026.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+/* Close admin with Escape key */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAdmin(); });
 
 /* ── REVEAL ON SCROLL ── */
 const reveals = document.querySelectorAll('.reveal');
@@ -1433,74 +1976,41 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.12 });
 reveals.forEach(el => observer.observe(el));
-
-/* ── MENU PIN ── */
-// Change this PIN to whatever code you'll tell guests on the day
-const MENU_PIN = '1003'; // e.g. day + month: Oct 3 = 1003
-
-function pinInput(index) {
-  const val = document.getElementById('pin' + index).value;
-  if (val.length === 1 && index < 3) {
-    document.getElementById('pin' + (index + 1)).focus();
-  }
-  checkPin();
-}
-
-function pinKey(e, index) {
-  if (e.key === 'Backspace' && !document.getElementById('pin' + index).value && index > 0) {
-    document.getElementById('pin' + (index - 1)).focus();
-  }
-}
-
-function checkPin() {
-  const entered = [0,1,2,3].map(i => document.getElementById('pin' + i).value).join('');
-  if (entered.length < 4) return;
-  if (entered === MENU_PIN) {
-    unlockMenu();
-  } else {
-    document.getElementById('pin-error').textContent =
-      currentLang === 'es' ? 'Código incorrecto. Inténtalo de nuevo.' : 'Incorrect code. Please try again.';
-    [0,1,2,3].forEach(i => { document.getElementById('pin' + i).value = ''; });
-    document.getElementById('pin0').focus();
-  }
-}
-
-function unlockMenu() {
-  document.getElementById('menu-lock').style.display = 'none';
-  document.getElementById('menu-content').classList.add('unlocked');
-  setLang(currentLang);
-}
-
-function lockMenu() {
-  document.getElementById('menu-lock').style.display = 'block';
-  document.getElementById('menu-content').classList.remove('unlocked');
-  [0,1,2,3].forEach(i => { document.getElementById('pin' + i).value = ''; });
-  document.getElementById('pin-error').textContent = '';
-}
 </script>
 
 <!--
-================================================================================
-  README — RSVP BACKEND OPTIONS
-================================================================================
+════════════════════════════════════════════════════════════════
+  GUÍA DE SETUP COMPLETA
+════════════════════════════════════════════════════════════════
 
-RECOMMENDED: Formspree (free, zero-server, perfect for GitHub Pages)
-  1. Sign up at https://formspree.io
-  2. Create a new form → copy your form ID (looks like "xabc1234")
-  3. In submitRSVP(), uncomment the Formspree block and fill in YOUR_FORM_ID
-  4. Responses land in your Formspree dashboard + optional email/Google Sheets
+  VARIABLES QUE DEBES RELLENAR EN EL SCRIPT DE ARRIBA:
+  ┌─────────────────────────────────────────────────────┐
+  │ WA_NUMBER          → tu número con lada (52662...)  │
+  │ ADMIN_KEY          → tu clave secreta de admin      │
+  │ EMAILJS_PUBLIC_KEY → de emailjs.com → Account       │
+  │ EMAILJS_SERVICE_ID → de emailjs.com → Services      │
+  │ EMAILJS_TEMPLATE_ID→ de emailjs.com → Templates     │
+  │ firebaseConfig     → de Firebase Console → Web app  │
+  └─────────────────────────────────────────────────────┘
 
-ALTERNATIVE: Google Sheets via Apps Script
-  1. Create a Google Sheet
-  2. Extensions → Apps Script → paste a doPost(e) handler
-  3. Deploy as Web App (Anyone, even anonymous) → copy the URL
-  4. POST form data to that URL from submitRSVP()
-  — Free, unlimited, data stays in your Google account
+  ACCESO AL PANEL ADMIN:
+  • URL secreta:  tudominio.com/?admin=CR2026
+  • Móvil:        5 taps rápidos en "C & R" del footer
+  • Teclado:      tecla Escape para cerrar
 
-ALTERNATIVE: Netlify Forms (if deploying to Netlify instead of GitHub Pages)
-  Add netlify to <form> tag — zero config needed.
+  TEMPLATE EMAILJS SUGERIDO:
+  ──────────────────────────
+  Asunto: 🎊 {{from_name}} confirmó — {{asistencia}}
+  Cuerpo:
+    Nombre:     {{from_name}}
+    Email:      {{email}}
+    Asistencia: {{asistencia}}
+    Personas:   {{personas}}
+    Dieta:      {{dieta}}
+    Mensaje:    {{mensaje}}
+    Fecha:      {{timestamp}}
 
-================================================================================
+════════════════════════════════════════════════════════════════
 -->
 </body>
 </html>
