@@ -184,142 +184,217 @@ class BootScene extends Phaser.Scene {
   }
 
   _makePlaceholders(){
+    // NOTE: NEVER chain stroke calls after lineStyle() in Phaser 3.
+    // Always call lineStyle() on its own line, then strokeXxx() on the next.
+    // NEVER use strokeArc() — it doesn't exist. Use beginPath/arc/strokePath.
     const gfx = this.make.graphics({add:false});
 
-    // ── BG layers ──
-    const skyCols = [0xf4e4b0, 0xf5d88e, 0xeac870, 0xf0d888];
-    gfx.clear().fillStyle(0xf4e4b0).fillRect(0,0,W,120);
-    // cathedral silhouettes
-    gfx.fillStyle(0xd4a860).fillRect(60,20,40,100).fillRect(300,10,60,110).fillRect(400,15,50,105);
-    gfx.fillTriangle(80,20,80,4,100,20).fillTriangle(330,10,330,-5,355,10);
-    gfx.generateTexture('bg_far',W,120); gfx.clear();
+    // ── BG FAR ──
+    gfx.clear();
+    gfx.fillStyle(0xf4e4b0); gfx.fillRect(0,0,W,120);
+    gfx.fillStyle(0xd4a860);
+    gfx.fillRect(60,20,40,100); gfx.fillRect(300,10,60,110); gfx.fillRect(400,15,50,105);
+    gfx.fillTriangle(80,20,80,4,100,20);
+    gfx.fillTriangle(330,10,330,-5,355,10);
+    gfx.generateTexture('bg_far',W,120);
 
-    gfx.fillStyle(0x5a9e3c).fillRect(0,0,W,160);
-    gfx.fillStyle(0x3d7a28).fillRect(0,100,W,60);
-    // trees
-    for(let tx of [80,230,400,580,720]){
-      gfx.fillStyle(0x6b4c2a).fillRect(tx,60,18,100);
-      gfx.fillStyle(0x2d7a1a).fillCircle(tx+9,50,38);
-      gfx.fillStyle(0xf5d060).fillCircle(tx+9,50,5).fillCircle(tx-10,40,4).fillCircle(tx+22,35,4);
+    // ── BG MID ──
+    gfx.clear();
+    gfx.fillStyle(0x5a9e3c); gfx.fillRect(0,0,W,160);
+    gfx.fillStyle(0x3d7a28); gfx.fillRect(0,100,W,60);
+    for(const tx of [80,230,400,580,720]){
+      gfx.fillStyle(0x6b4c2a); gfx.fillRect(tx,60,18,100);
+      gfx.fillStyle(0x2d7a1a); gfx.fillCircle(tx+9,50,38);
+      gfx.fillStyle(0xf5d060);
+      gfx.fillCircle(tx+9,50,5); gfx.fillCircle(tx-10,40,4); gfx.fillCircle(tx+22,35,4);
     }
-    gfx.generateTexture('bg_mid',W,160); gfx.clear();
+    gfx.generateTexture('bg_mid',W,160);
 
-    gfx.fillStyle(0xf0ead8).fillRect(0,0,W,50);
-    gfx.fillStyle(0xd4c88a).fillRect(0,45,W,5);
-    gfx.fillStyle(0xe8dda0).fillRect(0,2,W,3);
-    gfx.generateTexture('bg_near',W,50); gfx.clear();
+    // ── BG NEAR ──
+    gfx.clear();
+    gfx.fillStyle(0xf0ead8); gfx.fillRect(0,0,W,50);
+    gfx.fillStyle(0xd4c88a); gfx.fillRect(0,45,W,5);
+    gfx.fillStyle(0xe8dda0); gfx.fillRect(0,2,W,3);
+    gfx.generateTexture('bg_near',W,50);
 
-    gfx.fillStyle(0x7ab840).fillRect(0,0,W,20);
-    gfx.fillStyle(0xf0ead8).fillRect(0,20,W,50);
-    gfx.fillStyle(0xd4c88a).fillRect(10,22,W-20,3).fillRect(10,62,W-20,3);
-    gfx.generateTexture('ground_tile',W,70); gfx.clear();
+    // ── GROUND ──
+    gfx.clear();
+    gfx.fillStyle(0x7ab840); gfx.fillRect(0,0,W,20);
+    gfx.fillStyle(0xf0ead8); gfx.fillRect(0,20,W,50);
+    gfx.fillStyle(0xd4c88a);
+    gfx.fillRect(10,22,W-20,3); gfx.fillRect(10,62,W-20,3);
+    gfx.generateTexture('ground_tile',W,70);
 
-    // ── COUPLE sprite (placeholder stick figures) ──
-    const makeCouple = (action='run', frame=0) => {
+    // ── COUPLE (bride + groom running side by side) ──
+    const makeCouple = (action, frame) => {
       gfx.clear();
-      const sx = action==='run' ? [-15,15] : [-12,18];
-      // bride (white dress)
-      gfx.fillStyle(0xffd0e8).fillCircle(40,22,14);
-      gfx.fillStyle(0xffffff).fillTriangle(20,36,60,36,50,80).fillRect(24,34,32,26);
-      gfx.fillStyle(0xa0522d).fillRect(28,8,24,16);
-      // groom (tux)
-      gfx.fillStyle(0xffd0c0).fillCircle(75,22,14);
-      gfx.fillStyle(0x222222).fillRect(58,34,30,40).fillTriangle(58,34,88,34,73,50);
-      gfx.fillStyle(0xffffff).fillRect(68,34,8,18);
-      if(action==='jump'){ gfx.fillStyle(0xffee44).fillRect(0,88,110,4); }
-      if(action==='kiss'){ gfx.fillStyle(0xff6b9d).fillCircle(58,22,6); }
-      gfx.generateTexture(`couple_${action}_${frame}`,110,100);
+      // Bride
+      gfx.fillStyle(0xffd0e8); gfx.fillCircle(40,22,14);
+      gfx.fillStyle(0xffffff);
+      gfx.fillTriangle(20,36,60,36,50,80); gfx.fillRect(24,34,32,26);
+      gfx.fillStyle(0xa0522d); gfx.fillRect(28,8,24,16);
+      // Groom
+      gfx.fillStyle(0xffd0c0); gfx.fillCircle(75,22,14);
+      gfx.fillStyle(0x222222);
+      gfx.fillRect(58,34,30,40); gfx.fillTriangle(58,34,88,34,73,50);
+      gfx.fillStyle(0xffffff); gfx.fillRect(68,34,8,18);
+      // State variations
+      if(action==='jump'){    gfx.fillStyle(0xffee44); gfx.fillRect(0,88,110,4); }
+      if(action==='rebound'){ gfx.fillStyle(0xff4444); gfx.fillRect(0,88,110,4); }
+      if(action==='kiss'){    gfx.fillStyle(0xff6b9d); gfx.fillCircle(57,22,6); }
+      gfx.generateTexture('couple_' + action + '_' + frame, 110, 100);
     };
     for(let i=0;i<4;i++) makeCouple('run',i);
-    makeCouple('jump',0); makeCouple('rebound',0); makeCouple('kiss',0);
+    makeCouple('jump',0);
+    makeCouple('rebound',0);
+    makeCouple('kiss',0);
 
-    // ── CAT placeholders ──
-    const catColors = {black:0x111111, grey:0x7799bb, tabby:0x997755};
-    for(const [type,col] of Object.entries(catColors)){
-      for(let st of ['idle','run','happy']){
+    // ── CATS ──
+    const catDefs = [
+      {type:'black', col:0x222222},
+      {type:'grey',  col:0x7799bb},
+      {type:'tabby', col:0x997755},
+    ];
+    for(const {type,col} of catDefs){
+      for(const st of ['idle','run','happy']){
         gfx.clear();
-        gfx.fillStyle(col).fillEllipse(40,34,60,36);
+        gfx.fillStyle(col);
+        gfx.fillEllipse(40,34,60,36);
         gfx.fillCircle(60,20,16);
-        gfx.fillStyle(col+0x111111).fillTriangle(52,8,56,0,64,8).fillTriangle(60,8,64,0,72,8);
-        gfx.fillStyle(0x88cc44).fillCircle(56,20,5).fillCircle(66,20,5);
-        if(st==='run'){ gfx.fillStyle(col).fillRect(10,38,16,22).fillRect(30,38,16,22).fillRect(46,38,16,22).fillRect(62,38,16,22); }
-        if(type==='tabby'){ gfx.lineStyle(1.5,0x775533).strokeRect(20,24,40,16); }
-        if(type==='grey' && st==='happy'){ gfx.fillStyle(0xff6699).fillCircle(40,10,8); }
-        gfx.generateTexture(`cat_${type}_${st}`,80,60);
+        // ears (slightly lighter — clamp to white max)
+        const earCol = Math.min(col + 0x333333, 0xffffff);
+        gfx.fillStyle(earCol);
+        gfx.fillTriangle(52,8,56,0,64,8);
+        gfx.fillTriangle(60,8,64,0,72,8);
+        // eyes
+        gfx.fillStyle(0x88cc44);
+        gfx.fillCircle(56,20,5); gfx.fillCircle(66,20,5);
+        // legs when running
+        if(st==='run'){
+          gfx.fillStyle(col);
+          gfx.fillRect(10,38,14,20); gfx.fillRect(28,38,14,20);
+          gfx.fillRect(44,38,14,20); gfx.fillRect(60,38,14,20);
+        }
+        // tabby stripes using filled rectangles (no stroke needed)
+        if(type==='tabby'){
+          gfx.fillStyle(0x775533);
+          gfx.fillRect(22,26,5,12); gfx.fillRect(33,26,5,12); gfx.fillRect(44,26,5,12);
+        }
+        // grey happy heart
+        if(type==='grey' && st==='happy'){
+          gfx.fillStyle(0xff6699); gfx.fillCircle(40,10,7);
+        }
+        gfx.generateTexture('cat_' + type + '_' + st, 80, 60);
       }
     }
 
-    // ── Daughter placeholder ──
+    // ── DAUGHTER ──
     for(const st of ['idle','walk','angry','happy']){
       gfx.clear();
-      gfx.fillStyle(0xffd0c0).fillCircle(40,30,22); // head
-      gfx.fillStyle(0x4a2c0a).fillRect(18,8,44,24); // hair
-      gfx.fillStyle(0xffb0c8).fillRect(24,52,32,40); // shirt
-      gfx.fillStyle(0x5577aa).fillRect(20,90,36,60); // jeans
-      gfx.fillStyle(0xffd0c0).fillRect(56,55,14,36).fillRect(10,55,14,36); // arms
-      // headphones — strokeArc doesn't chain; draw separately
-      gfx.lineStyle(4, 0x334455, 1);
-      gfx.beginPath();
-      gfx.arc(40, 22, 24, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(340), false);
-      gfx.strokePath();
-      gfx.fillStyle(0x334455).fillCircle(18,28,8).fillCircle(62,28,8);
-      if(st==='angry'){
-        gfx.fillStyle(0xff4444).fillRect(15,35,50,5);
-        gfx.lineStyle(3,0xff4444,1);
-        gfx.strokeRect(15,20,50,20);
+      // head
+      gfx.fillStyle(0xffd0c0); gfx.fillCircle(40,30,22);
+      // hair
+      gfx.fillStyle(0x3a1c0a); gfx.fillRect(18,8,44,28);
+      // shirt
+      gfx.fillStyle(0xffb0c8); gfx.fillRect(24,52,32,44);
+      // legs
+      gfx.fillStyle(0x5577aa);
+      gfx.fillRect(22,94,14,62); gfx.fillRect(44,94,14,62);
+      // arms
+      gfx.fillStyle(0xffd0c0);
+      gfx.fillRect(8,54,14,38); gfx.fillRect(58,54,14,38);
+      // headphone cups (filled circles, no stroke)
+      gfx.fillStyle(0x334455);
+      gfx.fillCircle(17,30,9); gfx.fillCircle(63,30,9);
+      // headphone band (dots along arc — avoids any stroke call)
+      gfx.fillStyle(0x334455);
+      for(let a=195; a<=345; a+=12){
+        const r = a * Math.PI / 180;
+        gfx.fillRect(
+          Math.round(40 + Math.cos(r)*23) - 2,
+          Math.round(22 + Math.sin(r)*22) - 2,
+          4, 4
+        );
       }
-      if(st==='happy'){ gfx.fillStyle(0xffdd00).fillCircle(40,70,10); }
-      gfx.generateTexture(`daughter_${st}`, 80, 160);
+      // state visuals
+      if(st==='angry'){
+        gfx.fillStyle(0xff4444);
+        gfx.fillRect(16,36,48,4);  // angry brow
+        gfx.fillStyle(0xff6666);
+        gfx.fillRect(16,20,48,3); gfx.fillRect(16,42,48,3);
+        gfx.fillRect(16,20,3,25); gfx.fillRect(61,20,3,25);
+      }
+      if(st==='happy'){
+        gfx.fillStyle(0xffdd00); gfx.fillCircle(40,72,10);
+      }
+      if(st==='walk'){
+        gfx.fillStyle(0xeeeeee);
+        gfx.fillRect(26,150,10,8); gfx.fillRect(44,150,10,8);
+      }
+      gfx.generateTexture('daughter_' + st, 80, 165);
     }
 
-    // ── Items ──
-    // Beer bottle
-    gfx.clear().fillStyle(0x8B5e2a).fillRect(10,0,14,40).fillRect(6,30,22,30).fillStyle(0xc8922a).fillRect(10,28,14,4).fillStyle(0xfff8e0).fillRect(6,35,22,20);
-    gfx.generateTexture('item_beer',34,60);
+    // ── ITEMS ──
+
+    // Beer
+    gfx.clear();
+    gfx.fillStyle(0x8B5e2a);
+    gfx.fillRect(10,0,14,42); gfx.fillRect(6,30,22,32);
+    gfx.fillStyle(0xc8922a); gfx.fillRect(10,28,14,4);
+    gfx.fillStyle(0xfff8e0); gfx.fillRect(6,35,22,22);
+    gfx.generateTexture('item_beer',34,62);
 
     // Bible
-    gfx.clear().fillStyle(0x5c2d00).fillRect(0,0,50,64).fillStyle(0xc8941a).fillRect(4,4,42,56).fillStyle(0xfff8e0).fillRect(8,8,34,48).fillStyle(0xc8941a).fillCircle(25,32,6).fillRect(22,12,6,40);
+    gfx.clear();
+    gfx.fillStyle(0x5c2d00); gfx.fillRect(0,0,50,64);
+    gfx.fillStyle(0xc8941a); gfx.fillRect(4,4,42,56);
+    gfx.fillStyle(0xfff8e0); gfx.fillRect(8,8,34,48);
+    gfx.fillStyle(0xc8941a);
+    gfx.fillCircle(25,32,6); gfx.fillRect(22,12,6,40);
     gfx.generateTexture('item_bible',50,64);
 
-    // Money
+    // Money (all fill, no stroke)
     gfx.clear();
-    gfx.fillStyle(0x2d7a2d).fillRect(0,0,56,36);
-    gfx.fillStyle(0x44aa44).fillRect(4,4,48,28);
-    gfx.fillStyle(0xfff8e0).fillCircle(28,18,10);
-    gfx.lineStyle(1,0x2d7a2d,1);
-    gfx.strokeCircle(28,18,10);
+    gfx.fillStyle(0x2d7a2d); gfx.fillRect(0,0,56,36);
+    gfx.fillStyle(0x44aa44); gfx.fillRect(4,4,48,28);
+    gfx.fillStyle(0xfff8e0); gfx.fillCircle(28,18,10);
+    gfx.fillStyle(0x1a5a1a); gfx.fillCircle(28,18,6);
     gfx.generateTexture('item_money',56,36);
 
-    // Gift box
+    // Gift
     gfx.clear();
-    gfx.fillStyle(0xff4466).fillRect(0,14,60,46);
-    gfx.fillStyle(0xff8800).fillRect(6,20,48,34);
-    gfx.fillStyle(0xffd700).fillRect(26,0,8,60).fillRect(0,22,60,8);
-    gfx.fillStyle(0xffd700).fillCircle(30,14,12);
+    gfx.fillStyle(0xff4466); gfx.fillRect(0,14,60,46);
+    gfx.fillStyle(0xff8800); gfx.fillRect(6,20,48,34);
+    gfx.fillStyle(0xffd700);
+    gfx.fillRect(26,0,8,60); gfx.fillRect(0,22,60,8);
+    gfx.fillCircle(30,14,10);
     gfx.generateTexture('item_gift',60,60);
 
-    // Shield FX
+    // Shield (all fill, no stroke)
     gfx.clear();
-    gfx.fillStyle(0x44aaff,0.6).fillCircle(30,30,28);
-    gfx.lineStyle(3,0x88ddff,1);
-    gfx.strokeCircle(30,30,28);
+    gfx.fillStyle(0x2266cc, 0.45); gfx.fillCircle(30,30,28);
+    gfx.fillStyle(0x66bbff, 0.35); gfx.fillCircle(30,30,20);
+    gfx.fillStyle(0xaaddff, 0.25); gfx.fillCircle(30,30,10);
     gfx.generateTexture('shield_fx',60,60);
 
-    // Altar scene
-    gfx.clear();
-    gfx.fillStyle(0xf0ead8).fillRect(0,0,W,H);
-    gfx.fillStyle(0xd4a860).fillRect(150,20,500,220);
-    gfx.fillStyle(0xeeddbb).fillRect(170,30,460,180);
-    gfx.fillStyle(0x8b6020).fillRect(310,60,180,130);
-    gfx.fillStyle(0xffd700).fillRect(370,30,80,40);
-    gfx.fillTriangle(380,30,410,0,440,30);
-    gfx.fillStyle(0xffffff).fillRect(340,120,120,80);
-    gfx.fillStyle(0xcc2200).fillRect(340,120,120,8).fillRect(340,120,8,80).fillRect(452,120,8,80).fillRect(340,196,120,8);
-    gfx.generateTexture('altar_bg',W,H);
-
     // Particle
-    gfx.clear().fillStyle(0xffd700).fillCircle(4,4,4);
+    gfx.clear();
+    gfx.fillStyle(0xffd700); gfx.fillCircle(4,4,4);
     gfx.generateTexture('particle',8,8);
+
+    // Altar background
+    gfx.clear();
+    gfx.fillStyle(0xf0ead8); gfx.fillRect(0,0,W,H);
+    gfx.fillStyle(0xd4a860); gfx.fillRect(150,20,500,220);
+    gfx.fillStyle(0xeeddbb); gfx.fillRect(170,30,460,180);
+    gfx.fillStyle(0x8b6020); gfx.fillRect(310,60,180,130);
+    gfx.fillStyle(0xffd700); gfx.fillRect(370,30,80,40);
+    gfx.fillTriangle(380,30,410,0,440,30);
+    gfx.fillStyle(0xffffff); gfx.fillRect(340,120,120,80);
+    gfx.fillStyle(0xcc2200);
+    gfx.fillRect(340,120,120,6); gfx.fillRect(340,192,120,6);
+    gfx.fillRect(340,120,6,80); gfx.fillRect(454,120,6,80);
+    gfx.generateTexture('altar_bg',W,H);
 
     gfx.destroy();
   }
@@ -337,8 +412,8 @@ class MenuScene extends Phaser.Scene {
     // ── CORS warning — show when opened as file:// ──
     if(location.protocol === 'file:'){
       const warn = this.add.graphics().setDepth(200);
-      warn.fillStyle(0x3d0000, 0.97).fillRect(0, 0, W, 52);
-      warn.lineStyle(1.5, 0xff4444).strokeRect(0, 0, W, 52);
+      warn.fillStyle(0x3d0000, 0.97); warn.fillRect(0, 0, W, 52);
+      warn.lineStyle(1.5, 0xff4444, 1); warn.strokeRect(0, 0, W, 52);
       this.add.text(W/2, 10,
         '⚠  Para cargar tus imágenes debes usar un servidor local:', {
         fontFamily:'Lato', fontSize:'11px', color:'#ffaaaa'
