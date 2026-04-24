@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>La Boda de Cris y José · El Juego</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #1a0a00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Lato', sans-serif;
+    overflow: hidden;
+  }
+  #game-container {
+    position: relative;
+    width: 800px;
+    max-width: 100vw;
+  }
+  canvas { display: block; }
+
+  /* ── Back button ── */
+  #back-btn {
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 1000;
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .15em;
+    padding: .5rem 1.2rem;
+    background: rgba(0,0,0,.5);
+    border: 1px solid rgba(184,154,106,.4);
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .3s;
+    backdrop-filter: blur(6px);
+  }
+  #back-btn:hover { border-color: #b89a6a; color: #b89a6a; }
+
+  /* ── Touch controls ── */
+  #touch-hint {
+    position: fixed;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .2em;
+    color: rgba(255,255,255,.3);
+    pointer-events: none;
+  }
+  @media(min-width:801px){ #touch-hint { display:none; } }
+</style>
+</head>
+<body>
+
+<a id="back-btn" href="index.html">← VOLVER</a>
+<div id="game-container"></div>
+<div id="touch-hint">TAP PARA SALTAR</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER
+   ───────────────────────────────────────────────────────────────────
+   SPRITE LAYOUT GUIDE (adjust these constants to match your PNGs)
+
+   novios.png  — estimated 1060×530, 4 columns × 2 rows of ~265×265 sprites
+     Row 0: RUN frames (4)
+     Row 1: JUMP(0), REBOUND(1), KISS(2), extras
+
+   animaciones.png — tall sheet, multiple character rows
+     CATS (each row = 5 states: IDLE,RUN,MEW,ANGRY,HAPPY, 2 rows per cat)
+       Black cat row  0–1: frames at y≈0    h≈130
+       Grey  cat row  2–3: frames at y≈260  h≈130
+       Tabby cat row  4–5: frames at y≈520  h≈130
+     DAUGHTER (row 6–7): y≈780 — IDLE,WALK,ANGRY,BORED,HAPPY  w≈120 h≈300
+
+   mundo.png — wide panoramic sheet
+     BG_FAR   y=0    h≈120
+     BG_MID   y=120  h≈160
+     TRACK    y=280  h≈80
+     ALTAR    y=360  h≈280  x=0 w≈560
+     OBSTACLE items below altar
+
+   ══ HOW TO TUNE FRAMES ══
+   Each sprite section below has a FRAMES object. Change x,y,w,h to
+   match your actual PNG coordinates using a tool like:
+   https://www.leshylabs.com/apps/sstool/
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── CONFIG ─────────────────────────────────────────────────────── */
+const W = 800, H = 360;
+const GROUND_Y = H - 70;        // pixel Y of the ground surface
+const GOAL_DIST = 2000;          // meters to reach the altar
+const SPEEDS = { initial:280, max:520, accelPerSec:8 };
+
+/* ── FRAME DATA — adjust to real sprite coordinates ─────────────── */
+
+// novios.png — 1060×530 assumed — 4 cols × 2 rows
+const NOVIOS_FRAMES = {
+  RUN:     [
+    {x:0,   y:0,   w:265, h:265},
+    {x:265, y:0,   w:265, h:265},
+    {x:530, y:0,   w:265, h:265},
+    {x:795, y:0,   w:265, h:265},
+    // Row 2
+    {x:0,   y:265, w:265, h:265},
+    {x:265, y:265, w:265, h:265},
+  ],
+  JUMP:    [{x:530, y:265, w:265, h:265}],
+  REBOUND: [{x:795, y:265, w:265, h:265}],
+  KISS:    [{x:530, y:265, w:265, h:265}],  // placeholder — update
+};
+
+// animaciones.png — cats (5 states × 2 rows each, w≈100, h≈100)
+const CAT_W=100, CAT_H=110;
+const CAT_FRAMES = {
+  black: {
+    IDLE:  [{x:0,   y:0,   w:CAT_W, h:CAT_H},{x:100, y:0,   w:CAT_W, h:CAT_H}],
+    RUN:   [{x:100, y:0,   w:CAT_W, h:CAT_H},{x:200, y:0,   w:CAT_W, h:CAT_H},{x:300,y:0,w:CAT_W,h:CAT_H},{x:400,y:0,w:CAT_W,h:CAT_H}],
+    HAPPY: [{x:400, y:0,   w:CAT_W, h:CAT_H}],
+    // row 2 (second pass y≈110)
+    IDLE2: [{x:0,   y:110, w:CAT_W, h:CAT_H},{x:100, y:110, w:CAT_W, h:CAT_H}],
+  },
+  grey: {
+    IDLE:  [{x:0,   y:220, w:CAT_W, h:CAT_H},{x:100, y:220, w:CAT_W, h:CAT_H}],
+    RUN:   [{x:100, y:220, w:CAT_W, h:CAT_H},{x:200, y:220, w:CAT_W, h:CAT_H},{x:300,y:220,w:CAT_W,h:CAT_H},{x:400,y:220,w:CAT_W,h:CAT_H}],
+    HAPPY: [{x:400, y:220, w:CAT_W, h:CAT_H}],
+  },
+  tabby: {
+    IDLE:  [{x:0,   y:440, w:CAT_W, h:CAT_H},{x:100, y:440, w:CAT_W, h:CAT_H}],
+    RUN:   [{x:100, y:440, w:CAT_W, h:CAT_H},{x:200, y:440, w:CAT_W, h:CAT_H},{x:300,y:440,w:CAT_W,h:CAT_H},{x:400,y:440,w:CAT_W,h:CAT_H}],
+    HAPPY: [{x:400, y:440, w:CAT_W, h:CAT_H}],
+  },
+};
+
+// Daughter — tall sprite
+const DGHT_W=120, DGHT_H=300;
+const DGHT_FRAMES = {
+  IDLE:  [{x:0,   y:660, w:DGHT_W, h:DGHT_H}],
+  WALK:  [{x:0,   y:660, w:DGHT_W, h:DGHT_H},{x:120, y:660, w:DGHT_W, h:DGHT_H},{x:240, y:660, w:DGHT_W, h:DGHT_H}],
+  ANGRY: [{x:240, y:660, w:DGHT_W, h:DGHT_H}],
+  HAPPY: [{x:480, y:660, w:DGHT_W, h:DGHT_H}],
+  BORED: [{x:360, y:660, w:DGHT_W, h:DGHT_H}],
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCENE 1 — BOOT (generate placeholder textures)
+═══════════════════════════════════════════════════════════════════ */
+class BootScene extends Phaser.Scene {
+  constructor(){ super({key:'Boot'}); }
+
+  preload() {
+    // Load real assets from /assets/ folder
+    // Comment out lines you don't have yet and use generated placeholders
+    this.load.image('novios_sheet',     'assets/novios.png');
+    this.load.image('anim_sheet',       'assets/animaciones.png');
+    this.load.image('mundo_sheet',      'assets/mundo.png');
+    this.load.image('portada',          'assets/GamePortada.png');
+
+    // Show loading bar
+    const bar  = this.add.rectangle(W/2, H/2, 4, 20, 0xb89a6a);
+    const text = this.add.text(W/2, H/2+30,'CARGANDO...', {
+      fontFamily:'Cinzel', fontSize:'12px', color:'#b89a6a'
+    }).setOrigin(.5);
+    this.load.on('progress', v => bar.setDisplaySize(v*300, 20));
+    this.load.on('complete', () => {
+      this._assetsLoaded = true;
+    });
+  }
+
+  create() {
+    /* Generate ALL needed textures programmatically as fallback.
+       If real PNGs load correctly they override these in Menu. */
+    this._makePlaceholders();
+    this.scene.start('Menu');
+  }
+
+  _makePlaceholders(){
+    const gfx = this.make.graphics({add:false});
+
+    // ── BG layers ──
+    const skyCols = [0xf4e4b0, 0xf5d88e, 0xeac870, 0xf0d888];
+    gfx.clear().fillStyle(0xf4e4b0).fillRect(0,0,W,120);
+    // cathedral silhouettes
+    gfx.fillStyle(0xd4a860).fillRect(60,20,40,100).fillRect(300,10,60,110).fillRect(400,15,50,105);
+    gfx.fillTriangle(80,20,80,4,100,20).fillTriangle(330,10,330,-5,355,10);
+    gfx.generateTexture('bg_far',W,120); gfx.clear();
+
+    gfx.fillStyle(0x5a9e3c).fillRect(0,0,W,160);
+    gfx.fillStyle(0x3d7a28).fillRect(0,100,W,60);
+    // trees
+    for(let tx of [80,230,400,580,720]){
+      gfx.fillStyle(0x6b4c2a).fillRect(tx,60,18,100);
+      gfx.fillStyle(0x2d7a1a).fillCircle(tx+9,50,38);
+      gfx.fillStyle(0xf5d060).fillCircle(tx+9,50,5).fillCircle(tx-10,40,4).fillCircle(tx+22,35,4);
+    }
+    gfx.generateTexture('bg_mid',W,160); gfx.clear();
+
+    gfx.fillStyle(0xf0ead8).fillRect(0,0,W,50);
+    gfx.fillStyle(0xd4c88a).fillRect(0,45,W,5);
+    gfx.fillStyle(0xe8dda0).fillRect(0,2,W,3);
+    gfx.generateTexture('bg_near',W,50); gfx.clear();
+
+    gfx.fillStyle(0x7ab840).fillRect(0,0,W,20);
+    gfx.fillStyle(0xf0ead8).fillRect(0,20,W,50);
+    gfx.fillStyle(0xd4c88a).fillRect(10,22,W-20,3).fillRect(10,62,W-20,3);
+    gfx.generateTexture('ground_tile',W,70); gfx.clear();
+
+    // ── COUPLE sprite (placeholder stick figures) ──
+    const makeCouple = (action='run', frame=0) => {
+      gfx.clear();
+      const sx = action==='run' ? [-15,15] : [-12,18];
+      // bride (white dress)
+      gfx.fillStyle(0xffd0e8).fillCircle(40,22,14);
+      gfx.fillStyle(0xffffff).fillTriangle(20,36,60,36,50,80).fillRect(24,34,32,26);
+      gfx.fillStyle(0xa0522d).fillRect(28,8,24,16);
+      // groom (tux)
+      gfx.fillStyle(0xffd0c0).fillCircle(75,22,14);
+      gfx.fillStyle(0x222222).fillRect(58,34,30,40).fillTriangle(58,34,88,34,73,50);
+      gfx.fillStyle(0xffffff).fillRect(68,34,8,18);
+      if(action==='jump'){ gfx.fillStyle(0xffee44).fillRect(0,88,110,4); }
+      if(action==='kiss'){ gfx.fillStyle(0xff6b9d).fillCircle(58,22,6); }
+      gfx.generateTexture(`couple_${action}_${frame}`,110,100);
+    };
+    for(let i=0;i<4;i++) makeCouple('run',i);
+    makeCouple('jump',0); makeCouple('rebound',0); makeCouple('kiss',0);
+
+    // ── CAT placeholders ──
+    const catColors = {black:0x111111, grey:0x7799bb, tabby:0x997755};
+    for(const [type,col] of Object.entries(catColors)){
+      for(let st of ['idle','run','happy']){
+        gfx.clear();
+        gfx.fillStyle(col).fillEllipse(40,34,60,36);
+        gfx.fillCircle(60,20,16);
+        gfx.fillStyle(col+0x111111).fillTriangle(52,8,56,0,64,8).fillTriangle(60,8,64,0,72,8);
+        gfx.fillStyle(0x88cc44).fillCircle(56,20,5).fillCircle(66,20,5);
+        if(st==='run'){ gfx.fillStyle(col).fillRect(10,38,16,22).fillRect(30,38,16,22).fillRect(46,38,16,22).fillRect(62,38,16,22); }
+        if(type==='tabby'){ gfx.lineStyle(1.5,0x775533).strokeRect(20,24,40,16); }
+        if(type==='grey' && st==='happy'){ gfx.fillStyle(0xff6699).fillCircle(40,10,8); }
+        gfx.generateTexture(`cat_${type}_${st}`,80,60);
+      }
+    }
+
+    // ── Daughter placeholder ──
+    for(const st of ['idle','walk','angry','happy']){
+      gfx.clear();
+      gfx.fillStyle(0xffd0c0).fillCircle(40,30,22); // head
+      gfx.fillStyle(0x4a2c0a).fillRect(18,8,44,24); // hair
+      gfx.fillStyle(0xffb0c8).fillRect(24,52,32,40); // shirt
+      gfx.fillStyle(0x5577aa).fillRect(20,90,36,60); // jeans
+      gfx.fillStyle(0xffd0c0).fillRect(56,55,14,36).fillRect(10,55,14,36); // arms
+      // headphones
+      gfx.lineStyle(4,0x334455).strokeArc(40,22,24,200,340);
+      gfx.fillStyle(0x334455).fillCircle(18,28,8).fillCircle(62,28,8);
+      if(st==='angry'){ gfx.fillStyle(0xff4444).fillRect(15,35,50,5); gfx.lineStyle(3,0xff4444).strokeRect(15,20,50,20); }
+      if(st==='happy'){ gfx.fillStyle(0xffdd00).fillCircle(40,70,10); }
+      gfx.generateTexture(`daughter_${st}`,80,160);
+    }
+
+    // ── Items ──
+    // Beer bottle
+    gfx.clear().fillStyle(0x8B5e2a).fillRect(10,0,14,40).fillRect(6,30,22,30).fillStyle(0xc8922a).fillRect(10,28,14,4).fillStyle(0xfff8e0).fillRect(6,35,22,20);
+    gfx.generateTexture('item_beer',34,60);
+
+    // Bible
+    gfx.clear().fillStyle(0x5c2d00).fillRect(0,0,50,64).fillStyle(0xc8941a).fillRect(4,4,42,56).fillStyle(0xfff8e0).fillRect(8,8,34,48).fillStyle(0xc8941a).fillCircle(25,32,6).fillRect(22,12,6,40);
+    gfx.generateTexture('item_bible',50,64);
+
+    // Money
+    gfx.clear().fillStyle(0x2d7a2d).fillRect(0,0,56,36).fillStyle(0x44aa44).fillRect(4,4,48,28).fillStyle(0xfff8e0).fillCircle(28,18,10).lineStyle(1,0x2d7a2d).strokeCircle(28,18,10);
+    gfx.generateTexture('item_money',56,36);
+
+    // Gift box
+    gfx.clear().fillStyle(0xff4466).fillRect(0,14,60,46).fillStyle(0xff8800).fillRect(6,20,48,34).fillStyle(0xffd700).fillRect(26,0,8,60).fillRect(0,22,60,8).fillStyle(0xffd700).fillCircle(30,14,12);
+    gfx.generateTexture('item_gift',60,60);
+
+    // Shield FX
+    gfx.clear().fillStyle(0x44aaff,0.6).fillCircle(30,30,28).lineStyle(3,0x88ddff).strokeCircle(30,30,28);
+    gfx.generateTexture('shield_fx',60,60);
+
+    // Altar scene
+    gfx.clear();
+    gfx.fillStyle(0xf0ead8).fillRect(0,0,W,H);
+    gfx.fillStyle(0xd4a860).fillRect(150,20,500,220);
+    gfx.fillStyle(0xeeddbb).fillRect(170,30,460,180);
+    gfx.fillStyle(0x8b6020).fillRect(310,60,180,130);
+    gfx.fillStyle(0xffd700).fillRect(370,30,80,40);
+    gfx.fillTriangle(380,30,410,0,440,30);
+    gfx.fillStyle(0xffffff).fillRect(340,120,120,80);
+    gfx.fillStyle(0xcc2200).fillRect(340,120,120,8).fillRect(340,120,8,80).fillRect(452,120,8,80).fillRect(340,196,120,8);
+    gfx.generateTexture('altar_bg',W,H);
+
+    // Particle
+    gfx.clear().fillStyle(0xffd700).fillCircle(4,4,4);
+    gfx.generateTexture('particle',8,8);
+
+    gfx.destroy();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCENE 2 — MENU
+═══════════════════════════════════════════════════════════════════ */
+class MenuScene extends Phaser.Scene {
+  constructor(){ super({key:'Menu'}); }
+
+  create(){
+    this.cameras.main.setBackgroundColor('#1a0a00');
+
+    // Try to show portada cover
+    if(this.textures.exists('portada')){
+      this.add.image(W/2, H/2,'portada').setDisplaySize(W, H).setAlpha(0.92);
+    } else {
+      // Drawn cover fallback
+      this._drawCover();
+    }
+
+    // Overlay gradient
+    const grad = this.add.graphics();
+    grad.fillGradientStyle(0x000000,0x000000,0x000000,0x000000,0,0,0,0.6);
+    grad.fillRect(0,H*0.65,W,H*0.35);
+
+    // Title banner
+    const banner = this.add.graphics();
+    banner.fillStyle(0xffffff,0.92);
+    banner.fillRoundedRect(W/2-220, 14, 440, 66, 8);
+    banner.lineStyle(2, 0xb89a6a);
+    banner.strokeRoundedRect(W/2-220, 14, 440, 66, 8);
+
+    this.add.text(W/2, 32, 'La Boda de Cris y José', {
+      fontFamily:'Cinzel', fontSize:'22px', color:'#3d1f00', fontStyle:'italic'
+    }).setOrigin(0.5, 0);
+    this.add.text(W/2, 60, '03.10.2026', {
+      fontFamily:'Cinzel', fontSize:'13px', color:'#b89a6a'
+    }).setOrigin(0.5, 0);
+
+    // PLAY button
+    const playBtn = this.add.graphics();
+    playBtn.fillStyle(0x2c1a00, 0.88);
+    playBtn.fillRoundedRect(W/2-130, H-72, 260, 44, 6);
+    playBtn.lineStyle(2, 0xb89a6a);
+    playBtn.strokeRoundedRect(W/2-130, H-72, 260, 44, 6);
+
+    const playTxt = this.add.text(W/2, H-50, '▶  JUGAR', {
+      fontFamily:'Cinzel', fontSize:'18px', color:'#f5d87a', fontStyle:'bold'
+    }).setOrigin(0.5);
+
+    // Leaderboard preview
+    const scores = JSON.parse(localStorage.getItem('boda_scores')||'[]');
+    if(scores.length){
+      this.add.text(W-10, H-10, `🏆 Record: ${scores[0].score}pts`, {
+        fontFamily:'Lato', fontSize:'11px', color:'#f5d87a'
+      }).setOrigin(1,1);
+    }
+
+    // Controls hint
+    this.add.text(W/2, H-20, 'ESPACIO / TAP = SALTAR   ·   TAP ANIMALES = BONIFICACIÓN', {
+      fontFamily:'Lato', fontSize:'9px', color:'rgba(255,255,255,0.45)', letterSpacing:1
+    }).setOrigin(0.5, 1);
+
+    // Interactivity
+    [playBtn, playTxt].forEach(obj => {
+      obj.setInteractive(new Phaser.Geom.Rectangle(W/2-130, H-72, 260, 44), Phaser.Geom.Rectangle.Contains)
+         .on('pointerover', ()=>{ playTxt.setColor('#ffffff'); playBtn.clear().fillStyle(0xb89a6a,0.9).fillRoundedRect(W/2-130,H-72,260,44,6).lineStyle(2,0xffd700).strokeRoundedRect(W/2-130,H-72,260,44,6); })
+         .on('pointerout',  ()=>{ playTxt.setColor('#f5d87a'); playBtn.clear().fillStyle(0x2c1a00,0.88).fillRoundedRect(W/2-130,H-72,260,44,6).lineStyle(2,0xb89a6a).strokeRoundedRect(W/2-130,H-72,260,44,6); })
+         .on('pointerdown', ()=> this.scene.start('Game'));
+    });
+
+    // Animate title shimmer
+    this.tweens.add({ targets: playTxt, alpha:{from:0.7,to:1}, duration:900, yoyo:true, repeat:-1, ease:'Sine.InOut' });
+
+    this.input.keyboard.on('keydown-SPACE', ()=> this.scene.start('Game'));
+    this.input.on('pointerdown', (ptr)=>{ if(ptr.y > H*0.6) this.scene.start('Game'); });
+  }
+
+  _drawCover(){
+    const g = this.add.graphics();
+    // Sky gradient
+    g.fillGradientStyle(0xf4d880,0xf4d880,0x7ab8f0,0x7ab8f0,1);
+    g.fillRect(0,0,W,H);
+    // Cathedral silhouette
+    g.fillStyle(0xc8922a);
+    g.fillRect(500,40,200,220); g.fillRect(540,20,120,40);
+    g.fillTriangle(540,20,600,0,660,20);
+    g.fillStyle(0xb07820); g.fillRect(560,100,80,120);
+    // Ground
+    g.fillStyle(0x7ab840).fillRect(0,H*0.7,W,H*0.3);
+    g.fillStyle(0xf0ead8).fillRect(W*0.2,H*0.7,W*0.4,H*0.3);
+    // Couple silhouette
+    g.fillStyle(0xffffff); g.fillEllipse(280,H*0.5,90,160);
+    g.fillStyle(0x222222); g.fillEllipse(330,H*0.5,70,150);
+    g.fillStyle(0xffd0c0); g.fillCircle(285,H*0.35,20).fillCircle(330,H*0.35,18);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCENE 3 — GAME
+═══════════════════════════════════════════════════════════════════ */
+class GameScene extends Phaser.Scene {
+  constructor(){ super({key:'Game'}); }
+
+  init(){
+    this.score         = 0;
+    this.distance      = 0;   // in "meters"
+    this.speed         = SPEEDS.initial;
+    this.isAlive       = true;
+    this.isGrounded    = true;
+    this.shielded      = false;
+    this.boosted       = false;
+    this.shieldTimer   = 0;
+    this.boostTimer    = 0;
+    this.spawnTimer    = 0;
+    this.itemTimer     = 0;
+    this.gameOver      = false;
+    this.victoryStarted= false;
+    this.groundY       = GROUND_Y;
+    this._jumpCount    = 0;
+    this._maxJumps     = 2;     // double-jump allowed
+  }
+
+  create(){
+    this._buildWorld();
+    this._buildPlayer();
+    this._buildHUD();
+    this._buildInput();
+    this._buildParticles();
+    this.obstacles = this.add.group();
+    this.items     = this.add.group();
+    this.cats      = this.add.group();
+    this._spawnDaughter();
+  }
+
+  /* ── WORLD ─────────────────────────────────────────────────────── */
+  _buildWorld(){
+    // 3 parallax layers, each repeated twice for seamless scrolling
+    this.bgFar  = this.add.tileSprite(0,0,W,120,'bg_far').setOrigin(0,0).setDepth(0);
+    this.bgMid  = this.add.tileSprite(0,80,W,160,'bg_mid').setOrigin(0,0).setDepth(1);
+    this.bgNear = this.add.tileSprite(0,220,W,50,'bg_near').setOrigin(0,0).setDepth(2);
+    this.groundTile = this.add.tileSprite(0, GROUND_Y, W, 70, 'ground_tile').setOrigin(0,0).setDepth(3);
+  }
+
+  /* ── PLAYER ─────────────────────────────────────────────────────── */
+  _buildPlayer(){
+    // Create animation frames array from generated textures
+    // When using real spritesheet, replace with sprite.anims.create(...)
+    this._coupleFrame = 0;
+    this._coupleAnim  = 'run';
+    this._coupleKeys  = ['couple_run_0','couple_run_1','couple_run_2','couple_run_3'];
+
+    this.couple = this.add.image(120, GROUND_Y - 90, 'couple_run_0')
+      .setOrigin(0.5, 1)
+      .setScale(0.85)
+      .setDepth(10);
+
+    this.coupleVelY = 0;
+    this._frameTimer = 0;
+
+    // Shadow
+    this.shadow = this.add.ellipse(120, GROUND_Y+4, 80, 12, 0x000000, 0.18).setDepth(3);
+  }
+
+  /* ── INPUT ──────────────────────────────────────────────────────── */
+  _buildInput(){
+    this.input.keyboard.on('keydown-SPACE', ()=> this._jump());
+    this.input.keyboard.on('keydown-UP',    ()=> this._jump());
+    this.input.on('pointerdown', (ptr)=>{
+      // Ignore HUD area
+      if(ptr.y < 50) return;
+      this._jump();
+    });
+  }
+
+  _jump(){
+    if(!this.isAlive || this.gameOver || this.victoryStarted) return;
+    if(this._jumpCount >= this._maxJumps) return;
+    this.coupleVelY = -520;
+    this._jumpCount++;
+    this.isGrounded = false;
+    this._coupleAnim = 'jump';
+    this.couple.setTexture('couple_jump_0');
+    // Jump SFX via Web Audio
+    this._playTone(440, 0.08, 'square');
+    // Kick particles
+    this.emitter?.explode(6, this.couple.x, this.couple.y);
+  }
+
+  /* ── HUD ─────────────────────────────────────────────────────────── */
+  _buildHUD(){
+    // Background strip
+    this.hudBg = this.add.graphics().setDepth(50);
+    this.hudBg.fillStyle(0x000000, 0.45).fillRect(0,0,W,46);
+
+    this.scoreTxt = this.add.text(12, 8, 'PUNTOS  0', {
+      fontFamily:'Cinzel', fontSize:'13px', color:'#f5d87a'
+    }).setDepth(51);
+
+    this.distTxt = this.add.text(W/2, 8, '0 m', {
+      fontFamily:'Cinzel', fontSize:'13px', color:'#ffffff'
+    }).setOrigin(0.5,0).setDepth(51);
+
+    this.timeTxt = this.add.text(W-12, 8, '0:00', {
+      fontFamily:'Cinzel', fontSize:'13px', color:'#aaddff'
+    }).setOrigin(1,0).setDepth(51);
+
+    // Progress bar
+    this.add.graphics().setDepth(51).lineStyle(1,0x444400).strokeRect(W/2-150,30,300,10);
+    this.progressBar = this.add.graphics().setDepth(52);
+
+    // Status badges
+    this.shieldIcon = this.add.text(12, 30, '', {fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52);
+    this.boostIcon  = this.add.text(100, 30,'', {fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52);
+
+    this.elapsed = 0;
+  }
+
+  _updateHUD(delta){
+    this.elapsed += delta/1000;
+    const m = Math.floor(this.elapsed/60);
+    const s = Math.floor(this.elapsed%60).toString().padStart(2,'0');
+
+    this.scoreTxt.setText(`PUNTOS  ${this.score}`);
+    this.distTxt.setText(`${Math.floor(this.distance)} m`);
+    this.timeTxt.setText(`${m}:${s}`);
+
+    const prog = Math.min(this.distance / GOAL_DIST, 1);
+    this.progressBar.clear();
+    this.progressBar.fillStyle(0xb89a6a).fillRect(W/2-150, 30, 300*prog, 10);
+    // Wedding ring icon at end
+    this.progressBar.fillStyle(0xffd700).fillCircle(W/2+150, 35, 6);
+
+    if(this.shielded){
+      this.shieldTimer -= delta;
+      this.shieldIcon.setText(`🛡 ${(this.shieldTimer/1000).toFixed(1)}s`);
+      if(this.shieldTimer <= 0){ this.shielded=false; this.shieldIcon.setText(''); }
+    }
+    if(this.boosted){
+      this.boostTimer -= delta;
+      this.boostIcon.setText(`⚡ ${(this.boostTimer/1000).toFixed(1)}s`);
+      if(this.boostTimer <= 0){ this.boosted=false; this.boostIcon.setText(''); }
+    }
+  }
+
+  /* ── PARTICLES ───────────────────────────────────────────────────── */
+  _buildParticles(){
+    try {
+      this.emitter = this.add.particles(0,0,'particle',{
+        speed:{min:60,max:120}, angle:{min:200,max:340},
+        scale:{start:0.6,end:0}, alpha:{start:0.8,end:0},
+        lifespan:400, quantity:0
+      }).setDepth(15);
+    } catch(e){ this.emitter = null; }
+  }
+
+  /* ── AUDIO (Web Audio API — no files needed) ─────────────────────── */
+  _playTone(freq, dur=0.1, type='sine', vol=0.15){
+    try{
+      const ctx = this._audioCtx || (this._audioCtx = new(window.AudioContext||window.webkitAudioContext)());
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type=type; o.frequency.value=freq;
+      g.gain.setValueAtTime(vol, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+      o.start(); o.stop(ctx.currentTime+dur);
+    }catch(e){}
+  }
+  _playChime(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this._playTone(f,0.15,'sine'),i*120)); }
+  _playBuzz(){  this._playTone(120,0.25,'sawtooth',0.12); }
+
+  /* ── DAUGHTER SPAWNING ───────────────────────────────────────────── */
+  _spawnDaughter(){
+    const st = Math.random()<0.5?'walk':'idle';
+    const h  = DGHT_H * 0.75; // display height
+    this.daughter = {
+      img: this.add.image(W+80, GROUND_Y, `daughter_${st}`)
+               .setOrigin(0.5,1).setScale(0.75).setDepth(8),
+      state: st, moving: st==='walk',
+      frameIdx:0, frameTimer:0,
+    };
+    // Daughter moves slowly left
+    this.daughterVx = st==='walk' ? -60 : -20;
+  }
+
+  /* ── OBSTACLE / ITEM SPAWNING ────────────────────────────────────── */
+  _spawnObstacle(){
+    const types = ['item_gift','item_beer','item_bible','item_money'];
+    const type  = Phaser.Utils.Array.GetRandom(types);
+    const x     = W + 40;
+    // Some obstacles are on ground, some floating
+    const onGround = Math.random() < 0.65;
+    const y = onGround ? GROUND_Y - 20 : GROUND_Y - 80 - Math.random()*60;
+    const obj = this.add.image(x, y, type).setDepth(7);
+    obj.itemType = type;
+    obj.isCollectible = true;
+    this.items.add(obj);
+  }
+
+  _spawnCat(){
+    const types = ['black','grey','tabby'];
+    const type  = Phaser.Utils.Array.GetRandom(types);
+    const anim  = type==='tabby' ? 'run' : (Math.random()<0.6?'idle':'run');
+    const cat   = this.add.image(W+60, GROUND_Y, `cat_${type}_${anim}`)
+                    .setOrigin(0.5,1).setScale(0.85).setDepth(9);
+    cat.catType = type;
+    cat.interactive = true;
+    cat.setInteractive();
+    cat.on('pointerdown', ()=> this._petCat(cat));
+    this.cats.add(cat);
+  }
+
+  /* ── PET CAT ─────────────────────────────────────────────────────── */
+  _petCat(cat){
+    if(cat._petted) return;
+    cat._petted = true;
+    const effects = {
+      black: ()=>{ this.score += 500; this._showPopup(cat.x,cat.y,'💛 +500 AMOR DE MAMÁ!',0xf5d87a); this._playChime(); },
+      grey:  ()=>{ this.shielded=true; this.shieldTimer=3000; this._showPopup(cat.x,cat.y,'🛡 ¡ESCUDO DE TERNURA!',0x44aaff); this._playChime(); },
+      tabby: ()=>{ this.boosted=true; this.boostTimer=5000; this.speed=Math.min(this.speed*1.5,SPEEDS.max); this._showPopup(cat.x,cat.y,'⚡ ¡BOOST FELINO!',0xffaa00); this._playTone(660,0.2,'square'); },
+    };
+    effects[cat.catType]?.();
+    cat.setTexture(`cat_${cat.catType}_happy`);
+    this.tweens.add({ targets:cat, y:cat.y-30, alpha:0, duration:700, onComplete:()=>cat.destroy() });
+  }
+
+  /* ── POPUP TEXT ──────────────────────────────────────────────────── */
+  _showPopup(x, y, msg, color=0xffffff){
+    const txt = this.add.text(Math.min(x,W-20), y-30, msg, {
+      fontFamily:'Lato', fontSize:'12px', fontStyle:'bold',
+      color: '#'+color.toString(16).padStart(6,'0'),
+      stroke:'#000000', strokeThickness:3
+    }).setOrigin(0.5,1).setDepth(60);
+    this.tweens.add({ targets:txt, y:txt.y-40, alpha:0, duration:1200, onComplete:()=>txt.destroy() });
+  }
+
+  /* ── PHYSICS & COLLISION ─────────────────────────────────────────── */
+  _applyGravity(delta){
+    const dt = delta/1000;
+    if(!this.isGrounded){
+      this.coupleVelY += 1400 * dt; // gravity
+      this.couple.y   += this.coupleVelY * dt;
+    }
+    if(this.couple.y >= GROUND_Y){
+      this.couple.y  = GROUND_Y;
+      this.coupleVelY = 0;
+      this.isGrounded = true;
+      this._jumpCount = 0;
+      if(this._coupleAnim !== 'run'){ this._coupleAnim='run'; }
+    }
+    // Shadow scales with height
+    const shadowScale = 1 - (GROUND_Y - this.couple.y) / 200;
+    this.shadow.setScale(shadowScale, 1).setAlpha(0.18 * shadowScale);
+    this.shadow.setPosition(this.couple.x, GROUND_Y+4);
+  }
+
+  _animateCouple(delta){
+    this._frameTimer += delta;
+    if(this._coupleAnim === 'run' && this._frameTimer > 120){
+      this._frameTimer = 0;
+      this._coupleFrame = (this._coupleFrame+1) % 4;
+      this.couple.setTexture(`couple_run_${this._coupleFrame}`);
+    }
+  }
+
+  _checkCollisions(){
+    const cx = this.couple.x, cy = this.couple.y;
+    const cr = 36; // couple collision radius
+
+    // Items
+    this.items.getChildren().forEach(item => {
+      const dx = item.x - cx, dy = item.y - cy;
+      if(Math.sqrt(dx*dx+dy*dy) < cr+22){
+        const pts = {item_beer:100, item_bible:200, item_money:300, item_gift:150};
+        this.score += pts[item.itemType]||100;
+        this._showPopup(item.x, item.y, `+${pts[item.itemType]||100}`,
+          item.itemType==='item_money'?0x44cc44:item.itemType==='item_bible'?0xffdd44:0xff8844);
+        this._playChime();
+        item.destroy();
+      }
+    });
+
+    // Daughter collision
+    if(this.daughter?.img){
+      const dImg = this.daughter.img;
+      const dx = dImg.x - cx;
+      if(Math.abs(dx)<55 && !this.shielded){
+        // Only hits if couple is too low
+        const coupleTop = cy - 80;
+        const daughterTop = dImg.y - dImg.displayHeight;
+        if(coupleTop > daughterTop + 40){
+          this._hitDaughter();
+        }
+      }
+    }
+  }
+
+  _hitDaughter(){
+    if(this._recentHit) return;
+    this._recentHit = true;
+    this.score = Math.max(0, this.score - 200);
+    this.coupleVelY = -300;
+    this.isGrounded = false;
+    this.couple.setTexture('couple_rebound_0');
+    this._coupleAnim = 'rebound';
+    // Daughter goes angry
+    if(this.daughter?.img) this.daughter.img.setTexture('daughter_angry');
+    this._showPopup(this.couple.x, this.couple.y, '-200  😤 HIJA MOLESTA!', 0xff4444);
+    this._playBuzz();
+    this.cameras.main.shake(250, 0.01);
+    // Flash red
+    this.cameras.main.flash(200, 255, 50, 50);
+    setTimeout(()=>{
+      this._recentHit=false;
+      if(this.daughter?.img) this.daughter.img.setTexture('daughter_walk');
+    }, 1500);
+  }
+
+  /* ── MAIN UPDATE ─────────────────────────────────────────────────── */
+  update(time, delta){
+    if(this.gameOver || this.victoryStarted) return;
+
+    const dt = delta/1000;
+    const spd = this.boosted ? this.speed*1.4 : this.speed;
+
+    // Distance & speed ramp
+    this.distance += spd * dt * 0.05;
+    this.speed = Math.min(this.speed + SPEEDS.accelPerSec * dt, SPEEDS.max);
+    if(this.distance > GOAL_DIST && !this.victoryStarted){ this._startVictory(); return; }
+
+    // Parallax scroll
+    this.bgFar.tilePositionX  += spd * 0.08 * dt;
+    this.bgMid.tilePositionX  += spd * 0.25 * dt;
+    this.bgNear.tilePositionX += spd * 0.6  * dt;
+    this.groundTile.tilePositionX += spd * dt;
+
+    // Couple physics
+    this._applyGravity(delta);
+    this._animateCouple(delta);
+    this._updateHUD(delta);
+
+    // Score from distance
+    this.score += Math.round(spd * dt * 0.3);
+
+    // Spawn obstacles
+    this.spawnTimer += delta;
+    const spawnInterval = Math.max(1200, 2800 - this.distance*0.5);
+    if(this.spawnTimer > spawnInterval){
+      this.spawnTimer = 0;
+      Math.random()<0.55 ? this._spawnObstacle() : this._spawnCat();
+    }
+
+    // Move items/obstacles
+    this.items.getChildren().forEach(o => {
+      o.x -= spd * dt;
+      if(o.x < -60) o.destroy();
+    });
+    this.cats.getChildren().forEach(c => {
+      c.x -= spd * 0.6 * dt;
+      if(c.x < -80) c.destroy();
+    });
+
+    // Move daughter
+    if(this.daughter?.img){
+      this.daughter.img.x += this.daughterVx * dt;
+      // Daughter oscillates between x=200 and x=700
+      if(this.daughter.img.x < 200){ this.daughterVx = Math.abs(this.daughterVx); }
+      if(this.daughter.img.x > 700){ this.daughterVx = -Math.abs(this.daughterVx); }
+    }
+
+    this._checkCollisions();
+  }
+
+  /* ── VICTORY ─────────────────────────────────────────────────────── */
+  _startVictory(){
+    this.victoryStarted = true;
+    this.speed = 0;
+
+    // Stop daughter, make her happy
+    this.daughterVx = 0;
+    if(this.daughter?.img) this.daughter.img.setTexture('daughter_happy');
+
+    // Transition bg to altar
+    this.tweens.add({
+      targets:[this.bgFar,this.bgMid,this.bgNear,this.groundTile],
+      alpha:0, duration:1000,
+      onComplete:()=>{
+        this.add.image(W/2, H/2, 'altar_bg').setDisplaySize(W,H).setDepth(4);
+
+        // Walk couple to altar center
+        this.tweens.add({
+          targets: this.couple,
+          x: W/2-20, duration:2500, ease:'Sine.Out',
+          onComplete:()=> this._playKissScene()
+        });
+      }
+    });
+
+    // Confetti particles
+    this._launchConfetti();
+  }
+
+  _playKissScene(){
+    this.couple.setTexture('couple_kiss_0');
+    this._playChime();
+
+    // Time bonus
+    const timeBonus = Math.max(0, Math.floor(5000 - this.elapsed*10));
+    this.score += timeBonus;
+
+    // Save score
+    const prev  = JSON.parse(localStorage.getItem('boda_scores')||'[]');
+    const entry = { score:this.score, time:Math.round(this.elapsed), date: new Date().toLocaleDateString('es-MX') };
+    prev.unshift(entry);
+    prev.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('boda_scores', JSON.stringify(prev.slice(0,10)));
+
+    // Delay → Victory scene
+    this.time.delayedCall(2000, ()=> this.scene.start('Victory', {score:this.score, elapsed:this.elapsed}));
+  }
+
+  _launchConfetti(){
+    const colors = [0xffd700,0xff6699,0x44aaff,0xff8844,0x44cc88,0xcc44ff];
+    for(let i=0;i<40;i++){
+      this.time.delayedCall(i*80, ()=>{
+        try{
+          if(!this.emitter) return;
+          const col = Phaser.Utils.Array.GetRandom(colors);
+          const p = this.add.rectangle(
+            Phaser.Math.Between(100,W-100),
+            Phaser.Math.Between(20,H-20),
+            8, 8, col
+          ).setDepth(70);
+          this.tweens.add({ targets:p, y:p.y+40, alpha:0, angle:Phaser.Math.Between(-180,180),
+            duration:1200, onComplete:()=>p.destroy() });
+        }catch(e){}
+      });
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCENE 4 — VICTORY
+═══════════════════════════════════════════════════════════════════ */
+class VictoryScene extends Phaser.Scene {
+  constructor(){ super({key:'Victory'}); }
+
+  init(data){
+    this.finalScore = data.score||0;
+    this.elapsed    = data.elapsed||0;
+  }
+
+  create(){
+    this.cameras.main.setBackgroundColor('#0a0a1a');
+
+    // Stars bg
+    for(let i=0;i<60;i++){
+      this.add.circle(
+        Phaser.Math.Between(0,W), Phaser.Math.Between(0,H),
+        Phaser.Math.Between(1,3), 0xffffff,
+        Phaser.Math.FloatBetween(0.2,0.9)
+      );
+    }
+
+    // Gold panel
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1a0e00,0.95).fillRoundedRect(W/2-260, 30, 520, H-60, 12);
+    panel.lineStyle(2,0xb89a6a).strokeRoundedRect(W/2-260, 30, 520, H-60, 12);
+
+    // Ornament top
+    this.add.text(W/2, 50, '✦  ¡VIVAN LOS NOVIOS!  ✦', {
+      fontFamily:'Cinzel', fontSize:'14px', color:'#f5d87a', letterSpacing:3
+    }).setOrigin(0.5);
+
+    this.add.text(W/2, 78, 'La Boda de Cris y José', {
+      fontFamily:'Cinzel', fontSize:'20px', color:'#ffffff', fontStyle:'italic'
+    }).setOrigin(0.5);
+
+    // Score display
+    const m = Math.floor(this.elapsed/60), s = Math.floor(this.elapsed%60).toString().padStart(2,'0');
+    this.add.text(W/2, 118, `${this.finalScore}`, {
+      fontFamily:'Cinzel', fontSize:'48px', color:'#f5d87a', fontStyle:'bold'
+    }).setOrigin(0.5);
+    this.add.text(W/2, 168, 'PUNTOS', {
+      fontFamily:'Lato', fontSize:'12px', color:'rgba(255,255,255,0.5)', letterSpacing:4
+    }).setOrigin(0.5);
+    this.add.text(W/2, 188, `Tiempo: ${m}:${s}`, {
+      fontFamily:'Lato', fontSize:'11px', color:'#aaddff'
+    }).setOrigin(0.5);
+
+    // Leaderboard
+    this.add.text(W/2, 210, '— TABLA DE LÍDERES —', {
+      fontFamily:'Cinzel', fontSize:'10px', color:'#b89a6a', letterSpacing:3
+    }).setOrigin(0.5);
+
+    const scores = JSON.parse(localStorage.getItem('boda_scores')||'[]').slice(0,5);
+    scores.forEach((s,i)=>{
+      const y = 228 + i*22;
+      const medal = ['🥇','🥈','🥉','  4','  5'][i];
+      const isMe = i===0 && s.score===this.finalScore;
+      this.add.text(W/2-140, y, `${medal}  ${s.score} pts`, {
+        fontFamily:'Lato', fontSize:'12px',
+        color: isMe ? '#f5d87a' : 'rgba(255,255,255,0.65)',
+        fontStyle: isMe?'bold':''
+      });
+      this.add.text(W/2+60, y, `${s.time}s  ·  ${s.date}`, {
+        fontFamily:'Lato', fontSize:'10px', color:'rgba(255,255,255,0.4)'
+      });
+    });
+    if(!scores.length){
+      this.add.text(W/2, 248,'(sin récords aún)',{fontFamily:'Lato',fontSize:'11px',color:'rgba(255,255,255,0.35)'}).setOrigin(0.5);
+    }
+
+    // Buttons
+    this._makeBtn(W/2-110, H-75, 190, '▶ JUGAR DE NUEVO', ()=> this.scene.start('Game'));
+    this._makeBtn(W/2+100, H-75, 150, '← MENÚ',           ()=> this.scene.start('Menu'));
+
+    // Confetti
+    for(let i=0;i<50;i++){
+      const rect = this.add.rectangle(
+        Phaser.Math.Between(0,W), Phaser.Math.Between(-20,0),
+        Phaser.Math.Between(4,10), Phaser.Math.Between(4,10),
+        Phaser.Utils.Array.GetRandom([0xffd700,0xff6699,0x44aaff,0xff8844])
+      );
+      this.tweens.add({
+        targets:rect, y:H+20, angle:Phaser.Math.Between(-360,360),
+        duration:Phaser.Math.Between(2000,5000), delay:Phaser.Math.Between(0,2000),
+        repeat:-1
+      });
+    }
+  }
+
+  _makeBtn(x, y, w, label, cb){
+    const g = this.add.graphics();
+    g.fillStyle(0xb89a6a,0.15).fillRoundedRect(x-w/2,y-16,w,32,6);
+    g.lineStyle(1.5,0xb89a6a).strokeRoundedRect(x-w/2,y-16,w,32,6);
+    const txt = this.add.text(x, y, label, {
+      fontFamily:'Cinzel', fontSize:'11px', color:'#f5d87a'
+    }).setOrigin(0.5);
+    txt.setInteractive(new Phaser.Geom.Rectangle(-w/2,-16,w,32), Phaser.Geom.Rectangle.Contains)
+       .on('pointerover',()=>{ g.clear().fillStyle(0xb89a6a,0.5).fillRoundedRect(x-w/2,y-16,w,32,6); txt.setColor('#fff'); })
+       .on('pointerout', ()=>{ g.clear().fillStyle(0xb89a6a,0.15).fillRoundedRect(x-w/2,y-16,w,32,6).lineStyle(1.5,0xb89a6a).strokeRoundedRect(x-w/2,y-16,w,32,6); txt.setColor('#f5d87a'); })
+       .on('pointerdown', cb);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASER CONFIG
+═══════════════════════════════════════════════════════════════════ */
+const config = {
+  type: Phaser.AUTO,
+  width: W,
+  height: H,
+  backgroundColor: '#1a0a00',
+  parent: 'game-container',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  physics: { default:'arcade', arcade:{ gravity:{y:0}, debug:false } },
+  scene: [BootScene, MenuScene, GameScene, VictoryScene],
+  audio: { disableWebAudio: false },
+};
+
+const game = new Phaser.Game(config);
+
+/* ── Touch fullscreen on mobile ── */
+document.getElementById('game-container').addEventListener('dblclick', ()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.getElementById('game-container').requestFullscreen?.();
+});
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════════════
+  CÓMO CONECTAR TUS SPRITES REALES
+═══════════════════════════════════════════════════════════════════════
+
+  1. Crea una carpeta /assets/ junto a game.html
+  2. Coloca: novios.png, animaciones.png, mundo.png, GamePortada.png
+
+  3. Ajusta las coordenadas en NOVIOS_FRAMES, CAT_FRAMES, DGHT_FRAMES
+     al inicio del script. Usa esta herramienta gratuita para medir:
+     https://www.leshylabs.com/apps/sstool/
+
+  4. En GameScene._buildPlayer() reemplaza this.add.image(...) por:
+     this.couple = this.add.sprite(120, GROUND_Y-90, 'novios_sheet')
+     this.anims.create({ key:'run', frames: this.anims.generateFrames(
+       'novios_sheet', {frames:[0,1,2,3,4,5]}), frameRate:10, repeat:-1 });
+     this.couple.play('run');
+
+  5. Para los gatos, igual: sprite en lugar de image, con anims.create()
+
+═══════════════════════════════════════════════════════════════════════
+
+  BOTÓN "JUGAR" EN LA LANDING:
+  Añade en el nav de index.html:
+    <li><a href="game.html" class="nav-game-link">🎮 JUGAR</a></li>
+
+  O como botón hero:
+    <a href="game.html" class="btn btn-primary">🎮 JUGAR AL JUEGO</a>
+
+═══════════════════════════════════════════════════════════════════════
+-->
+</body>
+</html>
