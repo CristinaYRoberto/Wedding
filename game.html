@@ -156,22 +156,24 @@ class BootScene extends Phaser.Scene {
   constructor(){ super({key:'Boot'}); }
 
   preload() {
-    // Load real assets from /assets/ folder
-    // Comment out lines you don't have yet and use generated placeholders
-    this.load.image('novios_sheet',     'assets/novios.png');
-    this.load.image('anim_sheet',       'assets/animaciones.png');
-    this.load.image('mundo_sheet',      'assets/mundo.png');
-    this.load.image('portada',          'assets/GamePortada.png');
-
-    // Show loading bar
-    const bar  = this.add.rectangle(W/2, H/2, 4, 20, 0xb89a6a);
-    const text = this.add.text(W/2, H/2+30,'CARGANDO...', {
-      fontFamily:'Cinzel', fontSize:'12px', color:'#b89a6a'
-    }).setOrigin(.5);
-    this.load.on('progress', v => bar.setDisplaySize(v*300, 20));
-    this.load.on('complete', () => {
-      this._assetsLoaded = true;
+    // Try to load real assets — if they fail (CORS/missing) we use placeholders
+    // When running locally, use: npx serve . OR python -m http.server 8080
+    this.load.on('loaderror', (file) => {
+      console.warn(`Asset not found (using placeholder): ${file.key}`);
     });
+
+    // Comment these out if you don't have the files yet:
+    this.load.image('novios_sheet',  'assets/novios.png');
+    this.load.image('anim_sheet',    'assets/animaciones.png');
+    this.load.image('mundo_sheet',   'assets/mundo.png');
+    this.load.image('portada',       'assets/GamePortada.png');
+
+    // Loading bar
+    const bar  = this.add.rectangle(W/2, H/2, 4, 20, 0xb89a6a);
+    this.add.text(W/2, H/2+30, 'CARGANDO...', {
+      fontFamily:'Cinzel', fontSize:'12px', color:'#b89a6a'
+    }).setOrigin(0.5);
+    this.load.on('progress', v => bar.setDisplaySize(v * 300, 20));
   }
 
   create() {
@@ -255,12 +257,19 @@ class BootScene extends Phaser.Scene {
       gfx.fillStyle(0xffb0c8).fillRect(24,52,32,40); // shirt
       gfx.fillStyle(0x5577aa).fillRect(20,90,36,60); // jeans
       gfx.fillStyle(0xffd0c0).fillRect(56,55,14,36).fillRect(10,55,14,36); // arms
-      // headphones
-      gfx.lineStyle(4,0x334455).strokeArc(40,22,24,200,340);
+      // headphones — strokeArc doesn't chain; draw separately
+      gfx.lineStyle(4, 0x334455, 1);
+      gfx.beginPath();
+      gfx.arc(40, 22, 24, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(340), false);
+      gfx.strokePath();
       gfx.fillStyle(0x334455).fillCircle(18,28,8).fillCircle(62,28,8);
-      if(st==='angry'){ gfx.fillStyle(0xff4444).fillRect(15,35,50,5); gfx.lineStyle(3,0xff4444).strokeRect(15,20,50,20); }
+      if(st==='angry'){
+        gfx.fillStyle(0xff4444).fillRect(15,35,50,5);
+        gfx.lineStyle(3,0xff4444,1);
+        gfx.strokeRect(15,20,50,20);
+      }
       if(st==='happy'){ gfx.fillStyle(0xffdd00).fillCircle(40,70,10); }
-      gfx.generateTexture(`daughter_${st}`,80,160);
+      gfx.generateTexture(`daughter_${st}`, 80, 160);
     }
 
     // ── Items ──
@@ -273,15 +282,27 @@ class BootScene extends Phaser.Scene {
     gfx.generateTexture('item_bible',50,64);
 
     // Money
-    gfx.clear().fillStyle(0x2d7a2d).fillRect(0,0,56,36).fillStyle(0x44aa44).fillRect(4,4,48,28).fillStyle(0xfff8e0).fillCircle(28,18,10).lineStyle(1,0x2d7a2d).strokeCircle(28,18,10);
+    gfx.clear();
+    gfx.fillStyle(0x2d7a2d).fillRect(0,0,56,36);
+    gfx.fillStyle(0x44aa44).fillRect(4,4,48,28);
+    gfx.fillStyle(0xfff8e0).fillCircle(28,18,10);
+    gfx.lineStyle(1,0x2d7a2d,1);
+    gfx.strokeCircle(28,18,10);
     gfx.generateTexture('item_money',56,36);
 
     // Gift box
-    gfx.clear().fillStyle(0xff4466).fillRect(0,14,60,46).fillStyle(0xff8800).fillRect(6,20,48,34).fillStyle(0xffd700).fillRect(26,0,8,60).fillRect(0,22,60,8).fillStyle(0xffd700).fillCircle(30,14,12);
+    gfx.clear();
+    gfx.fillStyle(0xff4466).fillRect(0,14,60,46);
+    gfx.fillStyle(0xff8800).fillRect(6,20,48,34);
+    gfx.fillStyle(0xffd700).fillRect(26,0,8,60).fillRect(0,22,60,8);
+    gfx.fillStyle(0xffd700).fillCircle(30,14,12);
     gfx.generateTexture('item_gift',60,60);
 
     // Shield FX
-    gfx.clear().fillStyle(0x44aaff,0.6).fillCircle(30,30,28).lineStyle(3,0x88ddff).strokeCircle(30,30,28);
+    gfx.clear();
+    gfx.fillStyle(0x44aaff,0.6).fillCircle(30,30,28);
+    gfx.lineStyle(3,0x88ddff,1);
+    gfx.strokeCircle(30,30,28);
     gfx.generateTexture('shield_fx',60,60);
 
     // Altar scene
@@ -312,6 +333,25 @@ class MenuScene extends Phaser.Scene {
 
   create(){
     this.cameras.main.setBackgroundColor('#1a0a00');
+
+    // ── CORS warning — show when opened as file:// ──
+    if(location.protocol === 'file:'){
+      const warn = this.add.graphics().setDepth(200);
+      warn.fillStyle(0x3d0000, 0.97).fillRect(0, 0, W, 52);
+      warn.lineStyle(1.5, 0xff4444).strokeRect(0, 0, W, 52);
+      this.add.text(W/2, 10,
+        '⚠  Para cargar tus imágenes debes usar un servidor local:', {
+        fontFamily:'Lato', fontSize:'11px', color:'#ffaaaa'
+      }).setOrigin(0.5, 0).setDepth(201);
+      this.add.text(W/2, 26,
+        'npx serve .    ó    python -m http.server 8080    →  abre localhost:8080/game.html', {
+        fontFamily:'Lato', fontSize:'10px', color:'#ff8888', fontStyle:'bold'
+      }).setOrigin(0.5, 0).setDepth(201);
+      this.add.text(W/2, 42,
+        'El juego funciona igual sin imágenes  (usa gráficos de placeholder)', {
+        fontFamily:'Lato', fontSize:'9px', color:'rgba(255,150,150,0.7)'
+      }).setOrigin(0.5, 0).setDepth(201);
+    }
 
     // Try to show portada cover
     if(this.textures.exists('portada')){
