@@ -159,48 +159,63 @@ const DGHT_FRAMES = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════
-   SCENE 1 — BOOT (generate placeholder textures)
+   SCENE 1 — BOOT
+   • Builds placeholder textures (always work, no assets needed)
+   • Then loads the 4 real PNGs via addBase64 (async)
+   • Transitions to Menu when sprites are ready (or after timeout)
 ═══════════════════════════════════════════════════════════════════ */
 class BootScene extends Phaser.Scene {
   constructor(){ super({key:'Boot'}); }
 
-  preload() {
-    // ── Sprites embedded as Base64 — no server/CORS needed ──
-    // Images are inlined directly so they work on GitHub Pages, file://, everywhere.
-    this.textures.addBase64('novios_sheet',  NOVIOS_B64);
-    this.textures.addBase64('anim_sheet',    ANIM_B64);
-    this.textures.addBase64('mundo_sheet',   MUNDO_B64);
-    this.textures.addBase64('portada',       PORTADA_B64);
-
-    // Show a spinner while textures decode
-    const bar  = this.add.rectangle(W/2, H/2, 4, 20, 0xb89a6a);
-    const txt  = this.add.text(W/2, H/2+30, 'CARGANDO SPRITES...', {
-      fontFamily:'Cinzel', fontSize:'12px', color:'#b89a6a'
-    }).setOrigin(0.5);
-
-    // addBase64 is async — wait for all 4 to be ready before proceeding
-    let loaded = 0;
-    const needed = ['novios_sheet','anim_sheet','mundo_sheet','portada'];
-    needed.forEach(key => {
-      this.textures.on('addtexture-' + key, () => {
-        loaded++;
-        bar.setDisplaySize((loaded / needed.length) * 300, 20);
-        if (loaded === needed.length) {
-          txt.setText('LISTO!');
-          this.time.delayedCall(200, () => this.scene.start('Menu'));
-        }
-      });
-    });
-  }
-
-  // Override create so it does NOT auto-advance (preload handles the transition)
-  create() { this._makePlaceholders(); /* placeholders still built as fallback textures */ }
+  // preload() intentionally empty — addBase64 must run in create()
+  // because this.add.* and this.textures.on() need the scene to be active
 
   create() {
-    /* Generate ALL needed textures programmatically as fallback.
-       If real PNGs load correctly they override these in Menu. */
+    // 1. Build placeholder textures first (instant, always available)
     this._makePlaceholders();
-    this.scene.start('Menu');
+
+    // 2. Draw loading UI (safe here, scene is fully active)
+    this.cameras.main.setBackgroundColor('#1a0a00');
+    const bar = this.add.rectangle(W/2, H/2, 4, 20, 0xb89a6a);
+    this.add.text(W/2, H/2 - 20, 'LA BODA DE CRIS Y JOSÉ', {
+      fontFamily:'Cinzel', fontSize:'16px', color:'#f5d87a'
+    }).setOrigin(0.5);
+    const txt = this.add.text(W/2, H/2 + 36, 'Cargando sprites...', {
+      fontFamily:'Lato', fontSize:'11px', color:'#b89a6a'
+    }).setOrigin(0.5);
+
+    // 3. Load real sprites via addBase64 (async PNG decode)
+    const needed = ['novios_sheet','anim_sheet','mundo_sheet','portada'];
+    let loaded = 0;
+
+    const onLoaded = () => {
+      loaded++;
+      bar.setDisplaySize((loaded / needed.length) * 300, 20);
+      txt.setText(`Cargando... ${loaded}/${needed.length}`);
+      if (loaded >= needed.length) {
+        txt.setText('¡Listos!');
+        this.time.delayedCall(300, () => this.scene.start('Menu'));
+      }
+    };
+
+    // Listen before adding (addBase64 fires 'addtexture' almost immediately)
+    needed.forEach(key => {
+      this.textures.once('addtexture-' + key, onLoaded);
+    });
+
+    // Kick off async decoding
+    this.textures.addBase64('novios_sheet', NOVIOS_B64);
+    this.textures.addBase64('anim_sheet',   ANIM_B64);
+    this.textures.addBase64('mundo_sheet',  MUNDO_B64);
+    this.textures.addBase64('portada',      PORTADA_B64);
+
+    // Safety timeout — if any texture fails, go to Menu after 4s anyway
+    this.time.delayedCall(4000, () => {
+      if (this.scene.isActive('Boot')) {
+        console.warn('Texture timeout — using placeholders');
+        this.scene.start('Menu');
+      }
+    });
   }
 
   _makePlaceholders(){
