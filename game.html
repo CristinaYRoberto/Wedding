@@ -526,57 +526,6 @@ class GameScene extends Phaser.Scene {
 
 
 
-    
-
-
-
-
-
-
-
-
-
-
-
-    }
-    
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-    
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-    
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-    
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-    
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-    
-    // scale down items to around 40px height
-    let oTex = this.textures.get(type).getSourceImage();
-    let oScale = oTex && oTex.height ? 60 / oTex.height : 1;
-
-    const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
-    const o=this.add.image(W+42,y,type).setDepth(7);
-    
-    o.setScale(oScale);
-
-    o.itemType=type; o.category=category; this.items.add(o);
-  }
-
   _spawnCat(){
     const defs=[
       {key:'iker', effect:'shield'},
