@@ -65,7 +65,8 @@ const CHAR_KEYS=[
   'pilly_idle01','pilly_idle02','pilly_walking01','pilly_walking02',
   'pilly_jumping01','pilly_jumping02','pilly_meow01','pilly_sleeping01',
 ];
-const BG_KEYS=['bg_far','bg_mid','bg_near','ground_tile','portada'];
+const PROP_KEYS=['blocker_life-01','blocker_life-02','blocker_life-03','blocker_money-04','blocker_money_01','blocker_money_02','blocker_money_03','booster','life','points_01','points_02','points_03','points_04','points_05','shield'];
+const BG_KEYS=['bg_beach_far','bg_beach_mid','bg_church_far','bg_church_mid','bg_church_prop01','bg_city_far','bg_city_mid','bg_desert_far','bg_desert_mid','bg_halloween_far','bg_halloween_mid','bg_mexican_far','bg_mexican_mid','floor_beach','floor_church','floor_city','floor_desert','floor_halloween','floor_mexican','win_church_background','win_church_people','win_floor_church','portada'];=['bg_beach_far','bg_beach_mid','bg_church_far','bg_church_mid','bg_church_prop01','bg_city_far','bg_city_mid','bg_desert_far','bg_desert_mid','bg_halloween_far','bg_halloween_mid','bg_mexican_far','bg_mexican_mid','floor_beach','floor_church','floor_city','floor_desert','floor_halloween','floor_mexican','win_church_background','win_church_people','win_floor_church','portada'];
 
 /* ── Animation frame lists ── */
 const ANIMS={
@@ -139,12 +140,13 @@ class BootScene extends Phaser.Scene {
     const bar=this.add.rectangle(W/2,H/2,4,20,0xb89a6a);
     this.add.text(W/2,H/2-28,'LA BODA DE CRIS Y JOSÉ',{fontFamily:'Cinzel',fontSize:'15px',color:'#f5d87a'}).setOrigin(.5);
     const txt=this.add.text(W/2,H/2+36,'Cargando…',{fontFamily:'Lato',fontSize:'11px',color:'#b89a6a'}).setOrigin(.5);
-    const total=CHAR_KEYS.length+BG_KEYS.length;
+    const total=CHAR_KEYS.length+BG_KEYS.length+PROP_KEYS.length;
     let n=0;
     this.load.on('loaderror',f=>console.warn('Asset missing (placeholder used):',f.key));
     this.load.on('filecomplete',()=>{ n++; bar.setDisplaySize((n/total)*300,20); txt.setText(`Cargando ${n}/${total}…`); });
     CHAR_KEYS.forEach(k=>this.load.image(k,`assets/characters/${k}.png`));
     BG_KEYS.forEach(k=>this.load.image(k,`assets/bg/${k}.png`));
+    PROP_KEYS.forEach(k=>this.load.image(k,`assets/props/${k}.png`));
   }
 
   create(){ this.scene.start('Menu'); }
@@ -408,10 +410,20 @@ class GameScene extends Phaser.Scene {
     if(this.distance>=GOAL_DIST){ this._victory(); return; }
 
     /* Parallax */
+    
+    /* Themes */
+    const expectedTheme = Math.floor(this.distance / (GOAL_DIST / this.themes.length));
+    const nextThemeIndex = Math.min(expectedTheme, this.themes.length - 1);
+    if(nextThemeIndex > this.currentThemeIndex) {
+        this.currentThemeIndex = nextThemeIndex;
+        this.bgFar.setTexture(`bg_${this.themes[nextThemeIndex]}_far`);
+        this.bgMid.setTexture(`bg_${this.themes[nextThemeIndex]}_mid`);
+        this.gndTile.setTexture(`floor_${this.themes[nextThemeIndex]}`);
+    }
+
     this.bgFar.tilePositionX +=spd*.08*dts;
     this.bgMid.tilePositionX +=spd*.25*dts;
-    this.bgNear.tilePositionX+=spd*.6*dts;
-    this.gndTile.tilePositionX+=spd*dts;
+        this.gndTile.tilePositionX+=spd*dts;
 
     /* Physics */
     if(!this.isGrounded){
@@ -456,12 +468,29 @@ class GameScene extends Phaser.Scene {
     this._collide();
   }
 
+  
   _spawnItem(){
-    const types=['item_beer','item_bible','item_money','item_gift'];
-    const type=Phaser.Utils.Array.GetRandom(types);
+    const ptsTypes=['points_01','points_02','points_03','points_04'];
+    const blockerMoneyTypes=['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04'];
+    const blockerLifeTypes=['blocker_life-01','blocker_life-02','blocker_life-03'];
+    const powerupTypes=['booster','life','shield'];
+    
+    let type = '';
+    let category = '';
+    let r = Math.random();
+    if(r < 0.5) {
+        type = Phaser.Utils.Array.GetRandom(ptsTypes); category = 'points';
+    } else if(r < 0.7) {
+        type = Phaser.Utils.Array.GetRandom(blockerMoneyTypes); category = 'block_money';
+    } else if(r < 0.9) {
+        type = Phaser.Utils.Array.GetRandom(blockerLifeTypes); category = 'block_life';
+    } else {
+        type = Phaser.Utils.Array.GetRandom(powerupTypes); category = 'powerup';
+    }
+    
     const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
     const o=this.add.image(W+42,y,type).setDepth(7);
-    o.itemType=type; this.items.add(o);
+    o.itemType=type; o.category=category; this.items.add(o);
   }
 
   _spawnCat(){
@@ -490,17 +519,53 @@ class GameScene extends Phaser.Scene {
     }
     this.tweens.add({targets:c,y:c.y-30,alpha:0,duration:680,onComplete:()=>c.destroy()});
   }
-
   _collide(){
+    if(this.victoryStarted) return;
     const cx=this.coupleImg.x, cy=this.coupleImg.y;
     this.items.getChildren().forEach(item=>{
       const dx=item.x-cx,dy=item.y-cy;
       if(Math.sqrt(dx*dx+dy*dy)<56){
-        const pts={item_beer:100,item_bible:200,item_money:300,item_gift:150};
-        const cols={item_beer:0xff8844,item_bible:0xffdd44,item_money:0x44cc44,item_gift:0xff88cc};
-        this.score+=pts[item.itemType]||100;
-        this._popup(item.x,item.y,`+${pts[item.itemType]||100}`,cols[item.itemType]||0xffffff);
-        this._chime(); item.destroy();
+        if(item.category === 'points'){
+             const pts={points_01:100,points_02:200,points_03:300,points_04:150};
+             const cols={points_01:0xff8844,points_02:0xffdd44,points_03:0x44cc44,points_04:0xff88cc};
+             this.score+=pts[item.itemType]||100;
+             this._popup(item.x,item.y,`+${pts[item.itemType]||100}`,cols[item.itemType]||0xffffff);
+             this._chime();
+        } else if(item.category === 'block_money'){
+             if(!this.shielded){
+                 this.score=Math.max(0, this.score - 200);
+                 this._popup(item.x,item.y,`-200 RESTA DINERO`,0xff4444);
+                 this._tone(120,.25,'sawtooth');
+                 this._hitEffect();
+             } else {
+                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
+             }
+        } else if(item.category === 'block_life'){
+             if(!this.shielded){
+                  this.lives--;
+                  this._popup(item.x,item.y,`-1 VIDA`,0xff4444);
+                  this.updateLives();
+                  if(this.lives <= 0) {
+                      this._gameOver(); return;
+                  }
+                  this._tone(120,.25,'sawtooth');
+                  this._hitEffect();
+             } else {
+                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
+             }
+        } else if(item.category === 'powerup'){
+             if(item.itemType === 'life') {
+                  this.lives = Math.min(this.lives + 1, 5);
+                  this.updateLives();
+                  this._popup(item.x,item.y,`+1 VIDA`,0xff4444);
+                  this._chime();
+             } else if(item.itemType === 'shield') {
+                  this.shielded=true; this.shieldT=5000; this._popup(item.x,item.y,'🛡 ¡ESCUDO!',0x44aaff); this._chime();
+             } else if(item.itemType === 'booster') {
+                  this.boosted=true; this.boostT=5000; this.speed=Math.min(this.speed*1.45,SPEEDS.max); this._popup(item.x,item.y,'⚡ ¡BOOST!',0xffaa00); this._tone(660,.2,'square');
+             }
+        }
+        item.destroy();
       }
     });
     if(this.valeImg&&!this._hit){
@@ -512,6 +577,26 @@ class GameScene extends Phaser.Scene {
       }
     }
   }
+
+  updateLives(){
+     let h = '';
+     for(let i=0; i<this.lives; i++) h += '❤️';
+     this.livesTxt.setText(h);
+  }
+
+  _hitEffect(){
+    this.coupleVelY=-275; this.isGrounded=false;
+    this.coupleAnim.set(ANIMS.novios.hit,4);
+    this.cameras.main.shake(150,.01);
+    this.cameras.main.flash(100,255,50,50);
+  }
+
+  _gameOver(){
+     this.victoryStarted = true;
+     this.speed = 0;
+     this.time.delayedCall(1500,()=>this.scene.start('Menu')); // simplistic game over
+  }
+
 
   _hitVale(){
     this._hit=true;
@@ -538,9 +623,11 @@ class GameScene extends Phaser.Scene {
     this.victoryStarted=true; this.speed=0;
     this.valeAnim.set(ANIMS.vale.happy,5);
     this.tweens.add({
-      targets:[this.bgFar,this.bgMid,this.bgNear,this.gndTile],alpha:0,duration:1000,
+      targets:[this.bgFar,this.bgMid,this.gndTile],alpha:0,duration:1000,
       onComplete:()=>{
-        this.add.image(W/2,H/2,'altar_bg').setDisplaySize(W,H).setDepth(4);
+        this.add.image(W/2,H/2,'win_church_background').setDisplaySize(W,H).setDepth(4);
+        this.add.image(W/2,H/2,'win_church_people').setDisplaySize(W,H).setDepth(5);
+        this.add.image(W/2,H/2,'win_floor_church').setDisplaySize(W,H).setDepth(5);
         this.tweens.add({targets:this.coupleImg,x:W/2-18,duration:2400,ease:'Sine.Out',
           onComplete:()=>{
             this.coupleAnim.set(ANIMS.novios.kiss,5);
@@ -552,12 +639,13 @@ class GameScene extends Phaser.Scene {
             prev.sort((a,b)=>b.score-a.score);
             localStorage.setItem('boda_scores',JSON.stringify(prev.slice(0,10)));
             this._confetti();
-            this.time.delayedCall(2200,()=>this.scene.start('Victory',{score:this.score,elapsed:this.elapsed}));
+            this.time.delayedCall(3000,()=>this.scene.start('Victory',{score:this.score,elapsed:this.elapsed}));
           }
         });
       }
     });
   }
+
 
   _confetti(){
     const cols=[0xffd700,0xff6699,0x44aaff,0xff8844,0x44cc88,0xcc44ff];
