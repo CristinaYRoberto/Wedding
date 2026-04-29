@@ -520,24 +520,7 @@ class GameScene extends Phaser.Scene {
     o.setScale(oScale);
     o.itemType=type; o.category=category; this.items.add(o);
   }
-  const ptsTypes=['points_01','points_02','points_03','points_04'];
-  const blockerMoneyTypes=['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04'];
-  const blockerLifeTypes=['blocker_life-01','blocker_life-02','blocker_life-03'];
-  const powerupTypes=['booster','life','shield'];
-  let type='';
-  let category='';
-  const r=Math.random();
-  if(r < 0.5) { type=Phaser.Utils.Array.GetRandom(ptsTypes); category='points'; }
-  else if(r < 0.7) { type=Phaser.Utils.Array.GetRandom(blockerMoneyTypes); category='block_money'; }
-  else if(r < 0.9) { type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
-  else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
-  const y=Math.random()<0.65 ? GROUND_Y-20 : GROUND_Y-78-Math.random()*48;
-  const o=this.add.image(W+42,y,type).setDepth(7);
-  const oTex=this.textures.get(type).getSourceImage();
-  const oScale=oTex && oTex.height ? 60 / oTex.height : 1;
-  o.setScale(oScale);
-  o.itemType=type; o.category=category; this.items.add(o);
-}
+
 
 
 
