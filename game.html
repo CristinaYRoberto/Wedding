@@ -41,7 +41,7 @@
    LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER v3
    Assets in:  assets/characters/*.png   assets/bg/*.png
 ═══════════════════════════════════════════════════════════════════ */
-const W=800, H=360, GROUND_Y=H-70, GOAL_DIST=2000;
+const W=800, H=360, GROUND_Y=H-35, GOAL_DIST=2000;
 const SPEEDS={initial:260,max:500,accelPerSec:7};
 
 /* ── All character asset keys (filenames without .png) ── */
@@ -368,7 +368,7 @@ class GameScene extends Phaser.Scene {
     /* World */
     this.bgFar = this._scaledBg(0, H, `bg_${this.themes[0]}_far`, 0);
     this.bgMid = this._scaledBg(0, H, `bg_${this.themes[0]}_mid`, 1);
-    this.gndTile = this._scaledBg(GROUND_Y, 70, `floor_${this.themes[0]}`, 3);
+    this.gndTile = this._scaledBg(H - 85, 85, `floor_${this.themes[0]}`, 3);
     
     /* Variables */
     this.lives = 3;
@@ -376,17 +376,17 @@ class GameScene extends Phaser.Scene {
     /* Couple */
     this.coupleImg=this.add.image(120,GROUND_Y,'novios_running01').setOrigin(.5,1).setDepth(10);
     let coupleTex = this.textures.get('novios_running01').getSourceImage();
-    let coupleScale = coupleTex && coupleTex.height ? 90 / coupleTex.height : 1;
+    let coupleScale = coupleTex && coupleTex.height ? 100 / coupleTex.height : 1;
     this.coupleImg.setScale(coupleScale);
     this.coupleAnim=new Anim(this.coupleImg,ANIMS.novios.run,7);
     this.shadow=this.add.ellipse(120,GROUND_Y+4,80,12,0,0.18).setDepth(3);
 
     /* Vale */
-    this.valeImg=this.add.image(W+80,GROUND_Y,'vale_idle-Cel01').setOrigin(.5,1).setDepth(8);
-    let valeTex = this.textures.get('vale_idle-Cel01').getSourceImage();
-    let valeScale = valeTex && valeTex.height ? 80 / valeTex.height : 1;
+    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y,'vale_walking01').setOrigin(.5,1).setDepth(8);
+    let valeTex = this.textures.get('vale_walking01').getSourceImage();
+    let valeScale = valeTex && valeTex.height ? 90 / valeTex.height : 1;
     this.valeImg.setScale(valeScale);
-    this.valeAnim=new Anim(this.valeImg,ANIMS.vale.idle,3);
+    this.valeAnim=new Anim(this.valeImg,ANIMS.vale.walk,3);
 
     /* Groups */
     this.items=this.add.group();
@@ -441,7 +441,7 @@ class GameScene extends Phaser.Scene {
         this.gndTile.destroy();
         this.bgFar = this._scaledBg(0, H, `bg_${this.themes[nextThemeIndex]}_far`, 0);
         this.bgMid = this._scaledBg(0, H, `bg_${this.themes[nextThemeIndex]}_mid`, 1);
-        this.gndTile = this._scaledBg(GROUND_Y, 70, `floor_${this.themes[nextThemeIndex]}`, 3);
+        this.gndTile = this._scaledBg(H - 85, 85, `floor_${this.themes[nextThemeIndex]}`, 3);
     }
 
     this.bgFar.tilePositionX +=spd*.08*dts;
@@ -461,9 +461,10 @@ class GameScene extends Phaser.Scene {
     this.shadow.setScale(pct,1).setAlpha(.18*pct).setPosition(this.coupleImg.x,GROUND_Y+4);
 
     /* Vale */
-    this.valeImg.x+=this._valeDir*dts;
-    if(this.valeImg.x<220) this._valeDir=Math.abs(this._valeDir);
-    if(this.valeImg.x>720) this._valeDir=-Math.abs(this._valeDir);
+    this.valeImg.x -= spd * dts;
+    if(this.valeImg.x < -100) {
+        this.valeImg.x = W + Phaser.Math.Between(800, 2500);
+    }
     this.valeAnim.update(dt);
     this.coupleAnim.update(dt);
 
@@ -474,7 +475,7 @@ class GameScene extends Phaser.Scene {
 
     /* Move objects */
     this.items.getChildren().forEach(o=>{ o.x-=spd*dts; if(o.x<-70) o.destroy(); });
-    this.cats.getChildren().forEach(c=>{ c.x-=spd*.55*dts; if(c.catAnim) c.catAnim.update(dt); if(c.x<-90) c.destroy(); });
+    this.cats.getChildren().forEach(c=>{ c.x-=spd*dts; if(c.catAnim) c.catAnim.update(dt); if(c.x<-90) c.destroy(); });
 
     /* HUD */
     this.elapsed+=dts;
@@ -512,7 +513,7 @@ class GameScene extends Phaser.Scene {
     
     // scale down items to around 40px height
     let oTex = this.textures.get(type).getSourceImage();
-    let oScale = oTex && oTex.height ? 40 / oTex.height : 1;
+    let oScale = oTex && oTex.height ? 60 / oTex.height : 1;
 
     const y=Math.random()<.65?GROUND_Y-20:GROUND_Y-78-Math.random()*48;
     const o=this.add.image(W+42,y,type).setDepth(7);
@@ -533,7 +534,7 @@ class GameScene extends Phaser.Scene {
     const c=this.add.image(W+64,GROUND_Y,frames[0]).setOrigin(.5,1).setDepth(9);
     
     let cTex = this.textures.get(frames[0]).getSourceImage();
-    let cScale = cTex && cTex.height ? 40 / cTex.height : 1;
+    let cScale = cTex && cTex.height ? 60 / cTex.height : 1;
     c.setScale(cScale);
 
     c.catKey=d.key; c.catEffect=d.effect;
@@ -642,7 +643,7 @@ class GameScene extends Phaser.Scene {
     this._tone(120,.25,'sawtooth');
     this.cameras.main.shake(230,.01);
     this.cameras.main.flash(175,255,50,50);
-    this.time.delayedCall(1800,()=>{ this._hit=false; this.valeAnim.set(ANIMS.vale.idle,3); });
+    this.time.delayedCall(1800,()=>{ this._hit=false; this.valeAnim.set(ANIMS.vale.walk,3); });
   }
 
   _popup(x,y,msg,col){
