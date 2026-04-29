@@ -353,11 +353,17 @@ class GameScene extends Phaser.Scene {
   }
 
   create(){
+    /* Themes */
+    this.themes = ['beach', 'city', 'desert', 'halloween', 'mexican', 'church'];
+    this.currentThemeIndex = 0;
+    
     /* World */
-    this.bgFar  =this.add.tileSprite(0,0,W,120,'bg_far').setOrigin(0,0).setDepth(0);
-    this.bgMid  =this.add.tileSprite(0,80,W,160,'bg_mid').setOrigin(0,0).setDepth(1);
-    this.bgNear =this.add.tileSprite(0,220,W,50,'bg_near').setOrigin(0,0).setDepth(2);
-    this.gndTile=this.add.tileSprite(0,GROUND_Y,W,70,'ground_tile').setOrigin(0,0).setDepth(3);
+    this.bgFar  =this.add.tileSprite(0,0,W,120,`bg_${this.themes[0]}_far`).setOrigin(0,0).setDepth(0);
+    this.bgMid  =this.add.tileSprite(0,80,W,160,`bg_${this.themes[0]}_mid`).setOrigin(0,0).setDepth(1);
+    this.gndTile=this.add.tileSprite(0,GROUND_Y,W,70,`floor_${this.themes[0]}`).setOrigin(0,0).setDepth(3);
+    
+    /* Variables */
+    this.lives = 3;
 
     /* Couple */
     this.coupleImg=this.add.image(120,GROUND_Y,'novios_running01').setOrigin(.5,1).setScale(.72).setDepth(10);
@@ -380,8 +386,10 @@ class GameScene extends Phaser.Scene {
     this.add.graphics().setDepth(51).lineStyle(1,0x444400,1).strokeRect(W/2-150,30,300,10);
     this.add.graphics().setDepth(52).fillStyle(0xffd700,1).fillCircle(W/2+150,35,6);
     this.progBar=this.add.graphics().setDepth(52);
-    this.shTxt=this.add.text(12,30,'',{fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52);
-    this.bsTxt=this.add.text(110,30,'',{fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52);
+
+    this.livesTxt=this.add.text(12,28,'❤️❤️❤️',{fontFamily:'Lato',fontSize:'11px',color:'#ff4444'}).setDepth(52);
+    this.shTxt=this.add.text(80,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52);
+    this.bsTxt=this.add.text(140,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52);
 
     /* Input */
     this.input.keyboard.on('keydown-SPACE',()=>this._jump());
