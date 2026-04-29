@@ -451,19 +451,7 @@ class GameScene extends Phaser.Scene {
         this.bgMid.setTexture(`bg_${this.themes[nextThemeIndex]}_mid`);
         this.gndTile.setTexture(`floor_${this.themes[nextThemeIndex]}`);
     }
-    
-    
 
-    
-    /* Themes */
-
-    const nextThemeIndex = Math.min(expectedTheme, this.themes.length - 1);
-    if(nextThemeIndex > this.currentThemeIndex) {
-        this.currentThemeIndex = nextThemeIndex;
-        this.bgFar.setTexture(`bg_${this.themes[nextThemeIndex]}_far`);
-        this.bgMid.setTexture(`bg_${this.themes[nextThemeIndex]}_mid`);
-        this.gndTile.setTexture(`floor_${this.themes[nextThemeIndex]}`);
-    }
 
     this.bgFar.tilePositionX +=spd*.08*dts;
     this.bgMid.tilePositionX +=spd*.25*dts;
