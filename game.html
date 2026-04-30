@@ -156,6 +156,8 @@ class BootScene extends Phaser.Scene {
     
     
     this.load.image('portada', 'assets/UI/GamePortada.png');
+    this.load.image('ui_besttime', 'assets/UI/UI-BestTime.png');
+    this.load.image('ui_score', 'assets/UI/UI-Score.png');
     
   }
 
@@ -403,10 +405,17 @@ class GameScene extends Phaser.Scene {
     this.cats =this.add.group();
 
     /* HUD */
-    this.add.graphics().setDepth(50).fillStyle(0,0.45).fillRect(0,0,W,46);
-    this.scoreTxt=this.add.text(12,8,'PUNTOS  0',{fontFamily:'Cinzel',fontSize:'13px',color:'#f5d87a'}).setDepth(51);
-    this.distTxt =this.add.text(W/2,8,'0 m',{fontFamily:'Cinzel',fontSize:'13px',color:'#fff'}).setOrigin(.5,0).setDepth(51);
-    this.timeTxt =this.add.text(W-12,8,'0:00',{fontFamily:'Cinzel',fontSize:'13px',color:'#aaddff'}).setOrigin(1,0).setDepth(51);
+    const uiScoreImg = this.add.image(10, 10, 'ui_score').setOrigin(0, 0).setDepth(50);
+    const scoreScale = 46 / (this.textures.get('ui_score').getSourceImage().height || 46);
+    uiScoreImg.setScale(scoreScale);
+    this.scoreTxt = this.add.text(10 + (uiScoreImg.width * scoreScale) / 2, 10 + (uiScoreImg.height * scoreScale) / 2, 'PUNTOS  0', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
+
+    const uiTimeImg = this.add.image(W - 10, 10, 'ui_besttime').setOrigin(1, 0).setDepth(50);
+    const timeScale = 46 / (this.textures.get('ui_besttime').getSourceImage().height || 46);
+    uiTimeImg.setScale(timeScale);
+    this.timeTxt = this.add.text(W - 10 - (uiTimeImg.width * timeScale) / 2, 10 + (uiTimeImg.height * timeScale) / 2, '0:00', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
+
+    this.distTxt = this.add.text(W/2, 8, '0 m', {fontFamily:'Cinzel',fontSize:'13px',color:'#fff'}).setOrigin(.5,0).setDepth(51);
     this.add.graphics().setDepth(51).lineStyle(1,0x444400,1).strokeRect(W/2-150,30,300,10);
     this.add.graphics().setDepth(52).fillStyle(0xffd700,1).fillCircle(W/2+150,35,6);
     this.progBar=this.add.graphics().setDepth(52);
