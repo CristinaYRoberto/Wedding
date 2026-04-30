@@ -41,7 +41,8 @@
    LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER v3
    Assets in:  assets/characters/*.png   assets/bg/*.png
 ═══════════════════════════════════════════════════════════════════ */
-const W=800, H=360, WORLD_WIDTH=5000;
+const W=800, H=360, GROUND_Y=H-20, GOAL_DIST=2000;
+const SPEEDS={initial:150,max:300,accelPerSec:3};
 
 /* ── All character asset keys (filenames without .png) ── */
 const CHAR_KEYS=[
@@ -331,7 +332,7 @@ class MenuScene extends Phaser.Scene {
 
     const sc=JSON.parse(localStorage.getItem('boda_scores')||'[]');
     if(sc.length) this.add.text(W-10,H-8,`🏆 ${sc[0].score} pts`,{fontFamily:'Lato',fontSize:'11px',color:'#f5d87a'}).setOrigin(1,1);
-    this.add.text(W/2,H-8,'FLECHAS/WASD = MOVER  ·  ESPACIO = SALTAR',{fontFamily:'Lato',fontSize:'9px',color:'rgba(255,255,255,.38)'}).setOrigin(.5,1);
+    this.add.text(W/2,H-8,'ESPACIO / TAP = SALTAR  ·  TAP ANIMALES = BONUS',{fontFamily:'Lato',fontSize:'9px',color:'rgba(255,255,255,.38)'}).setOrigin(.5,1);
 
     this.input.keyboard.on('keydown-SPACE',()=>this.scene.start('Game'));
     this.input.on('pointerdown',p=>{ if(p.y>H*.55) this.scene.start('Game'); });
@@ -345,202 +346,161 @@ class GameScene extends Phaser.Scene {
   constructor(){ super({key:'Game'}); }
 
   init(){
-    this.score=0; this.lives=3; this.elapsed=0;
-    this.victoryStarted=false; this._jc=0;
-    this.shielded=false; this.shieldT=0;
-    this.boosted=false; this.boostT=0;
-    this._audioCtx=null;
+    this.score=0; this.distance=0; this.speed=SPEEDS.initial;
+    this.isGrounded=true; this.coupleVelY=0; this._jc=0;
+    this.shielded=false; this.boosted=false;
+    this.shieldT=0; this.boostT=0; this.spawnT=0;
+    this.elapsed=0; this.victoryStarted=false; this._hit=false;
+    this._valeDir=-42; this._audioCtx=null;
   }
 
-  _scaledBg(key, depth, scrollFactor) {
+  _scaledBg(y, height, key, depth) {
     let tex = this.textures.get(key).getSourceImage();
-    let scale = tex && tex.height ? H / tex.height : 1;
-    let ts = this.add.tileSprite(0, 0, WORLD_WIDTH/scrollFactor + W, tex ? tex.height : H, key).setOrigin(0,0).setDepth(depth).setScale(scale).setScrollFactor(scrollFactor, 0);
+    let scale = tex && tex.height ? height / tex.height : 1;
+    let w = W / scale;
+    let ts = this.add.tileSprite(0, y, w, tex ? tex.height : height, key).setOrigin(0,0).setDepth(depth).setScale(scale);
     return ts;
   }
 
   create(){
+    /* Themes */
     this.themes = ['beach', 'city', 'desert', 'halloween', 'mexican', 'church'];
     this.currentThemeIndex = 0;
     
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, H);
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, H);
-
-    this.bgFar = this._scaledBg(`bg_${this.themes[0]}_far`, 0, 0.2);
-    this.bgMid = this._scaledBg(`bg_${this.themes[0]}_mid`, 1, 0.5);
-
-    /* Platforms */
-    this.platforms = this.physics.add.staticGroup();
-    let floorKey = `floor_${this.themes[0]}`;
+    /* World */
+    this.bgFar = this._scaledBg(0, H, `bg_${this.themes[0]}_far`, 0);
+    this.bgMid = this._scaledBg(0, H - 85, `bg_${this.themes[0]}_mid`, 1);
+    this.gndTile = this._scaledBg(H - 85, 85, `floor_${this.themes[0]}`, 3);
     
-    let xPos = 0;
-    while(xPos < WORLD_WIDTH) {
-        let pW = Phaser.Math.Between(300, 800);
-        let gap = Phaser.Math.Between(80, 180);
-        if(xPos === 0) pW = 800; // Start platform safe
-        if(xPos + pW > WORLD_WIDTH) pW = WORLD_WIDTH - xPos + 100; // Ensure end is covered
-        
-        let plat = this.add.tileSprite(xPos, H - 40, pW, 80, floorKey).setOrigin(0, 0).setDepth(3);
-        this.physics.add.existing(plat, true);
-        this.platforms.add(plat);
-        
-        if (xPos > 500 && Math.random() > 0.5) {
-            let elX = xPos + Phaser.Math.Between(50, pW - 150);
-            let elY = H - Phaser.Math.Between(120, 200);
-            let elW = Phaser.Math.Between(150, 300);
-            let elPlat = this.add.tileSprite(elX, elY, elW, 40, floorKey).setOrigin(0, 0).setDepth(3);
-            this.physics.add.existing(elPlat, true);
-            this.platforms.add(elPlat);
-        }
-        xPos += pW + gap;
-    }
-
-    /* Death Zone */
-    this.deathZone = this.add.rectangle(WORLD_WIDTH/2, H+50, WORLD_WIDTH, 20, 0xff0000).setAlpha(0);
-    this.physics.add.existing(this.deathZone, true);
+    /* Variables */
+    this.lives = 3;
 
     /* Couple */
-    this.player = this.physics.add.sprite(100, H - 150, 'novios_idle01').setOrigin(0.5, 1).setDepth(10);
-    let coupleTex = this.textures.get('novios_idle01').getSourceImage();
+    this.coupleImg=this.add.image(120,GROUND_Y,'novios_running01').setOrigin(.5,1).setDepth(10);
+    let coupleTex = this.textures.get('novios_running01').getSourceImage();
     let coupleScale = coupleTex && coupleTex.height ? 100 / coupleTex.height : 1;
-    this.player.setScale(coupleScale);
-    this.player.setCollideWorldBounds(true);
-    // Add physics body offset and size to be more forgiving
-    this.player.body.setSize(this.player.width * 0.4, this.player.height * 0.8);
-    this.player.body.setOffset(this.player.width * 0.3, this.player.height * 0.2);
+    this.coupleImg.setScale(coupleScale);
+    this.coupleAnim=new Anim(this.coupleImg,ANIMS.novios.run,7);
+    this.shadow=this.add.ellipse(120,GROUND_Y+4,80,12,0,0.18).setDepth(3);
 
-    this.coupleAnim=new Anim(this.player,ANIMS.novios.idle,7);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -W/4 + 100, 100);
-
-    /* Vale (Goal) */
-    this.valeImg = this.physics.add.sprite(WORLD_WIDTH - 150, H - 100, 'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
+    /* Vale */
+    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y - 50,'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
     let valeTex = this.textures.get('vale_idle-Stand01').getSourceImage();
     let valeScale = valeTex && valeTex.height ? 140 / valeTex.height : 1;
     this.valeImg.setScale(valeScale);
     this.valeAnim=new Anim(this.valeImg,ANIMS.vale.idle,3);
 
     /* Groups */
-    this.items=this.physics.add.group({allowGravity:false});
-    this.cats=this.physics.add.group({allowGravity:false});
-
-    // Populate Level
-    for(let i=600; i<WORLD_WIDTH - 600; i+= Phaser.Math.Between(250, 500)) {
-        if(Math.random() < 0.6) this._spawnItem(i, H - Phaser.Math.Between(100, 250));
-        else this._spawnCat(i, H - Phaser.Math.Between(100, 200));
-    }
+    this.items=this.add.group();
+    this.cats =this.add.group();
 
     /* HUD */
-    const uiScoreImg = this.add.image(10, 10, 'ui_score').setOrigin(0, 0).setDepth(50).setScrollFactor(0);
+    const uiScoreImg = this.add.image(10, 10, 'ui_score').setOrigin(0, 0).setDepth(50);
     const scoreScale = 46 / (this.textures.get('ui_score').getSourceImage().height || 46);
     uiScoreImg.setScale(scoreScale);
-    this.scoreTxt = this.add.text(10 + (uiScoreImg.width * scoreScale) / 2, 10 + (uiScoreImg.height * scoreScale) / 2, 'PUNTOS  0', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51).setScrollFactor(0);
+    this.scoreTxt = this.add.text(10 + (uiScoreImg.width * scoreScale) / 2, 10 + (uiScoreImg.height * scoreScale) / 2, 'PUNTOS  0', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
 
-    const uiTimeImg = this.add.image(W - 10, 10, 'ui_besttime').setOrigin(1, 0).setDepth(50).setScrollFactor(0);
+    const uiTimeImg = this.add.image(W - 10, 10, 'ui_besttime').setOrigin(1, 0).setDepth(50);
     const timeScale = 46 / (this.textures.get('ui_besttime').getSourceImage().height || 46);
     uiTimeImg.setScale(timeScale);
-    this.timeTxt = this.add.text(W - 10 - (uiTimeImg.width * timeScale) / 2, 10 + (uiTimeImg.height * timeScale) / 2, '0:00', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51).setScrollFactor(0);
+    this.timeTxt = this.add.text(W - 10 - (uiTimeImg.width * timeScale) / 2, 10 + (uiTimeImg.height * timeScale) / 2, '0:00', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
 
-    this.livesTxt=this.add.text(12,28,'❤️❤️❤️',{fontFamily:'Lato',fontSize:'11px',color:'#ff4444'}).setDepth(52).setScrollFactor(0);
-    this.shTxt=this.add.text(80,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52).setScrollFactor(0);
-    this.bsTxt=this.add.text(140,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52).setScrollFactor(0);
+    this.distTxt = this.add.text(W/2, 8, '0 m', {fontFamily:'Cinzel',fontSize:'13px',color:'#fff'}).setOrigin(.5,0).setDepth(51);
+    this.add.graphics().setDepth(51).lineStyle(1,0x444400,1).strokeRect(W/2-150,30,300,10);
+    this.add.graphics().setDepth(52).fillStyle(0xffd700,1).fillCircle(W/2+150,35,6);
+    this.progBar=this.add.graphics().setDepth(52);
 
-    /* Mobile Controls */
-    this.btnLeft = this.add.rectangle(W*0.1, H-40, W*0.2, 80, 0x000000, 0).setInteractive().setScrollFactor(0).setDepth(60);
-    this.btnRight = this.add.rectangle(W*0.3, H-40, W*0.2, 80, 0x000000, 0).setInteractive().setScrollFactor(0).setDepth(60);
-    this.btnJump = this.add.rectangle(W*0.85, H-40, W*0.3, 80, 0x000000, 0).setInteractive().setScrollFactor(0).setDepth(60);
-    
-    this.leftDown = false; this.rightDown = false; this.jumpDown = false;
-    this.btnLeft.on('pointerdown', ()=>this.leftDown=true).on('pointerup', ()=>this.leftDown=false).on('pointerout', ()=>this.leftDown=false);
-    this.btnRight.on('pointerdown', ()=>this.rightDown=true).on('pointerup', ()=>this.rightDown=false).on('pointerout', ()=>this.rightDown=false);
-    this.btnJump.on('pointerdown', ()=>this._jump());
+    this.livesTxt=this.add.text(12,28,'❤️❤️❤️',{fontFamily:'Lato',fontSize:'11px',color:'#ff4444'}).setDepth(52);
+    this.shTxt=this.add.text(80,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52);
+    this.bsTxt=this.add.text(140,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52);
 
     /* Input */
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-
-    /* Collisions */
-    this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.valeImg, this.platforms);
-    this.physics.add.overlap(this.player, this.items, this._collideItem, null, this);
-    this.physics.add.overlap(this.player, this.cats, this._collideCat, null, this);
-    this.physics.add.overlap(this.player, this.valeImg, this._victory, null, this);
-    this.physics.add.overlap(this.player, this.deathZone, this._fallDeath, null, this);
+    this.input.keyboard.on('keydown-SPACE',()=>this._jump());
+    this.input.keyboard.on('keydown-UP',   ()=>this._jump());
+    this.input.on('pointerdown',p=>{ if(p.y>50) this._jump(); });
   }
 
   _jump(){
     if(this.victoryStarted) return;
-    if(this.player.body.touching.down || this._jc < 2) {
-      if(this.player.body.touching.down) this._jc = 0;
-      this.player.setVelocityY(-480);
-      this._jc++;
-      this.coupleAnim.set(ANIMS.novios.jump,6);
-      this._tone(440,.08,'square');
-      this._burst();
-    }
+    if(this._jc>=2) return;
+    this.coupleVelY=-510; this._jc++; this.isGrounded=false;
+    this.coupleAnim.set(ANIMS.novios.jump,6);
+    this._tone(440,.08,'square');
+    this._burst();
   }
 
   update(_t,dt){
     if(this.victoryStarted) return;
     const dts=dt/1000;
-    this.elapsed+=dts;
+    const spd=this.boosted?this.speed*1.4:this.speed;
 
-    // Movement
-    let speed = this.boosted ? 380 : 250;
-    let isMoving = false;
+    this.distance+=spd*dts*.05;
+    this.score+=Math.round(spd*dts*.28);
+    this.speed=Math.min(this.speed+SPEEDS.accelPerSec*dts,SPEEDS.max);
 
-    if (this.cursors.left.isDown || this.keys.A.isDown || this.leftDown) {
-        this.player.setVelocityX(-speed);
-        this.player.setFlipX(true);
-        isMoving = true;
-    } else if (this.cursors.right.isDown || this.keys.D.isDown || this.rightDown) {
-        this.player.setVelocityX(speed);
-        this.player.setFlipX(false);
-        isMoving = true;
-    } else {
-        this.player.setVelocityX(0);
+    if(this.distance>=GOAL_DIST){ this._victory(); return; }
+
+
+    /* Themes */
+    const expectedTheme = Math.floor(this.distance / (GOAL_DIST / this.themes.length));
+    const nextThemeIndex = Math.min(expectedTheme, this.themes.length - 1);
+    if(nextThemeIndex > this.currentThemeIndex) {
+        this.currentThemeIndex = nextThemeIndex;
+        this.bgFar.setTexture(`bg_${this.themes[nextThemeIndex]}_far`);
+        this.bgMid.setTexture(`bg_${this.themes[nextThemeIndex]}_mid`);
+        this.gndTile.setTexture(`floor_${this.themes[nextThemeIndex]}`);
     }
 
-    if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.SPACE.isDown) {
-        if(this.player.body.touching.down && this._jc === 0 && !this.jumpKeyHeld) {
-            this._jump();
-            this.jumpKeyHeld = true;
-        }
-    } else {
-        this.jumpKeyHeld = false;
-    }
 
-    // Animation states
-    if(this.player.body.touching.down) {
-        this._jc = 0;
-        if(isMoving) this.coupleAnim.set(ANIMS.novios.run,7);
-        else this.coupleAnim.set(ANIMS.novios.idle,7);
-    } else {
-        this.coupleAnim.set(ANIMS.novios.jump,6);
-    }
+    this.bgFar.tilePositionX +=spd*.08*dts;
+    this.bgMid.tilePositionX +=spd*.25*dts;
+    this.gndTile.tilePositionX+=spd*dts;
 
+    /* Physics */
+    if(!this.isGrounded){
+      this.coupleVelY+=1380*dts;
+      this.coupleImg.y+=this.coupleVelY*dts;
+    }
+    if(this.coupleImg.y>=GROUND_Y){
+      this.coupleImg.y=GROUND_Y; this.coupleVelY=0;
+      if(!this.isGrounded){ this.isGrounded=true; this._jc=0; this.coupleAnim.set(ANIMS.novios.run,7); }
+    }
+    const pct=Math.max(0,1-(GROUND_Y-this.coupleImg.y)/180);
+    this.shadow.setScale(pct,1).setAlpha(.18*pct).setPosition(this.coupleImg.x,GROUND_Y+4);
+
+    /* Vale */
+    this.valeImg.x -= spd * dts;
+    if(this.valeImg.x < -100) {
+        this.valeImg.x = W + Phaser.Math.Between(800, 2500);
+    }
     this.valeAnim.update(dt);
     this.coupleAnim.update(dt);
-    this.cats.getChildren().forEach(c=>{ if(c.catAnim) c.catAnim.update(dt); });
+
+    /* Spawn */
+    this.spawnT+=dt;
+    const interval=Math.max(800,1800-this.distance*.8);
+    if(this.spawnT>interval){ this.spawnT=0; Math.random()<.55?this._spawnItem():this._spawnCat(); }
+
+    /* Move objects */
+    this.items.getChildren().forEach(o=>{ o.x-=spd*dts; if(o.x<-70) o.destroy(); });
+    this.cats.getChildren().forEach(c=>{ c.x-=spd*dts; if(c.catAnim) c.catAnim.update(dt); if(c.x<-90) c.destroy(); });
 
     /* HUD */
+    this.elapsed+=dts;
     const m=Math.floor(this.elapsed/60), s=Math.floor(this.elapsed%60).toString().padStart(2,'0');
     this.scoreTxt.setText(`PUNTOS  ${this.score}`);
+    this.distTxt.setText(`${Math.floor(this.distance)} m`);
     this.timeTxt.setText(`${m}:${s}`);
-
+    const prog=Math.min(this.distance/GOAL_DIST,1);
+    this.progBar.clear(); this.progBar.fillStyle(0xb89a6a,1).fillRect(W/2-150,30,300*prog,10);
     if(this.shielded){ this.shieldT-=dt; this.shTxt.setText(`🛡 ${(this.shieldT/1000).toFixed(1)}s`); if(this.shieldT<=0){this.shielded=false;this.shTxt.setText('');} }
     if(this.boosted){  this.boostT-=dt;  this.bsTxt.setText(`⚡ ${(this.boostT/1000).toFixed(1)}s`);  if(this.boostT<=0){this.boosted=false;this.bsTxt.setText('');} }
 
-    /* Auto Theme Change based on X position */
-    let progress = this.player.x / WORLD_WIDTH;
-    let expectedTheme = Math.min(Math.floor(progress * this.themes.length), this.themes.length - 1);
-    if(expectedTheme !== this.currentThemeIndex) {
-        this.currentThemeIndex = expectedTheme;
-        this.bgFar.setTexture(`bg_${this.themes[expectedTheme]}_far`);
-        this.bgMid.setTexture(`bg_${this.themes[expectedTheme]}_mid`);
-    }
+    /* Collisions */
+    this._collide();
   }
 
-  _spawnItem(x, y){
+  _spawnItem(){
     const ptsTypes=['points_01','points_02','points_03','points_04'];
     const blockerMoneyTypes=['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04'];
     const blockerLifeTypes=['blocker_life-01','blocker_life-02','blocker_life-03'];
@@ -552,18 +512,26 @@ class GameScene extends Phaser.Scene {
     else if(r < 0.7){ type=Phaser.Utils.Array.GetRandom(blockerMoneyTypes); category='block_money'; }
     else if(r < 0.9){ type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
     else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
-    
-    const o=this.items.create(x, y, type).setOrigin(0.5, 1).setDepth(7);
+    let y = GROUND_Y;
+    if(category === 'block_money') {
+        y = GROUND_Y - 120;
+    }
+    const o=this.add.image(W+42,y,type).setOrigin(0.5, 1).setDepth(7);
     if(category === 'block_money' || category === 'powerup') {
         this.tweens.add({targets:o, alpha:{from:0.5, to:1}, duration:450, yoyo:true, repeat:-1});
     }
     const oTex=this.textures.get(type).getSourceImage();
     const oScale=oTex && oTex.height ? 60 / oTex.height : 1;
     o.setScale(oScale);
-    o.itemType=type; o.category=category;
+    o.itemType=type; o.category=category; this.items.add(o);
   }
 
-  _spawnCat(x, y){
+
+
+
+
+
+  _spawnCat(){
     const defs=[
       {key:'iker', effect:'shield'},
       {key:'finch',effect:'points'},
@@ -571,7 +539,7 @@ class GameScene extends Phaser.Scene {
     ];
     const d=Phaser.Utils.Array.GetRandom(defs);
     const frames=Math.random()<.35?ANIMS[d.key].sleep:ANIMS[d.key].idle;
-    const c=this.cats.create(x, y, frames[0]).setOrigin(.5,1).setDepth(9);
+    const c=this.add.image(W+64,GROUND_Y,frames[0]).setOrigin(.5,1).setDepth(9);
     
     let cTex = this.textures.get(frames[0]).getSourceImage();
     let cScale = cTex && cTex.height ? 60 / cTex.height : 1;
@@ -579,57 +547,59 @@ class GameScene extends Phaser.Scene {
 
     c.catKey=d.key; c.catEffect=d.effect;
     c.catAnim=new Anim(c,frames,5);
+    this.cats.add(c);
   }
 
-  _collideItem(player, item){
-    if(item.category === 'points'){
-         const pts={points_01:100,points_02:200,points_03:300,points_04:150};
-         const cols={points_01:0xff8844,points_02:0xffdd44,points_03:0x44cc44,points_04:0xff88cc};
-         this.score+=pts[item.itemType]||100;
-         this._popup(item.x,item.y,`+${pts[item.itemType]||100}`,cols[item.itemType]||0xffffff);
-         this._chime();
-    } else if(item.category === 'block_money'){
-         if(!this.shielded){
-             this.score=Math.max(0, this.score - 200);
-             this._popup(item.x,item.y,`-200 RESTA DINERO`,0xff4444);
-             this._tone(120,.25,'sawtooth');
-             this._hitEffect();
-         } else {
-             this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
-         }
-    } else if(item.category === 'block_life'){
-         if(!this.shielded){
-              this.lives--;
-              this._popup(item.x,item.y,`-1 VIDA`,0xff4444);
-              this.updateLives();
-              if(this.lives <= 0) {
-                  this._gameOver(); return;
-              }
-              this._tone(120,.25,'sawtooth');
-              this._hitEffect();
-         } else {
-             this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
-         }
-    } else if(item.category === 'powerup'){
-         if(item.itemType === 'life') {
-              this.lives = Math.min(this.lives + 1, 5);
-              this.updateLives();
-              this._popup(item.x,item.y,`+1 VIDA`,0xff4444);
-              this._chime();
-         } else if(item.itemType === 'shield') {
-              this.shielded=true; this.shieldT=5000; this._popup(item.x,item.y,'🛡 ¡ESCUDO!',0x44aaff); this._chime();
-         } else if(item.itemType === 'booster') {
-              this.boosted=true; this.boostT=5000; this._popup(item.x,item.y,'⚡ ¡BOOST!',0xffaa00); this._tone(660,.2,'square');
-         }
-    }
-    item.destroy();
-  }
 
-  _collideCat(player, cat){
-      if(cat.catEffect==='points'){ this.score+=500; this._popup(cat.x,cat.y,'+500',0xffdd44); this._chime(); }
-      if(cat.catEffect==='shield'){ this.shielded=true; this.shieldT=8000; this._popup(cat.x,cat.y,'🛡 ESCUDO GATO',0x44aaff); this._chime(); }
-      if(cat.catEffect==='boost'){ this.boosted=true; this.boostT=8000; this._popup(cat.x,cat.y,'⚡ SUPER BOOST',0xffaa00); this._tone(660,.2,'square'); }
-      cat.destroy();
+  _collide(){
+    if(this.victoryStarted) return;
+    const cx=this.coupleImg.x, cy=this.coupleImg.y;
+    this.items.getChildren().forEach(item=>{
+      const dx=item.x-cx,dy=item.y-cy;
+      if(Math.sqrt(dx*dx+dy*dy)<56){
+        if(item.category === 'points'){
+             const pts={points_01:100,points_02:200,points_03:300,points_04:150};
+             const cols={points_01:0xff8844,points_02:0xffdd44,points_03:0x44cc44,points_04:0xff88cc};
+             this.score+=pts[item.itemType]||100;
+             this._popup(item.x,item.y,`+${pts[item.itemType]||100}`,cols[item.itemType]||0xffffff);
+             this._chime();
+        } else if(item.category === 'block_money'){
+             if(!this.shielded){
+                 this.score=Math.max(0, this.score - 200);
+                 this._popup(item.x,item.y,`-200 RESTA DINERO`,0xff4444);
+                 this._tone(120,.25,'sawtooth');
+                 this._hitEffect();
+             } else {
+                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
+             }
+        } else if(item.category === 'block_life'){
+             if(!this.shielded){
+                  this.lives--;
+                  this._popup(item.x,item.y,`-1 VIDA`,0xff4444);
+                  this.updateLives();
+                  if(this.lives <= 0) {
+                      this._gameOver(); return;
+                  }
+                  this._tone(120,.25,'sawtooth');
+                  this._hitEffect();
+             } else {
+                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
+             }
+        } else if(item.category === 'powerup'){
+             if(item.itemType === 'life') {
+                  this.lives = Math.min(this.lives + 1, 5);
+                  this.updateLives();
+                  this._popup(item.x,item.y,`+1 VIDA`,0xff4444);
+                  this._chime();
+             } else if(item.itemType === 'shield') {
+                  this.shielded=true; this.shieldT=5000; this._popup(item.x,item.y,'🛡 ¡ESCUDO!',0x44aaff); this._chime();
+             } else if(item.itemType === 'booster') {
+                  this.boosted=true; this.boostT=5000; this.speed=Math.min(this.speed*1.45,SPEEDS.max); this._popup(item.x,item.y,'⚡ ¡BOOST!',0xffaa00); this._tone(660,.2,'square');
+             }
+        }
+        item.destroy();
+      }
+    });
   }
 
   updateLives(){
@@ -639,34 +609,28 @@ class GameScene extends Phaser.Scene {
   }
 
   _hitEffect(){
-    this.player.setVelocityY(-250);
+    this.coupleVelY=-275; this.isGrounded=false;
     this.coupleAnim.set(ANIMS.novios.hit,4);
     this.cameras.main.shake(150,.01);
     this.cameras.main.flash(100,255,50,50);
   }
 
-  _fallDeath(){
-      if(this.victoryStarted) return;
-      this.lives--;
-      this.updateLives();
-      if(this.lives <= 0) {
-          this._gameOver();
-      } else {
-          this.player.setPosition(Math.max(100, this.player.x - 300), H - 250);
-          this.player.setVelocity(0,0);
-          this._hitEffect();
-      }
-  }
-
   _gameOver(){
      this.victoryStarted = true;
-     this.player.setVelocity(0,0);
-     this.player.setTint(0xff0000);
-     this.time.delayedCall(1500,()=>this.scene.start('Menu')); 
+     this.speed = 0;
+     this.time.delayedCall(1500,()=>this.scene.start('Menu')); // simplistic game over
   }
 
+
+
+
+
+
+
+
+
   _popup(x,y,msg,col){
-    const t=this.add.text(x,y-30,msg,{
+    const t=this.add.text(Math.min(x,W-22),y-30,msg,{
       fontFamily:'Lato',fontSize:'12px',fontStyle:'bold',
       color:'#'+col.toString(16).padStart(6,'0'),stroke:'#000',strokeThickness:3
     }).setOrigin(.5,1).setDepth(60);
@@ -674,20 +638,15 @@ class GameScene extends Phaser.Scene {
   }
 
   _victory(){
-    if(this.victoryStarted) return;
-    this.victoryStarted=true;
-    this.player.setVelocity(0,0);
+    this.victoryStarted=true; this.speed=0;
     this.valeAnim.set(ANIMS.vale.happy,5);
-    this.cameras.main.stopFollow();
-    
     this.tweens.add({
-      targets:[this.bgFar,this.bgMid],alpha:0,duration:1000,
+      targets:[this.bgFar,this.bgMid,this.gndTile],alpha:0,duration:1000,
       onComplete:()=>{
-        this.add.image(this.cameras.main.scrollX + W/2,H/2,'win_church_background').setDisplaySize(W,H).setDepth(4);
-        this.add.image(this.cameras.main.scrollX + W/2,H/2,'win_church_people').setDisplaySize(W,H).setDepth(5);
-        this.add.image(this.cameras.main.scrollX + W/2,H/2,'win_floor_church').setDisplaySize(W,H).setDepth(5);
-        this.player.setDepth(10);
-        this.tweens.add({targets:this.player, x:this.cameras.main.scrollX + W/2 - 18, duration:2400, ease:'Sine.Out',
+        this.add.image(W/2,H/2,'win_church_background').setDisplaySize(W,H).setDepth(4);
+        this.add.image(W/2,H/2,'win_church_people').setDisplaySize(W,H).setDepth(5);
+        this.add.image(W/2,H/2,'win_floor_church').setDisplaySize(W,H).setDepth(5);
+        this.tweens.add({targets:this.coupleImg,x:W/2-18,duration:2400,ease:'Sine.Out',
           onComplete:()=>{
             this.coupleAnim.set(ANIMS.novios.kiss,5);
             this._chime();
@@ -705,18 +664,23 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+
+
+
+
+
+
   _confetti(){
     const cols=[0xffd700,0xff6699,0x44aaff,0xff8844,0x44cc88,0xcc44ff];
-    let cx = this.cameras.main.scrollX;
     for(let i=0;i<50;i++) this.time.delayedCall(i*70,()=>{
-      const r=this.add.rectangle(cx + Phaser.Math.Between(80,W-80),Phaser.Math.Between(20,H-20),8,8,Phaser.Utils.Array.GetRandom(cols)).setDepth(70);
+      const r=this.add.rectangle(Phaser.Math.Between(80,W-80),Phaser.Math.Between(20,H-20),8,8,Phaser.Utils.Array.GetRandom(cols)).setDepth(70);
       this.tweens.add({targets:r,y:r.y+50,alpha:0,angle:Phaser.Math.Between(-180,180),duration:1300,onComplete:()=>r.destroy()});
     });
   }
 
   _burst(){
     for(let i=0;i<6;i++){
-      const r=this.add.rectangle(this.player.x+Phaser.Math.Between(-20,20),this.player.y,6,6,Phaser.Utils.Array.GetRandom([0xffd700,0xff6699,0x44aaff])).setDepth(15);
+      const r=this.add.rectangle(this.coupleImg.x+Phaser.Math.Between(-20,20),this.coupleImg.y,6,6,Phaser.Utils.Array.GetRandom([0xffd700,0xff6699,0x44aaff])).setDepth(15);
       this.tweens.add({targets:r,y:r.y+30,alpha:0,duration:400,onComplete:()=>r.destroy()});
     }
   }
@@ -798,7 +762,7 @@ new Phaser.Game({
   type:Phaser.AUTO, width:W, height:H, backgroundColor:'#1a0a00',
   parent:'game-container',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
-  physics:{default:'arcade',arcade:{gravity:{y:800},debug:false}},
+  physics:{default:'arcade',arcade:{gravity:{y:0},debug:false}},
   scene:[BootScene,MenuScene,GameScene,VictoryScene],
 });
 
