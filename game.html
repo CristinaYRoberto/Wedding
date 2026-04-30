@@ -42,7 +42,7 @@
    Assets in:  assets/characters/*.png   assets/bg/*.png
 ═══════════════════════════════════════════════════════════════════ */
 const W=800, H=360, GROUND_Y=H-42, GOAL_DIST=2000;
-const SPEEDS={initial:260,max:500,accelPerSec:7};
+const SPEEDS={initial:200,max:400,accelPerSec:4};
 
 /* ── All character asset keys (filenames without .png) ── */
 const CHAR_KEYS=[
@@ -86,28 +86,28 @@ const ANIMS={
     hit:   ['novios_hit01'],
   },
   vale:{
-    idle:    ['vale_idle-Stand01','vale_idle-Cel01'],
+    idle:    ['vale_idle-Stand01'],
     walk:    ['vale_walking01','vale_walking02'],
     angry:   ['vale_angry01','vale_surpise01'],
     happy:   ['vale_happy'],
     jump:    ['vale_jumping01'],
   },
   iker:{
-    idle:  ['iker_idle01','iker_idle02'],
+    idle:  ['iker_idle01'],
     walk:  ['iker_walking01','iker_walking02'],
     jump:  ['iker_jumping01','iker_jumping02'],
     happy: ['iker_meow01','iker_meow02'],
     sleep: ['iker_sleeping01'],
   },
   finch:{
-    idle:  ['finch_idle01','finch_idle02'],
+    idle:  ['finch_idle01'],
     walk:  ['finch_walking01','finch_walking02'],
     jump:  ['finch_jumping01','finch_jumping02'],
     happy: ['finch_meow01','finch_meow02'],
     sleep: ['finch_sleeping01'],
   },
   pilly:{
-    idle:  ['pilly_idle01','pilly_idle02'],
+    idle:  ['pilly_idle01'],
     walk:  ['pilly_walking01','pilly_walking02'],
     jump:  ['pilly_jumping01','pilly_jumping02'],
     happy: ['pilly_meow01'],
@@ -479,7 +479,7 @@ class GameScene extends Phaser.Scene {
 
     /* Spawn */
     this.spawnT+=dt;
-    const interval=Math.max(1100,2600-this.distance*.5);
+    const interval=Math.max(800,1800-this.distance*.8);
     if(this.spawnT>interval){ this.spawnT=0; Math.random()<.55?this._spawnItem():this._spawnCat(); }
 
     /* Move objects */
@@ -514,7 +514,7 @@ class GameScene extends Phaser.Scene {
     else if(r < 0.9){ type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
     else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
     let y = GROUND_Y;
-    if(category === 'block_money' || category === 'powerup') {
+    if(category === 'powerup' || (category === 'points' && Math.random() < 0.6)) {
         y = GROUND_Y - 75;
     }
     const o=this.add.image(W+42,y,type).setDepth(7);
