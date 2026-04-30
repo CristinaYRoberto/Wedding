@@ -41,8 +41,8 @@
    LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER v3
    Assets in:  assets/characters/*.png   assets/bg/*.png
 ═══════════════════════════════════════════════════════════════════ */
-const W=800, H=360, GROUND_Y=H-42, GOAL_DIST=2000;
-const SPEEDS={initial:200,max:400,accelPerSec:4};
+const W=800, H=360, GROUND_Y=H-20, GOAL_DIST=2000;
+const SPEEDS={initial:150,max:300,accelPerSec:3};
 
 /* ── All character asset keys (filenames without .png) ── */
 const CHAR_KEYS=[
@@ -305,7 +305,10 @@ class MenuScene extends Phaser.Scene {
   constructor(){ super({key:'Menu'}); }
   create(){
     this.cameras.main.setBackgroundColor('#1a0a00');
-    this.add.image(W/2,H/2,'portada').setDisplaySize(W,H).setAlpha(.9);
+    const portadaImg = this.add.image(W/2,H/2,'portada').setAlpha(.9);
+    const pTex = this.textures.get('portada').getSourceImage();
+    if(pTex && pTex.height) { portadaImg.setScale(H / pTex.height); }
+    
     const ov=this.add.graphics();
     ov.fillGradientStyle(0,0,0,0,0,0,0,0.55); ov.fillRect(0,H*.58,W,H*.42);
 
@@ -314,19 +317,6 @@ class MenuScene extends Phaser.Scene {
     bn.lineStyle(2,0xb89a6a,1); bn.strokeRoundedRect(W/2-210,12,420,62,8);
     this.add.text(W/2,26,'La Boda de Cris y José',{fontFamily:'Cinzel',fontSize:'22px',color:'#3d1f00',fontStyle:'italic'}).setOrigin(.5,0);
     this.add.text(W/2,54,'03.10.2026',{fontFamily:'Cinzel',fontSize:'13px',color:'#b89a6a'}).setOrigin(.5,0);
-
-    /* Character preview */
-    const prev=[
-      {k:'novios_idle01',scale:.55,yo:-8},
-      {k:'vale_idle-Stand01',scale:.42,yo:0},
-      {k:'iker_idle01',scale:.5,yo:4},
-      {k:'finch_idle01',scale:.5,yo:4},
-      {k:'pilly_idle01',scale:.5,yo:4},
-    ];
-    prev.forEach(({k,scale,yo},i)=>{
-      if(!this.textures.exists(k)) return;
-      this.add.image(W/2+(i-2)*90, H-112+yo, k).setScale(scale).setAlpha(.88).setOrigin(.5,1);
-    });
 
     /* Play button */
     const pb=this.add.graphics();
@@ -394,9 +384,9 @@ class GameScene extends Phaser.Scene {
     this.shadow=this.add.ellipse(120,GROUND_Y+4,80,12,0,0.18).setDepth(3);
 
     /* Vale */
-    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y - 30,'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
+    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y - 50,'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
     let valeTex = this.textures.get('vale_idle-Stand01').getSourceImage();
-    let valeScale = valeTex && valeTex.height ? 90 / valeTex.height : 1;
+    let valeScale = valeTex && valeTex.height ? 140 / valeTex.height : 1;
     this.valeImg.setScale(valeScale);
     this.valeAnim=new Anim(this.valeImg,ANIMS.vale.idle,3);
 
@@ -523,10 +513,13 @@ class GameScene extends Phaser.Scene {
     else if(r < 0.9){ type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
     else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
     let y = GROUND_Y;
-    if(category === 'powerup' || (category === 'points' && Math.random() < 0.6)) {
-        y = GROUND_Y - 75;
+    if(category === 'block_money') {
+        y = GROUND_Y - 120;
     }
-    const o=this.add.image(W+42,y,type).setDepth(7);
+    const o=this.add.image(W+42,y,type).setOrigin(0.5, 1).setDepth(7);
+    if(category === 'block_money' || category === 'powerup') {
+        this.tweens.add({targets:o, alpha:{from:0.5, to:1}, duration:450, yoyo:true, repeat:-1});
+    }
     const oTex=this.textures.get(type).getSourceImage();
     const oScale=oTex && oTex.height ? 60 / oTex.height : 1;
     o.setScale(oScale);
@@ -546,7 +539,7 @@ class GameScene extends Phaser.Scene {
     ];
     const d=Phaser.Utils.Array.GetRandom(defs);
     const frames=Math.random()<.35?ANIMS[d.key].sleep:ANIMS[d.key].idle;
-    const c=this.add.image(W+64,GROUND_Y + 15,frames[0]).setOrigin(.5,1).setDepth(9);
+    const c=this.add.image(W+64,GROUND_Y,frames[0]).setOrigin(.5,1).setDepth(9);
     
     let cTex = this.textures.get(frames[0]).getSourceImage();
     let cScale = cTex && cTex.height ? 60 / cTex.height : 1;
