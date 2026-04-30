@@ -41,7 +41,7 @@
    LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER v3
    Assets in:  assets/characters/*.png   assets/bg/*.png
 ═══════════════════════════════════════════════════════════════════ */
-const W=800, H=360, GROUND_Y=H-35, GOAL_DIST=2000;
+const W=800, H=360, GROUND_Y=H-42, GOAL_DIST=2000;
 const SPEEDS={initial:260,max:500,accelPerSec:7};
 
 /* ── All character asset keys (filenames without .png) ── */
@@ -303,7 +303,7 @@ class MenuScene extends Phaser.Scene {
   constructor(){ super({key:'Menu'}); }
   create(){
     this.cameras.main.setBackgroundColor('#1a0a00');
-    this.add.image(W/2,H/2).setDisplaySize(W,H).setAlpha(.9);
+    this.add.image(W/2,H/2,'portada').setDisplaySize(W,H).setAlpha(.9);
     const ov=this.add.graphics();
     ov.fillGradientStyle(0,0,0,0,0,0,0,0.55); ov.fillRect(0,H*.58,W,H*.42);
 
@@ -377,7 +377,7 @@ class GameScene extends Phaser.Scene {
     
     /* World */
     this.bgFar = this._scaledBg(0, H, `bg_${this.themes[0]}_far`, 0);
-    this.bgMid = this._scaledBg(0, H, `bg_${this.themes[0]}_mid`, 1);
+    this.bgMid = this._scaledBg(0, H - 85, `bg_${this.themes[0]}_mid`, 1);
     this.gndTile = this._scaledBg(H - 85, 85, `floor_${this.themes[0]}`, 3);
     
     /* Variables */
@@ -392,11 +392,11 @@ class GameScene extends Phaser.Scene {
     this.shadow=this.add.ellipse(120,GROUND_Y+4,80,12,0,0.18).setDepth(3);
 
     /* Vale */
-    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y,'vale_walking01').setOrigin(.5,1).setDepth(8);
-    let valeTex = this.textures.get('vale_walking01').getSourceImage();
+    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y - 30,'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
+    let valeTex = this.textures.get('vale_idle-Stand01').getSourceImage();
     let valeScale = valeTex && valeTex.height ? 90 / valeTex.height : 1;
     this.valeImg.setScale(valeScale);
-    this.valeAnim=new Anim(this.valeImg,ANIMS.vale.walk,3);
+    this.valeAnim=new Anim(this.valeImg,ANIMS.vale.idle,3);
 
     /* Groups */
     this.items=this.add.group();
@@ -513,7 +513,10 @@ class GameScene extends Phaser.Scene {
     else if(r < 0.7){ type=Phaser.Utils.Array.GetRandom(blockerMoneyTypes); category='block_money'; }
     else if(r < 0.9){ type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
     else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
-    const y=Math.random()<0.65 ? GROUND_Y-20 : GROUND_Y-78-Math.random()*48;
+    let y = GROUND_Y;
+    if(category === 'block_money' || category === 'powerup') {
+        y = GROUND_Y - 75;
+    }
     const o=this.add.image(W+42,y,type).setDepth(7);
     const oTex=this.textures.get(type).getSourceImage();
     const oScale=oTex && oTex.height ? 60 / oTex.height : 1;
@@ -533,8 +536,8 @@ class GameScene extends Phaser.Scene {
       {key:'pilly',effect:'boost'},
     ];
     const d=Phaser.Utils.Array.GetRandom(defs);
-    const frames=Math.random()<.35?ANIMS[d.key].sleep:ANIMS[d.key].walk;
-    const c=this.add.image(W+64,GROUND_Y,frames[0]).setOrigin(.5,1).setDepth(9);
+    const frames=Math.random()<.35?ANIMS[d.key].sleep:ANIMS[d.key].idle;
+    const c=this.add.image(W+64,GROUND_Y + 15,frames[0]).setOrigin(.5,1).setDepth(9);
     
     let cTex = this.textures.get(frames[0]).getSourceImage();
     let cScale = cTex && cTex.height ? 60 / cTex.height : 1;
@@ -651,7 +654,7 @@ class GameScene extends Phaser.Scene {
     this._tone(120,.25,'sawtooth');
     this.cameras.main.shake(230,.01);
     this.cameras.main.flash(175,255,50,50);
-    this.time.delayedCall(1800,()=>{ this._hit=false; this.valeAnim.set(ANIMS.vale.walk,3); });
+    this.time.delayedCall(1800,()=>{ this._hit=false; this.valeAnim.set(ANIMS.vale.idle,3); });
   }
 
   _popup(x,y,msg,col){
