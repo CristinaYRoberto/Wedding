@@ -7,45 +7,38 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background:#1a0a00;
-    display:flex; align-items:center; justify-content:center;
-    min-height:100vh; font-family:'Lato',sans-serif; overflow:hidden;
-  }
-  #game-container { position:relative; width:800px; max-width:100vw; }
-  canvas { display:block; }
-  #back-btn {
-    position:fixed; top:14px; left:14px; z-index:1000;
-    font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.15em;
-    padding:.5rem 1.2rem; background:rgba(0,0,0,.5);
-    border:1px solid rgba(184,154,106,.4); color:rgba(255,255,255,.7);
-    cursor:pointer; text-decoration:none; transition:all .3s;
-    backdrop-filter:blur(6px);
-  }
-  #back-btn:hover { border-color:#b89a6a; color:#b89a6a; }
-  #touch-hint {
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.2em;
-    color:rgba(255,255,255,.3); pointer-events:none;
-  }
-  @media(min-width:801px){ #touch-hint { display:none; } }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#1a0a00;
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh; font-family:'Lato',sans-serif; overflow:hidden;
+}
+#game-container { position:relative; }
+canvas { display:block; touch-action:none; }
+#back-btn {
+  position:fixed; top:14px; left:14px; z-index:1000;
+  font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.15em;
+  padding:.5rem 1.2rem; background:rgba(0,0,0,.5);
+  border:1px solid rgba(184,154,106,.4); color:rgba(255,255,255,.7);
+  cursor:pointer; text-decoration:none; transition:all .3s;
+  backdrop-filter:blur(6px);
+}
+#back-btn:hover { border-color:#b89a6a; color:#b89a6a; }
 </style>
 </head>
 <body>
 <a id="back-btn" href="index.html">← VOLVER</a>
 <div id="game-container"></div>
-<div id="touch-hint">TAP PARA SALTAR</div>
 <script>
-/* ═══════════════════════════════════════════════════════════════════
-   LA BODA DE CRIS Y JOSÉ — ENDLESS RUNNER v3
-   Assets in:  assets/characters/*.png   assets/bg/*.png
-═══════════════════════════════════════════════════════════════════ */
-const W=800, H=360, GROUND_Y=H-20, GOAL_DIST=2000;
-const SPEEDS={initial:150,max:300,accelPerSec:3};
+/* ═══════════════════════════════════════════════════════════════
+   LA BODA DE CRIS Y JOSÉ — PLATFORMER v4
+═══════════════════════════════════════════════════════════════ */
+const W = 800, H = 360;
+const WORLD_W = 5000;
+const GROUND_Y = H - 20;
+const GRAVITY = 1380;
 
-/* ── All character asset keys (filenames without .png) ── */
-const CHAR_KEYS=[
+const CHAR_KEYS = [
   'novios_idle01','novios_idle03',
   'novios_running01','novios_running02',
   'novios_walking01','novios_walking02',
@@ -65,16 +58,26 @@ const CHAR_KEYS=[
   'pilly_idle01','pilly_idle02','pilly_walking01','pilly_walking02',
   'pilly_jumping01','pilly_jumping02','pilly_meow01','pilly_sleeping01',
 ];
-const PROP_KEYS=['blocker_life-01','blocker_life-02','blocker_life-03','blocker_money-04','blocker_money_01','blocker_money_02','blocker_money_03','booster','life','points_01','points_02','points_03','points_04','points_05','shield'];
+const PROP_KEYS = [
+  'blocker_life-01','blocker_life-02','blocker_life-03',
+  'blocker_money-04','blocker_money_01','blocker_money_02','blocker_money_03',
+  'booster','life','points_01','points_02','points_03','points_04','points_05','shield'
+];
+const BG_KEYS = [
+  'bg_beach_far','bg_beach_mid',
+  'bg_church_far','bg_church_mid','bg_church_prop01',
+  'bg_city_far','bg_city_mid',
+  'bg_desert_far','bg_desert_mid',
+  'bg_halloween_far','bg_halloween_mid',
+  'bg_mexican_far','bg_mexican_mid',
+  'floor_beach','floor_church','floor_city','floor_desert','floor_halloween','floor_mexican',
+  'win_church_background','win_church_people','win_floor_church'
+];
 
+const THEMES = ['beach','city','desert','halloween','mexican','church'];
+const THEME_STARTS = [0, 800, 1600, 2400, 3200, 4000];
 
-
-
-
-const BG_KEYS=['bg_beach_far','bg_beach_mid','bg_church_far','bg_church_mid','bg_church_prop01','bg_city_far','bg_city_mid','bg_desert_far','bg_desert_mid','bg_halloween_far','bg_halloween_mid','bg_mexican_far','bg_mexican_mid','floor_beach','floor_church','floor_city','floor_desert','floor_halloween','floor_mexican','win_church_background','win_church_people','win_floor_church'];
-
-/* ── Animation frame lists ── */
-const ANIMS={
+const ANIMS = {
   novios:{
     idle:  ['novios_idle01','novios_idle03'],
     run:   ['novios_running01','novios_running02'],
@@ -86,28 +89,27 @@ const ANIMS={
     hit:   ['novios_hit01'],
   },
   vale:{
-    idle:    ['vale_idle-Stand01'],
-    walk:    ['vale_walking01','vale_walking02'],
-    angry:   ['vale_angry01','vale_surpise01'],
-    happy:   ['vale_happy'],
-    jump:    ['vale_jumping01'],
+    idle:  ['vale_idle-Stand01'],
+    walk:  ['vale_walking01','vale_walking02'],
+    happy: ['vale_happy'],
+    jump:  ['vale_jumping01'],
   },
   iker:{
-    idle:  ['iker_idle01'],
+    idle:  ['iker_idle01','iker_idle02'],
     walk:  ['iker_walking01','iker_walking02'],
     jump:  ['iker_jumping01','iker_jumping02'],
-    happy: ['iker_meow01','iker_meow02'],
+    happy: ['iker_meow01','iker_meow02','iker_meow03'],
     sleep: ['iker_sleeping01'],
   },
   finch:{
-    idle:  ['finch_idle01'],
+    idle:  ['finch_idle01','finch_idle02'],
     walk:  ['finch_walking01','finch_walking02'],
     jump:  ['finch_jumping01','finch_jumping02'],
     happy: ['finch_meow01','finch_meow02'],
     sleep: ['finch_sleeping01'],
   },
   pilly:{
-    idle:  ['pilly_idle01'],
+    idle:  ['pilly_idle01','pilly_idle02'],
     walk:  ['pilly_walking01','pilly_walking02'],
     jump:  ['pilly_jumping01','pilly_jumping02'],
     happy: ['pilly_meow01'],
@@ -115,681 +117,834 @@ const ANIMS={
   },
 };
 
-/* ── Simple frame animator ── */
+/* ── Frame animator ── */
 class Anim {
-  constructor(img, frames, fps=7){ this.img=img; this.fps=fps; this._t=0; this._f=0; this._frames=frames; }
-  set(frames,fps=7){
-    if(this._frames===frames) return;
-    this._frames=frames; this.fps=fps; this._f=0; this._t=0; this._show();
+  constructor(img, frames, fps = 7) {
+    this.img = img; this.fps = fps;
+    this._t = 0; this._f = 0; this._frames = frames;
   }
-  update(dt){
-    if(!this._frames||this._frames.length<2) return;
-    this._t+=dt;
-    if(this._t>=1000/this.fps){ this._t=0; this._f=(this._f+1)%this._frames.length; this._show(); }
+  set(frames, fps = 7) {
+    if (this._frames === frames) return;
+    this._frames = frames; this.fps = fps; this._f = 0; this._t = 0; this._show();
   }
-  _show(){
-    const k=this._frames[this._f];
-    if(this.img.scene&&this.img.scene.textures.exists(k)) this.img.setTexture(k);
+  update(dt) {
+    if (!this._frames || this._frames.length < 2) return;
+    this._t += dt;
+    if (this._t >= 1000 / this.fps) {
+      this._t = 0; this._f = (this._f + 1) % this._frames.length; this._show();
+    }
+  }
+  _show() {
+    const k = this._frames[this._f];
+    if (this.img.scene && this.img.scene.textures.exists(k)) this.img.setTexture(k);
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   BOOT SCENE
-═══════════════════════════════════════════════════════════════════ */
-class BootScene extends Phaser.Scene {
-  constructor(){ super({key:'Boot'}); }
+/* ── Audio ── */
+let _audioCtx = null;
+function getAudio() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function tone(f, d = 0.1, type = 'sine', v = 0.14) {
+  try {
+    const ctx = getAudio();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(v, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
+    o.start(); o.stop(ctx.currentTime + d);
+  } catch (e) {}
+}
+function chime() { [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 0.14, 'sine'), i * 110)); }
 
-  preload(){
+/* ═══════════════════════════════════════════════════════════════
+   BOOT SCENE
+═══════════════════════════════════════════════════════════════ */
+class BootScene extends Phaser.Scene {
+  constructor() { super({ key: 'Boot' }); }
+
+  preload() {
     this.cameras.main.setBackgroundColor('#1a0a00');
-    const bar=this.add.rectangle(W/2,H/2,4,20,0xb89a6a);
-    this.add.text(W/2,H/2-28,'LA BODA DE CRIS Y JOSÉ',{fontFamily:'Cinzel',fontSize:'15px',color:'#f5d87a'}).setOrigin(.5);
-    const txt=this.add.text(W/2,H/2+36,'Cargando…',{fontFamily:'Lato',fontSize:'11px',color:'#b89a6a'}).setOrigin(.5);
-    const total=CHAR_KEYS.length+BG_KEYS.length+PROP_KEYS.length;
-    let n=0;
-    this.load.on('loaderror',f=>console.warn('Asset missing (placeholder used):',f.key));
-    this.load.on('filecomplete',()=>{ n++; bar.setDisplaySize((n/total)*300,20); txt.setText(`Cargando ${n}/${total}…`); });
-    CHAR_KEYS.forEach(k=>this.load.image(k,`assets/characters/${k}.png`));
-    BG_KEYS.forEach(k=>this.load.image(k,`assets/bg/${k}.png`));
-    PROP_KEYS.forEach(k=>this.load.image(k,`assets/props/${k}.png`));
-    
-    
-    
-    
+    const bar = this.add.rectangle(W / 2, H / 2, 4, 20, 0xb89a6a);
+    this.add.text(W / 2, H / 2 - 28, 'LA BODA DE CRIS Y JOSÉ', {
+      fontFamily: 'Cinzel', fontSize: '15px', color: '#f5d87a'
+    }).setOrigin(0.5);
+    const txt = this.add.text(W / 2, H / 2 + 36, 'Cargando…', {
+      fontFamily: 'Lato', fontSize: '11px', color: '#b89a6a'
+    }).setOrigin(0.5);
+
+    const all = [...CHAR_KEYS, ...BG_KEYS, ...PROP_KEYS, 'portada', 'ui_besttime', 'ui_score'];
+    let n = 0;
+    this.load.on('loaderror', f => console.warn('Asset missing:', f.key));
+    this.load.on('filecomplete', () => {
+      n++; bar.setDisplaySize((n / all.length) * 300, 20);
+      txt.setText(`Cargando ${n}/${all.length}…`);
+    });
+    CHAR_KEYS.forEach(k => this.load.image(k, `assets/characters/${k}.png`));
+    BG_KEYS.forEach(k => this.load.image(k, `assets/bg/${k}.png`));
+    PROP_KEYS.forEach(k => this.load.image(k, `assets/props/${k}.png`));
     this.load.image('portada', 'assets/UI/GamePortada.png');
     this.load.image('ui_besttime', 'assets/UI/UI-BestTime.png');
     this.load.image('ui_score', 'assets/UI/UI-Score.png');
-    
   }
 
-  create(){ this.scene.start('Menu'); }
-
-  _makePlaceholders(){
-    const g=this.make.graphics({add:false});
-    const sv=(k,w,h)=>{ g.generateTexture(k,w,h); g.clear(); };
-
-    /* BG far */
-    g.fillStyle(0xf4e4b0); g.fillRect(0,0,W,120);
-    g.fillStyle(0xd4a860); g.fillRect(60,20,40,100); g.fillRect(300,10,60,110); g.fillRect(400,15,50,105);
-    g.fillTriangle(80,20,80,4,100,20); g.fillTriangle(330,10,330,-5,355,10); sv('bg_far',W,120);
-
-    /* BG mid */
-    g.fillStyle(0x5a9e3c); g.fillRect(0,0,W,160);
-    g.fillStyle(0x3d7a28); g.fillRect(0,100,W,60);
-    for(const tx of [80,230,400,580,720]){
-      g.fillStyle(0x6b4c2a); g.fillRect(tx,60,18,100);
-      g.fillStyle(0x2d7a1a); g.fillCircle(tx+9,50,38);
-      g.fillStyle(0xf5d060); g.fillCircle(tx+9,50,5); g.fillCircle(tx-10,40,4); g.fillCircle(tx+22,35,4);
-    }
-    sv('bg_mid',W,160);
-
-    /* BG near */
-    g.fillStyle(0xf0ead8); g.fillRect(0,0,W,50);
-    g.fillStyle(0xd4c88a); g.fillRect(0,45,W,5); sv('bg_near',W,50);
-
-    /* Ground */
-    g.fillStyle(0x7ab840); g.fillRect(0,0,W,20);
-    g.fillStyle(0xf0ead8); g.fillRect(0,20,W,50);
-    g.fillStyle(0xd4c88a); g.fillRect(10,22,W-20,3); g.fillRect(10,62,W-20,3); sv('ground_tile',W,70);
-
-    /* Portada */
-    g.fillStyle(0x1a0a00); g.fillRect(0,0,W,H);
-    g.fillStyle(0xd4a860); g.fillRect(480,30,240,240);
-    g.fillStyle(0xb07820); g.fillRect(550,90,100,130);
-    g.fillTriangle(540,30,610,0,680,30);
-    g.fillStyle(0x7ab840); g.fillRect(0,H*.68,W,H*.32);
-    g.fillStyle(0xf0ead8); g.fillRect(W*.18,H*.68,W*.44,H*.32); sv('portada',W,H);
-
-    /* Novios placeholder */
-    const nov=(k,mood)=>{
-      g.fillStyle(0xffd0e8); g.fillCircle(34,19,13);
-      g.fillStyle(0xffffff); g.fillTriangle(14,31,54,31,44,76); g.fillRect(18,29,28,23);
-      g.fillStyle(0x8b4513); g.fillRect(22,7,22,13);
-      g.fillStyle(0xffd0c0); g.fillCircle(70,19,13);
-      g.fillStyle(0x222222); g.fillRect(54,29,28,40); g.fillTriangle(54,29,82,29,68,45);
-      g.fillStyle(0xffffff); g.fillRect(63,29,8,15);
-      if(mood==='jump')  { g.fillStyle(0xffee44); g.fillRect(0,80,104,4); }
-      if(mood==='kiss')  { g.fillStyle(0xff6b9d); g.fillCircle(52,19,6); }
-      if(mood==='hit')   { g.fillStyle(0xff4444); g.fillCircle(52,12,8); }
-      if(mood==='win')   { g.fillStyle(0xffd700); g.fillCircle(34,5,6); g.fillCircle(70,5,6); }
-      if(mood==='dance') { g.fillStyle(0xf0a0c0); g.fillCircle(52,37,8); }
-      sv(k,104,98);
-    };
-    ['novios_idle01','novios_idle03'].forEach(k=>nov(k,'idle'));
-    ['novios_running01','novios_running02'].forEach(k=>nov(k,'run'));
-    ['novios_walking01','novios_walking02'].forEach(k=>nov(k,'walk'));
-    ['novios_jumping01','novios_jumping02'].forEach(k=>nov(k,'jump'));
-    ['novios_dancing01','novios_dancing02','novios_dancing03'].forEach(k=>nov(k,'dance'));
-    ['novios_kiss01','novios_kiss02'].forEach(k=>nov(k,'kiss'));
-    ['novios_win01','novios_win02'].forEach(k=>nov(k,'win'));
-    nov('novios_hit01','hit');
-
-    /* Vale placeholder */
-    const vale=(k,mood)=>{
-      g.fillStyle(0xffd0c0); g.fillCircle(40,28,20);
-      g.fillStyle(0x3a1c0a); g.fillRect(20,8,40,22);
-      g.fillStyle(0xffb0c8); g.fillRect(24,48,32,38);
-      g.fillStyle(0x5577aa); g.fillRect(22,86,14,60); g.fillRect(44,86,14,60);
-      g.fillStyle(0xffd0c0); g.fillRect(10,50,12,34); g.fillRect(58,50,12,34);
-      g.fillStyle(0x334455); g.fillCircle(18,28,8); g.fillCircle(62,28,8);
-      if(mood==='angry') { g.fillStyle(0xff4444); g.fillRect(15,32,50,4); }
-      if(mood==='happy') { g.fillStyle(0xffdd00); g.fillCircle(40,68,10); }
-      sv(k,80,158);
-    };
-    ['vale_idle-Stand01','vale_idle-Cel01','vale_walking01','vale_walking02','vale_jumping01','vale_surpise01']
-      .forEach(k=>vale(k,'idle'));
-    vale('vale_angry01','angry');
-    vale('vale_happy','happy');
-
-    /* Cat placeholder */
-    const cat=(k,col,mood)=>{
-      g.fillStyle(col); g.fillEllipse(40,34,58,34); g.fillCircle(58,20,15);
-      const ec=Math.min(col+0x333333,0xffffff);
-      g.fillStyle(ec); g.fillTriangle(50,8,54,0,62,8); g.fillTriangle(58,8,62,0,70,8);
-      g.fillStyle(0x88cc44); g.fillCircle(54,20,5); g.fillCircle(64,20,5);
-      if(mood==='walk'){ g.fillStyle(col); g.fillRect(8,38,13,18); g.fillRect(26,38,13,18); g.fillRect(44,38,13,18); g.fillRect(60,38,13,18); }
-      if(mood==='sleep'){ g.fillStyle(col); g.fillEllipse(40,40,58,28); }
-      if(mood==='happy'){ g.fillStyle(0xff6699); g.fillCircle(40,8,7); }
-      if(col===0x997755){ g.fillStyle(0x775533); g.fillRect(22,26,4,12); g.fillRect(33,26,4,12); g.fillRect(44,26,4,12); }
-      sv(k,80,58);
-    };
-    const IK=0x222222,FI=0x7799bb,PI=0x997755;
-    ['iker_idle01','iker_idle02'].forEach(k=>cat(k,IK,'idle'));
-    ['iker_walking01','iker_walking02','iker_jumping01','iker_jumping02'].forEach(k=>cat(k,IK,'walk'));
-    ['iker_meow01','iker_meow02','iker_meow03'].forEach(k=>cat(k,IK,'happy'));
-    cat('iker_sleeping01',IK,'sleep');
-    ['finch_idle01','finch_idle02'].forEach(k=>cat(k,FI,'idle'));
-    ['finch_walking01','finch_walking02','finch_jumping01','finch_jumping02'].forEach(k=>cat(k,FI,'walk'));
-    ['finch_meow01','finch_meow02'].forEach(k=>cat(k,FI,'happy'));
-    cat('finch_sleeping01',FI,'sleep');
-    ['pilly_idle01','pilly_idle02'].forEach(k=>cat(k,PI,'idle'));
-    ['pilly_walking01','pilly_walking02','pilly_jumping01','pilly_jumping02'].forEach(k=>cat(k,PI,'walk'));
-    cat('pilly_meow01',PI,'happy');
-    cat('pilly_sleeping01',PI,'sleep');
-
-    /* Items */
-    g.fillStyle(0x8B5e2a); g.fillRect(10,0,14,40); g.fillRect(6,30,22,30);
-    g.fillStyle(0xfff8e0); g.fillRect(6,34,22,20); sv('item_beer',34,60);
-    g.fillStyle(0x5c2d00); g.fillRect(0,0,50,64);
-    g.fillStyle(0xc8941a); g.fillRect(4,4,42,56);
-    g.fillStyle(0xfff8e0); g.fillRect(8,8,34,48);
-    g.fillStyle(0xc8941a); g.fillCircle(25,32,6); g.fillRect(22,12,6,40); sv('item_bible',50,64);
-    g.fillStyle(0x2d7a2d); g.fillRect(0,0,56,36);
-    g.fillStyle(0x44aa44); g.fillRect(4,4,48,28);
-    g.fillStyle(0xfff8e0); g.fillCircle(28,18,10);
-    g.fillStyle(0x1a5a1a); g.fillCircle(28,18,6); sv('item_money',56,36);
-    g.fillStyle(0xff4466); g.fillRect(0,14,60,46);
-    g.fillStyle(0xff8800); g.fillRect(6,20,48,34);
-    g.fillStyle(0xffd700); g.fillRect(26,0,8,60); g.fillRect(0,22,60,8); g.fillCircle(30,14,10); sv('item_gift',60,60);
-    g.fillStyle(0x2266cc,.45); g.fillCircle(30,30,28);
-    g.fillStyle(0x66bbff,.35); g.fillCircle(30,30,20); sv('shield_fx',60,60);
-    g.fillStyle(0xffd700); g.fillCircle(4,4,4); sv('particle',8,8);
-
-    /* Altar */
-    g.fillStyle(0xf0ead8); g.fillRect(0,0,W,H);
-    g.fillStyle(0xd4a860); g.fillRect(150,20,500,220);
-    g.fillStyle(0xeeddbb); g.fillRect(170,30,460,180);
-    g.fillStyle(0x8b6020); g.fillRect(310,60,180,130);
-    g.fillStyle(0xffd700); g.fillRect(370,30,80,40); g.fillTriangle(380,30,410,0,440,30);
-    g.fillStyle(0xffffff); g.fillRect(340,120,120,80);
-    g.fillStyle(0xcc2200); g.fillRect(340,120,120,6); g.fillRect(340,192,120,6);
-    g.fillRect(340,120,6,80); g.fillRect(454,120,6,80); sv('altar_bg',W,H);
-
-    g.destroy();
-  }
+  create() { this.scene.start('Menu'); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    MENU SCENE
-═══════════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 class MenuScene extends Phaser.Scene {
-  constructor(){ super({key:'Menu'}); }
-  create(){
+  constructor() { super({ key: 'Menu' }); }
+
+  create() {
     this.cameras.main.setBackgroundColor('#1a0a00');
-    const portadaImg = this.add.image(W/2,H/2,'portada').setAlpha(.9);
+
+    const portada = this.add.image(W / 2, H / 2, 'portada').setAlpha(0.9);
     const pTex = this.textures.get('portada').getSourceImage();
-    if(pTex && pTex.height) { portadaImg.setScale(H / pTex.height); }
-    
-    const ov=this.add.graphics();
-    ov.fillGradientStyle(0,0,0,0,0,0,0,0.55); ov.fillRect(0,H*.58,W,H*.42);
+    if (pTex && pTex.height) portada.setScale(H / pTex.height);
 
-    const bn=this.add.graphics();
-    bn.fillStyle(0xffffff,.93); bn.fillRoundedRect(W/2-210,12,420,62,8);
-    bn.lineStyle(2,0xb89a6a,1); bn.strokeRoundedRect(W/2-210,12,420,62,8);
-    this.add.text(W/2,26,'La Boda de Cris y José',{fontFamily:'Cinzel',fontSize:'22px',color:'#3d1f00',fontStyle:'italic'}).setOrigin(.5,0);
-    this.add.text(W/2,54,'03.10.2026',{fontFamily:'Cinzel',fontSize:'13px',color:'#b89a6a'}).setOrigin(.5,0);
+    const ov = this.add.graphics();
+    ov.fillGradientStyle(0, 0, 0, 0, 0, 0, 0, 0.6);
+    ov.fillRect(0, H * 0.5, W, H * 0.5);
 
-    /* Play button */
-    const pb=this.add.graphics();
-    pb.fillStyle(0x2c1a00,.9); pb.fillRoundedRect(W/2-130,H-66,260,42,6);
-    pb.lineStyle(2,0xb89a6a,1); pb.strokeRoundedRect(W/2-130,H-66,260,42,6);
-    const pt=this.add.text(W/2,H-45,'▶  JUGAR',{fontFamily:'Cinzel',fontSize:'18px',color:'#f5d87a',fontStyle:'bold'}).setOrigin(.5);
-    this.tweens.add({targets:pt,alpha:{from:.72,to:1},duration:920,yoyo:true,repeat:-1});
+    const bn = this.add.graphics();
+    bn.fillStyle(0xffffff, 0.93); bn.fillRoundedRect(W / 2 - 220, 10, 440, 68, 8);
+    bn.lineStyle(2, 0xb89a6a, 1); bn.strokeRoundedRect(W / 2 - 220, 10, 440, 68, 8);
+    this.add.text(W / 2, 22, 'La Boda de Cris y José', {
+      fontFamily: 'Cinzel', fontSize: '22px', color: '#3d1f00', fontStyle: 'italic'
+    }).setOrigin(0.5, 0);
+    this.add.text(W / 2, 54, '03.10.2026', {
+      fontFamily: 'Cinzel', fontSize: '13px', color: '#b89a6a'
+    }).setOrigin(0.5, 0);
 
-    const hz=this.add.zone(W/2,H-45,260,42).setInteractive();
-    hz.on('pointerover',()=>{ pb.clear(); pb.fillStyle(0xb89a6a,.9); pb.fillRoundedRect(W/2-130,H-66,260,42,6); pt.setColor('#fff'); });
-    hz.on('pointerout', ()=>{ pb.clear(); pb.fillStyle(0x2c1a00,.9); pb.fillRoundedRect(W/2-130,H-66,260,42,6); pb.lineStyle(2,0xb89a6a,1); pb.strokeRoundedRect(W/2-130,H-66,260,42,6); pt.setColor('#f5d87a'); });
-    hz.on('pointerdown',()=>this.scene.start('Game'));
+    this.add.text(W / 2, H * 0.62, '¡Ayuda a Cris y José a llegar con Vale a la iglesia!', {
+      fontFamily: 'Lato', fontSize: '11px', color: 'rgba(255,255,255,.75)'
+    }).setOrigin(0.5);
 
-    const sc=JSON.parse(localStorage.getItem('boda_scores')||'[]');
-    if(sc.length) this.add.text(W-10,H-8,`🏆 ${sc[0].score} pts`,{fontFamily:'Lato',fontSize:'11px',color:'#f5d87a'}).setOrigin(1,1);
-    this.add.text(W/2,H-8,'ESPACIO / TAP = SALTAR  ·  TAP ANIMALES = BONUS',{fontFamily:'Lato',fontSize:'9px',color:'rgba(255,255,255,.38)'}).setOrigin(.5,1);
+    this.add.text(W / 2, H * 0.72, '← → MOVER   ↑ / ESPACIO = SALTAR', {
+      fontFamily: 'Cinzel', fontSize: '10px', color: '#b89a6a'
+    }).setOrigin(0.5);
 
-    this.input.keyboard.on('keydown-SPACE',()=>this.scene.start('Game'));
-    this.input.on('pointerdown',p=>{ if(p.y>H*.55) this.scene.start('Game'); });
+    const pb = this.add.graphics();
+    pb.fillStyle(0x2c1a00, 0.92); pb.fillRoundedRect(W / 2 - 130, H - 68, 260, 44, 6);
+    pb.lineStyle(2, 0xb89a6a, 1); pb.strokeRoundedRect(W / 2 - 130, H - 68, 260, 44, 6);
+    const pt = this.add.text(W / 2, H - 46, '▶  JUGAR', {
+      fontFamily: 'Cinzel', fontSize: '18px', color: '#f5d87a', fontStyle: 'bold'
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: pt, alpha: { from: 0.72, to: 1 }, duration: 920, yoyo: true, repeat: -1 });
+
+    const hz = this.add.zone(W / 2, H - 46, 260, 44).setInteractive();
+    hz.on('pointerover', () => { pb.clear(); pb.fillStyle(0xb89a6a, 0.9); pb.fillRoundedRect(W / 2 - 130, H - 68, 260, 44, 6); pt.setColor('#fff'); });
+    hz.on('pointerout', () => { pb.clear(); pb.fillStyle(0x2c1a00, 0.92); pb.fillRoundedRect(W / 2 - 130, H - 68, 260, 44, 6); pb.lineStyle(2, 0xb89a6a, 1); pb.strokeRoundedRect(W / 2 - 130, H - 68, 260, 44, 6); pt.setColor('#f5d87a'); });
+    hz.on('pointerdown', () => this.scene.start('Game'));
+
+    const sc = JSON.parse(localStorage.getItem('boda_scores') || '[]');
+    if (sc.length) this.add.text(W - 10, H - 8, `🏆 ${sc[0].score} pts`, {
+      fontFamily: 'Lato', fontSize: '11px', color: '#f5d87a'
+    }).setOrigin(1, 1);
+
+    this.input.keyboard.on('keydown-SPACE', () => this.scene.start('Game'));
+    this.input.keyboard.on('keydown-ENTER', () => this.scene.start('Game'));
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    GAME SCENE
-═══════════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 class GameScene extends Phaser.Scene {
-  constructor(){ super({key:'Game'}); }
+  constructor() { super({ key: 'Game' }); }
 
-  init(){
-    this.score=0; this.distance=0; this.speed=SPEEDS.initial;
-    this.isGrounded=true; this.coupleVelY=0; this._jc=0;
-    this.shielded=false; this.boosted=false;
-    this.shieldT=0; this.boostT=0; this.spawnT=0;
-    this.elapsed=0; this.victoryStarted=false; this._hit=false;
-    this._valeDir=-42; this._audioCtx=null;
+  init() {
+    this.score = 0;
+    this.lives = 3;
+    this.elapsed = 0;
+    this.worldX = 0;         /* camera / world scroll position */
+    this.velX = 0;
+    this.velY = 0;
+    this.isGrounded = true;
+    this.jumpCount = 0;
+    this.shielded = false;
+    this.boosted = false;
+    this.shieldT = 0;
+    this.boostT = 0;
+    this.hitCooldown = 0;
+    this.victoryStarted = false;
+    this.themeIndex = 0;
+    this.themeAlpha = 0;      /* 0→1 transition progress */
+    this.items = [];
+    this.cats = [];
+    this.spawnX = W + 300;   /* next spawn world-x */
+    this.keys = {};
+    this.touch = { left: false, right: false, jump: false };
   }
 
-  _scaledBg(y, height, key, depth) {
-    let tex = this.textures.get(key).getSourceImage();
-    let scale = tex && tex.height ? height / tex.height : 1;
-    let w = W / scale;
-    let ts = this.add.tileSprite(0, y, w, tex ? tex.height : height, key).setOrigin(0,0).setDepth(depth).setScale(scale);
+  /* ── helpers ── */
+  _imgScale(key, targetH) {
+    const t = this.textures.get(key).getSourceImage();
+    return (t && t.height) ? targetH / t.height : 1;
+  }
+
+  _scaledTile(worldY, height, key, depth) {
+    const scale = this._imgScale(key, height);
+    const tex = this.textures.get(key).getSourceImage();
+    const tw = tex ? tex.width : W;
+    const ts = this.add.tileSprite(0, worldY, tw, tex ? tex.height : height, key)
+      .setOrigin(0, 0).setDepth(depth).setScale(scale);
     return ts;
   }
 
-  create(){
-    /* Themes */
-    this.themes = ['beach', 'city', 'desert', 'halloween', 'mexican', 'church'];
-    this.currentThemeIndex = 0;
-    
-    /* World */
-    this.bgFar = this._scaledBg(0, H, `bg_${this.themes[0]}_far`, 0);
-    this.bgMid = this._scaledBg(0, H - 85, `bg_${this.themes[0]}_mid`, 1);
-    this.gndTile = this._scaledBg(H - 85, 85, `floor_${this.themes[0]}`, 3);
-    
-    /* Variables */
-    this.lives = 3;
+  create() {
+    /* Backgrounds — two sets for crossfade */
+    this.bgFarA  = this._scaledTile(0, H, 'bg_beach_far', 0);
+    this.bgFarB  = this._scaledTile(0, H, 'bg_beach_far', 0).setAlpha(0);
+    this.bgMidA  = this._scaledTile(0, H - 85, 'bg_beach_mid', 1);
+    this.bgMidB  = this._scaledTile(0, H - 85, 'bg_beach_mid', 1).setAlpha(0);
+    this.gndA    = this._scaledTile(H - 85, 85, 'floor_beach', 3);
+    this.gndB    = this._scaledTile(H - 85, 85, 'floor_beach', 3).setAlpha(0);
 
-    /* Couple */
-    this.coupleImg=this.add.image(120,GROUND_Y,'novios_running01').setOrigin(.5,1).setDepth(10);
-    let coupleTex = this.textures.get('novios_running01').getSourceImage();
-    let coupleScale = coupleTex && coupleTex.height ? 100 / coupleTex.height : 1;
-    this.coupleImg.setScale(coupleScale);
-    this.coupleAnim=new Anim(this.coupleImg,ANIMS.novios.run,7);
-    this.shadow=this.add.ellipse(120,GROUND_Y+4,80,12,0,0.18).setDepth(3);
+    /* Player */
+    this.playerX = 120;   /* world-space X, player always near left of screen */
+    this.playerY = GROUND_Y;
+    this.playerImg = this.add.image(120, GROUND_Y, 'novios_running01')
+      .setOrigin(0.5, 1).setDepth(10);
+    this.playerImg.setScale(this._imgScale('novios_running01', 100));
+    this.playerAnim = new Anim(this.playerImg, ANIMS.novios.idle, 7);
+    this.shadow = this.add.ellipse(120, GROUND_Y + 4, 80, 12, 0x000000, 0.18).setDepth(3);
 
-    /* Vale */
-    this.valeImg=this.add.image(W + Phaser.Math.Between(800, 2500),GROUND_Y - 50,'vale_idle-Stand01').setOrigin(.5,1).setDepth(8);
-    let valeTex = this.textures.get('vale_idle-Stand01').getSourceImage();
-    let valeScale = valeTex && valeTex.height ? 140 / valeTex.height : 1;
-    this.valeImg.setScale(valeScale);
-    this.valeAnim=new Anim(this.valeImg,ANIMS.vale.idle,3);
-
-    /* Groups */
-    this.items=this.add.group();
-    this.cats =this.add.group();
+    /* Vale — placed at end of world */
+    this.valeWorldX = WORLD_W - 160;
+    this.valeImg = this.add.image(this.valeWorldX - this.worldX, GROUND_Y, 'vale_idle-Stand01')
+      .setOrigin(0.5, 1).setDepth(8);
+    this.valeImg.setScale(this._imgScale('vale_idle-Stand01', 140));
+    this.valeAnim = new Anim(this.valeImg, ANIMS.vale.idle, 3);
 
     /* HUD */
-    const uiScoreImg = this.add.image(10, 10, 'ui_score').setOrigin(0, 0).setDepth(50);
-    const scoreScale = 46 / (this.textures.get('ui_score').getSourceImage().height || 46);
-    uiScoreImg.setScale(scoreScale);
-    this.scoreTxt = this.add.text(10 + (uiScoreImg.width * scoreScale) / 2, 10 + (uiScoreImg.height * scoreScale) / 2, 'PUNTOS  0', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
+    this._buildHUD();
 
-    const uiTimeImg = this.add.image(W - 10, 10, 'ui_besttime').setOrigin(1, 0).setDepth(50);
-    const timeScale = 46 / (this.textures.get('ui_besttime').getSourceImage().height || 46);
-    uiTimeImg.setScale(timeScale);
-    this.timeTxt = this.add.text(W - 10 - (uiTimeImg.width * timeScale) / 2, 10 + (uiTimeImg.height * timeScale) / 2, '0:00', {fontFamily:'Cinzel',fontSize:'14px',color:'#ffffff',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
+    /* Mobile controls */
+    this._buildMobileControls();
 
-    this.distTxt = this.add.text(W/2, 8, '0 m', {fontFamily:'Cinzel',fontSize:'13px',color:'#fff'}).setOrigin(.5,0).setDepth(51);
-    this.add.graphics().setDepth(51).lineStyle(1,0x444400,1).strokeRect(W/2-150,30,300,10);
-    this.add.graphics().setDepth(52).fillStyle(0xffd700,1).fillCircle(W/2+150,35,6);
-    this.progBar=this.add.graphics().setDepth(52);
+    /* Keyboard */
+    const kb = this.input.keyboard;
+    this.keys.left  = kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+    this.keys.right = kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+    this.keys.up    = kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.keys.space = kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keys.a     = kb.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.keys.d     = kb.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keys.w     = kb.addKey(Phaser.Input.Keyboard.KeyCodes.W);
 
-    this.livesTxt=this.add.text(12,28,'❤️❤️❤️',{fontFamily:'Lato',fontSize:'11px',color:'#ff4444'}).setDepth(52);
-    this.shTxt=this.add.text(80,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#44aaff'}).setDepth(52);
-    this.bsTxt=this.add.text(140,28,'',{fontFamily:'Lato',fontSize:'11px',color:'#ffaa00'}).setDepth(52);
+    kb.on('keydown-UP',    () => this._jump());
+    kb.on('keydown-SPACE', () => this._jump());
+    kb.on('keydown-W',     () => this._jump());
 
-    /* Input */
-    this.input.keyboard.on('keydown-SPACE',()=>this._jump());
-    this.input.keyboard.on('keydown-UP',   ()=>this._jump());
-    this.input.on('pointerdown',p=>{ if(p.y>50) this._jump(); });
+    /* Pre-spawn items and cats across the world */
+    this._preSpawnWorld();
   }
 
-  _jump(){
-    if(this.victoryStarted) return;
-    if(this._jc>=2) return;
-    this.coupleVelY=-510; this._jc++; this.isGrounded=false;
-    this.coupleAnim.set(ANIMS.novios.jump,6);
-    this._tone(440,.08,'square');
+  _buildHUD() {
+    /* Score */
+    const uiScoreImg = this.add.image(10, 10, 'ui_score').setOrigin(0, 0).setDepth(50);
+    uiScoreImg.setScale(this._imgScale('ui_score', 46));
+    this.scoreTxt = this.add.text(
+      10 + (uiScoreImg.displayWidth) / 2,
+      10 + (uiScoreImg.displayHeight) / 2,
+      'PUNTOS  0',
+      { fontFamily: 'Cinzel', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }
+    ).setOrigin(0.5).setDepth(51);
+
+    /* Timer */
+    const uiTimeImg = this.add.image(W - 10, 10, 'ui_besttime').setOrigin(1, 0).setDepth(50);
+    uiTimeImg.setScale(this._imgScale('ui_besttime', 46));
+    this.timeTxt = this.add.text(
+      W - 10 - uiTimeImg.displayWidth / 2,
+      10 + uiTimeImg.displayHeight / 2,
+      '0:00',
+      { fontFamily: 'Cinzel', fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }
+    ).setOrigin(0.5).setDepth(51);
+
+    /* Progress bar */
+    this.add.graphics().setDepth(51)
+      .lineStyle(1, 0x444400, 1)
+      .strokeRect(W / 2 - 150, 30, 300, 10);
+    this.add.graphics().setDepth(52)
+      .fillStyle(0xffd700, 1)
+      .fillCircle(W / 2 + 150, 35, 6);
+    this.progBar = this.add.graphics().setDepth(52);
+
+    /* Lives + status */
+    this.livesTxt = this.add.text(12, 46, '❤️❤️❤️', {
+      fontFamily: 'Lato', fontSize: '11px', color: '#ff4444'
+    }).setDepth(52);
+    this.shTxt = this.add.text(90, 46, '', {
+      fontFamily: 'Lato', fontSize: '11px', color: '#44aaff'
+    }).setDepth(52);
+    this.bsTxt = this.add.text(160, 46, '', {
+      fontFamily: 'Lato', fontSize: '11px', color: '#ffaa00'
+    }).setDepth(52);
+  }
+
+  _buildMobileControls() {
+    const btnStyle = { fontFamily: 'Lato', fontSize: '22px', color: '#ffffff' };
+    const alpha = 0.45;
+    const btnH = H - 26;
+
+    const mkBtn = (x, label, w, h, cb) => {
+      const g = this.add.graphics().setDepth(60).setScrollFactor(0);
+      g.fillStyle(0xffffff, alpha); g.fillRoundedRect(x - w / 2, btnH - h / 2, w, h, 8);
+      const t = this.add.text(x, btnH, label, btnStyle).setOrigin(0.5).setDepth(61).setScrollFactor(0);
+      const z = this.add.zone(x, btnH, w, h).setInteractive().setScrollFactor(0).setDepth(62);
+      z.on('pointerdown', () => cb(true));
+      z.on('pointerup', () => cb(false));
+      z.on('pointerout', () => cb(false));
+      return { g, t, z };
+    };
+
+    mkBtn(36, '←', 54, 44, v => this.touch.left = v);
+    mkBtn(96, '→', 54, 44, v => this.touch.right = v);
+    mkBtn(W - 46, '↑', 54, 44, v => { if (v) this._jump(); });
+
+    /* Only show on touch */
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) {
+      /* hide — still functional for hybrid devices */
+    }
+  }
+
+  _preSpawnWorld() {
+    /* Collectibles */
+    const ptTypes = ['points_01','points_02','points_03','points_04','points_05'];
+    const bmTypes = ['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04'];
+    const blTypes = ['blocker_life-01','blocker_life-02','blocker_life-03'];
+    const pwTypes = ['booster','life','shield'];
+
+    let wx = 600;
+    while (wx < WORLD_W - 300) {
+      const r = Math.random();
+      let key, cat;
+      if (r < 0.45)      { key = Phaser.Utils.Array.GetRandom(ptTypes); cat = 'points'; }
+      else if (r < 0.65) { key = Phaser.Utils.Array.GetRandom(bmTypes); cat = 'block_money'; }
+      else if (r < 0.82) { key = Phaser.Utils.Array.GetRandom(blTypes); cat = 'block_life'; }
+      else               { key = Phaser.Utils.Array.GetRandom(pwTypes); cat = 'powerup'; }
+
+      /* Varying heights: ground / elevated / floating */
+      const h = (cat === 'block_money') ? GROUND_Y - Phaser.Math.Between(60, 130)
+              : (cat === 'powerup')      ? GROUND_Y - Phaser.Math.Between(40, 100)
+              : GROUND_Y;
+
+      const img = this.add.image(wx - this.worldX, h, key)
+        .setOrigin(0.5, 1).setDepth(7);
+      img.setScale(this._imgScale(key, 55));
+      if (cat !== 'block_life') {
+        this.tweens.add({ targets: img, alpha: { from: 0.6, to: 1 }, duration: 500, yoyo: true, repeat: -1 });
+      }
+      img._wx = wx;
+      img._cat = cat;
+      img._key = key;
+      img._alive = true;
+      this.items.push(img);
+
+      wx += Phaser.Math.Between(180, 420);
+    }
+
+    /* Cats */
+    const catDefs = [
+      { key: 'iker',  effect: 'shield',  label: '🛡 ¡ESCUDO!' },
+      { key: 'finch', effect: 'points',  label: '+500 PUNTOS' },
+      { key: 'pilly', effect: 'boost',   label: '⚡ ¡TURBO!' },
+    ];
+    let cx = 500;
+    while (cx < WORLD_W - 400) {
+      cx += Phaser.Math.Between(600, 1100);
+      const d = Phaser.Utils.Array.GetRandom(catDefs);
+      const sleeping = Math.random() < 0.3;
+      const frames = sleeping ? ANIMS[d.key].sleep : ANIMS[d.key].idle;
+      const img = this.add.image(cx - this.worldX, GROUND_Y, frames[0])
+        .setOrigin(0.5, 1).setDepth(9);
+      img.setScale(this._imgScale(frames[0], 60));
+      img._wx = cx;
+      img._catKey = d.key;
+      img._effect = d.effect;
+      img._label = d.label;
+      img._alive = true;
+      img._anim = new Anim(img, frames, 5);
+      this.cats.push(img);
+    }
+  }
+
+  /* ── Jump ── */
+  _jump() {
+    if (this.victoryStarted) return;
+    if (this.jumpCount >= 2) return;
+    this.velY = -510;
+    this.jumpCount++;
+    this.isGrounded = false;
+    this.playerAnim.set(ANIMS.novios.jump, 6);
+    tone(440, 0.08, 'square');
     this._burst();
   }
 
-  update(_t,dt){
-    if(this.victoryStarted) return;
-    const dts=dt/1000;
-    const spd=this.boosted?this.speed*1.4:this.speed;
+  /* ── Update ── */
+  update(_t, dt) {
+    if (this.victoryStarted) return;
+    const dts = dt / 1000;
 
-    this.distance+=spd*dts*.05;
-    this.score+=Math.round(spd*dts*.28);
-    this.speed=Math.min(this.speed+SPEEDS.accelPerSec*dts,SPEEDS.max);
+    /* ── Input ── */
+    const goLeft  = this.keys.left.isDown  || this.keys.a.isDown    || this.touch.left;
+    const goRight = this.keys.right.isDown || this.keys.d.isDown    || this.touch.right;
 
-    if(this.distance>=GOAL_DIST){ this._victory(); return; }
+    const baseSpeed = this.boosted ? 260 : 180;
+    if (goRight)     this.velX =  baseSpeed;
+    else if (goLeft) this.velX = -baseSpeed;
+    else             this.velX = 0;
 
-
-    /* Themes */
-    const expectedTheme = Math.floor(this.distance / (GOAL_DIST / this.themes.length));
-    const nextThemeIndex = Math.min(expectedTheme, this.themes.length - 1);
-    if(nextThemeIndex > this.currentThemeIndex) {
-        this.currentThemeIndex = nextThemeIndex;
-        this.bgFar.setTexture(`bg_${this.themes[nextThemeIndex]}_far`);
-        this.bgMid.setTexture(`bg_${this.themes[nextThemeIndex]}_mid`);
-        this.gndTile.setTexture(`floor_${this.themes[nextThemeIndex]}`);
+    /* ── Physics ── */
+    if (!this.isGrounded) {
+      this.velY += GRAVITY * dts;
+      this.playerY += this.velY * dts;
+    }
+    if (this.playerY >= GROUND_Y) {
+      this.playerY = GROUND_Y; this.velY = 0;
+      if (!this.isGrounded) { this.isGrounded = true; this.jumpCount = 0; }
     }
 
+    /* ── World scroll (camera follow) ── */
+    const targetWorldX = Math.max(0, Math.min(this.playerX - 120, WORLD_W - W));
+    this.worldX += (targetWorldX - this.worldX) * Math.min(1, dts * 12);
 
-    this.bgFar.tilePositionX +=spd*.08*dts;
-    this.bgMid.tilePositionX +=spd*.25*dts;
-    this.gndTile.tilePositionX+=spd*dts;
+    /* Move player in world space */
+    this.playerX = Math.max(60, Math.min(WORLD_W - 60, this.playerX + this.velX * dts));
+    this.playerImg.x = this.playerX - this.worldX;
+    this.playerImg.y = this.playerY;
+    this.playerImg.setFlipX(this.velX < 0);
 
-    /* Physics */
-    if(!this.isGrounded){
-      this.coupleVelY+=1380*dts;
-      this.coupleImg.y+=this.coupleVelY*dts;
-    }
-    if(this.coupleImg.y>=GROUND_Y){
-      this.coupleImg.y=GROUND_Y; this.coupleVelY=0;
-      if(!this.isGrounded){ this.isGrounded=true; this._jc=0; this.coupleAnim.set(ANIMS.novios.run,7); }
-    }
-    const pct=Math.max(0,1-(GROUND_Y-this.coupleImg.y)/180);
-    this.shadow.setScale(pct,1).setAlpha(.18*pct).setPosition(this.coupleImg.x,GROUND_Y+4);
+    /* Shadow */
+    const airFrac = Math.max(0, 1 - (GROUND_Y - this.playerY) / 200);
+    this.shadow.setPosition(this.playerImg.x, GROUND_Y + 4).setScale(airFrac, 1).setAlpha(0.18 * airFrac);
 
-    /* Vale */
-    this.valeImg.x -= spd * dts;
-    if(this.valeImg.x < -100) {
-        this.valeImg.x = W + Phaser.Math.Between(800, 2500);
+    /* ── Animation state ── */
+    if (!this.hitCooldown) {
+      if (!this.isGrounded)     this.playerAnim.set(ANIMS.novios.jump, 6);
+      else if (Math.abs(this.velX) > 10) this.playerAnim.set(ANIMS.novios.run, 8);
+      else                      this.playerAnim.set(ANIMS.novios.idle, 5);
     }
+
+    /* ── Theme transitions ── */
+    this._updateTheme(dts);
+
+    /* ── Parallax scroll ── */
+    const spd = Math.abs(this.velX) > 10 ? Math.abs(this.velX) : 60;
+    const dir = this.velX >= 0 ? 1 : -1;
+    this.bgFarA.tilePositionX  += spd * 0.08 * dts * dir;
+    this.bgFarB.tilePositionX  += spd * 0.08 * dts * dir;
+    this.bgMidA.tilePositionX  += spd * 0.25 * dts * dir;
+    this.bgMidB.tilePositionX  += spd * 0.25 * dts * dir;
+    this.gndA.tilePositionX    += spd * dts * dir;
+    this.gndB.tilePositionX    += spd * dts * dir;
+
+    /* ── Items ── */
+    this.items.forEach(item => {
+      if (!item._alive) return;
+      item.x = item._wx - this.worldX;
+    });
+
+    /* ── Cats ── */
+    this.cats.forEach(cat => {
+      if (!cat._alive) return;
+      cat.x = cat._wx - this.worldX;
+      if (cat._anim) cat._anim.update(dt);
+    });
+
+    /* ── Vale ── */
+    this.valeImg.x = this.valeWorldX - this.worldX;
     this.valeAnim.update(dt);
-    this.coupleAnim.update(dt);
 
-    /* Spawn */
-    this.spawnT+=dt;
-    const interval=Math.max(800,1800-this.distance*.8);
-    if(this.spawnT>interval){ this.spawnT=0; Math.random()<.55?this._spawnItem():this._spawnCat(); }
+    /* ── Collisions ── */
+    this._checkCollisions();
 
-    /* Move objects */
-    this.items.getChildren().forEach(o=>{ o.x-=spd*dts; if(o.x<-70) o.destroy(); });
-    this.cats.getChildren().forEach(c=>{ c.x-=spd*dts; if(c.catAnim) c.catAnim.update(dt); if(c.x<-90) c.destroy(); });
-
-    /* HUD */
-    this.elapsed+=dts;
-    const m=Math.floor(this.elapsed/60), s=Math.floor(this.elapsed%60).toString().padStart(2,'0');
-    this.scoreTxt.setText(`PUNTOS  ${this.score}`);
-    this.distTxt.setText(`${Math.floor(this.distance)} m`);
-    this.timeTxt.setText(`${m}:${s}`);
-    const prog=Math.min(this.distance/GOAL_DIST,1);
-    this.progBar.clear(); this.progBar.fillStyle(0xb89a6a,1).fillRect(W/2-150,30,300*prog,10);
-    if(this.shielded){ this.shieldT-=dt; this.shTxt.setText(`🛡 ${(this.shieldT/1000).toFixed(1)}s`); if(this.shieldT<=0){this.shielded=false;this.shTxt.setText('');} }
-    if(this.boosted){  this.boostT-=dt;  this.bsTxt.setText(`⚡ ${(this.boostT/1000).toFixed(1)}s`);  if(this.boostT<=0){this.boosted=false;this.bsTxt.setText('');} }
-
-    /* Collisions */
-    this._collide();
-  }
-
-  _spawnItem(){
-    const ptsTypes=['points_01','points_02','points_03','points_04'];
-    const blockerMoneyTypes=['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04'];
-    const blockerLifeTypes=['blocker_life-01','blocker_life-02','blocker_life-03'];
-    const powerupTypes=['booster','life','shield'];
-    let type='';
-    let category='';
-    const r=Math.random();
-    if(r < 0.5){ type=Phaser.Utils.Array.GetRandom(ptsTypes); category='points'; }
-    else if(r < 0.7){ type=Phaser.Utils.Array.GetRandom(blockerMoneyTypes); category='block_money'; }
-    else if(r < 0.9){ type=Phaser.Utils.Array.GetRandom(blockerLifeTypes); category='block_life'; }
-    else { type=Phaser.Utils.Array.GetRandom(powerupTypes); category='powerup'; }
-    let y = GROUND_Y;
-    if(category === 'block_money') {
-        y = GROUND_Y - 120;
+    /* ── Victory check ── */
+    const distToVale = this.valeWorldX - this.playerX;
+    if (distToVale < 80 && !this.victoryStarted) {
+      this._startVictory();
+      return;
     }
-    const o=this.add.image(W+42,y,type).setOrigin(0.5, 1).setDepth(7);
-    if(category === 'block_money' || category === 'powerup') {
-        this.tweens.add({targets:o, alpha:{from:0.5, to:1}, duration:450, yoyo:true, repeat:-1});
+
+    /* ── Timers ── */
+    this.elapsed += dts;
+    if (this.hitCooldown > 0) this.hitCooldown -= dt;
+
+    if (this.shielded) {
+      this.shieldT -= dt;
+      this.shTxt.setText(`🛡 ${(this.shieldT / 1000).toFixed(1)}s`);
+      if (this.shieldT <= 0) { this.shielded = false; this.shTxt.setText(''); }
     }
-    const oTex=this.textures.get(type).getSourceImage();
-    const oScale=oTex && oTex.height ? 60 / oTex.height : 1;
-    o.setScale(oScale);
-    o.itemType=type; o.category=category; this.items.add(o);
+    if (this.boosted) {
+      this.boostT -= dt;
+      this.bsTxt.setText(`⚡ ${(this.boostT / 1000).toFixed(1)}s`);
+      if (this.boostT <= 0) { this.boosted = false; this.bsTxt.setText(''); }
+    }
+
+    /* ── HUD ── */
+    this.playerAnim.update(dt);
+    this._updateHUD();
   }
 
+  _updateTheme(dts) {
+    let nextTheme = 0;
+    for (let i = THEME_STARTS.length - 1; i >= 0; i--) {
+      if (this.playerX >= THEME_STARTS[i]) { nextTheme = i; break; }
+    }
+    if (nextTheme !== this.themeIndex) {
+      const t = THEMES[nextTheme];
+      this.bgFarB.setTexture(`bg_${t}_far`);
+      this.bgMidB.setTexture(`bg_${t}_mid`);
+      this.gndB.setTexture(`floor_${t}`);
+      this.bgFarB.setAlpha(0); this.bgMidB.setAlpha(0); this.gndB.setAlpha(0);
 
-
-
-
-
-  _spawnCat(){
-    const defs=[
-      {key:'iker', effect:'shield'},
-      {key:'finch',effect:'points'},
-      {key:'pilly',effect:'boost'},
-    ];
-    const d=Phaser.Utils.Array.GetRandom(defs);
-    const frames=Math.random()<.35?ANIMS[d.key].sleep:ANIMS[d.key].idle;
-    const c=this.add.image(W+64,GROUND_Y,frames[0]).setOrigin(.5,1).setDepth(9);
-    
-    let cTex = this.textures.get(frames[0]).getSourceImage();
-    let cScale = cTex && cTex.height ? 60 / cTex.height : 1;
-    c.setScale(cScale);
-
-    c.catKey=d.key; c.catEffect=d.effect;
-    c.catAnim=new Anim(c,frames,5);
-    this.cats.add(c);
-  }
-
-
-  _collide(){
-    if(this.victoryStarted) return;
-    const cx=this.coupleImg.x, cy=this.coupleImg.y;
-    this.items.getChildren().forEach(item=>{
-      const dx=item.x-cx,dy=item.y-cy;
-      if(Math.sqrt(dx*dx+dy*dy)<56){
-        if(item.category === 'points'){
-             const pts={points_01:100,points_02:200,points_03:300,points_04:150};
-             const cols={points_01:0xff8844,points_02:0xffdd44,points_03:0x44cc44,points_04:0xff88cc};
-             this.score+=pts[item.itemType]||100;
-             this._popup(item.x,item.y,`+${pts[item.itemType]||100}`,cols[item.itemType]||0xffffff);
-             this._chime();
-        } else if(item.category === 'block_money'){
-             if(!this.shielded){
-                 this.score=Math.max(0, this.score - 200);
-                 this._popup(item.x,item.y,`-200 RESTA DINERO`,0xff4444);
-                 this._tone(120,.25,'sawtooth');
-                 this._hitEffect();
-             } else {
-                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
-             }
-        } else if(item.category === 'block_life'){
-             if(!this.shielded){
-                  this.lives--;
-                  this._popup(item.x,item.y,`-1 VIDA`,0xff4444);
-                  this.updateLives();
-                  if(this.lives <= 0) {
-                      this._gameOver(); return;
-                  }
-                  this._tone(120,.25,'sawtooth');
-                  this._hitEffect();
-             } else {
-                 this._popup(item.x,item.y,`BLOCKED!`,0x44aaff);
-             }
-        } else if(item.category === 'powerup'){
-             if(item.itemType === 'life') {
-                  this.lives = Math.min(this.lives + 1, 5);
-                  this.updateLives();
-                  this._popup(item.x,item.y,`+1 VIDA`,0xff4444);
-                  this._chime();
-             } else if(item.itemType === 'shield') {
-                  this.shielded=true; this.shieldT=5000; this._popup(item.x,item.y,'🛡 ¡ESCUDO!',0x44aaff); this._chime();
-             } else if(item.itemType === 'booster') {
-                  this.boosted=true; this.boostT=5000; this.speed=Math.min(this.speed*1.45,SPEEDS.max); this._popup(item.x,item.y,'⚡ ¡BOOST!',0xffaa00); this._tone(660,.2,'square');
-             }
+      this.tweens.add({
+        targets: [this.bgFarB, this.bgMidB, this.gndB],
+        alpha: 1, duration: 1200,
+        onComplete: () => {
+          const t2 = THEMES[nextTheme];
+          this.bgFarA.setTexture(`bg_${t2}_far`).setAlpha(1);
+          this.bgMidA.setTexture(`bg_${t2}_mid`).setAlpha(1);
+          this.gndA.setTexture(`floor_${t2}`).setAlpha(1);
+          this.bgFarB.setAlpha(0); this.bgMidB.setAlpha(0); this.gndB.setAlpha(0);
         }
-        item.destroy();
-      }
-    });
-  }
-
-  updateLives(){
-     let h = '';
-     for(let i=0; i<this.lives; i++) h += '❤️';
-     this.livesTxt.setText(h);
-  }
-
-  _hitEffect(){
-    this.coupleVelY=-275; this.isGrounded=false;
-    this.coupleAnim.set(ANIMS.novios.hit,4);
-    this.cameras.main.shake(150,.01);
-    this.cameras.main.flash(100,255,50,50);
-  }
-
-  _gameOver(){
-     this.victoryStarted = true;
-     this.speed = 0;
-     this.time.delayedCall(1500,()=>this.scene.start('Menu')); // simplistic game over
-  }
-
-
-
-
-
-
-
-
-
-  _popup(x,y,msg,col){
-    const t=this.add.text(Math.min(x,W-22),y-30,msg,{
-      fontFamily:'Lato',fontSize:'12px',fontStyle:'bold',
-      color:'#'+col.toString(16).padStart(6,'0'),stroke:'#000',strokeThickness:3
-    }).setOrigin(.5,1).setDepth(60);
-    this.tweens.add({targets:t,y:t.y-38,alpha:0,duration:1100,onComplete:()=>t.destroy()});
-  }
-
-  _victory(){
-    this.victoryStarted=true; this.speed=0;
-    this.valeAnim.set(ANIMS.vale.happy,5);
-    this.tweens.add({
-      targets:[this.bgFar,this.bgMid,this.gndTile],alpha:0,duration:1000,
-      onComplete:()=>{
-        this.add.image(W/2,H/2,'win_church_background').setDisplaySize(W,H).setDepth(4);
-        this.add.image(W/2,H/2,'win_church_people').setDisplaySize(W,H).setDepth(5);
-        this.add.image(W/2,H/2,'win_floor_church').setDisplaySize(W,H).setDepth(5);
-        this.tweens.add({targets:this.coupleImg,x:W/2-18,duration:2400,ease:'Sine.Out',
-          onComplete:()=>{
-            this.coupleAnim.set(ANIMS.novios.kiss,5);
-            this._chime();
-            const bonus=Math.max(0,Math.floor(5000-this.elapsed*10));
-            this.score+=bonus;
-            const prev=JSON.parse(localStorage.getItem('boda_scores')||'[]');
-            prev.unshift({score:this.score,time:Math.round(this.elapsed),date:new Date().toLocaleDateString('es-MX')});
-            prev.sort((a,b)=>b.score-a.score);
-            localStorage.setItem('boda_scores',JSON.stringify(prev.slice(0,10)));
-            this._confetti();
-            this.time.delayedCall(3000,()=>this.scene.start('Victory',{score:this.score,elapsed:this.elapsed}));
-          }
-        });
-      }
-    });
-  }
-
-
-
-
-
-
-
-  _confetti(){
-    const cols=[0xffd700,0xff6699,0x44aaff,0xff8844,0x44cc88,0xcc44ff];
-    for(let i=0;i<50;i++) this.time.delayedCall(i*70,()=>{
-      const r=this.add.rectangle(Phaser.Math.Between(80,W-80),Phaser.Math.Between(20,H-20),8,8,Phaser.Utils.Array.GetRandom(cols)).setDepth(70);
-      this.tweens.add({targets:r,y:r.y+50,alpha:0,angle:Phaser.Math.Between(-180,180),duration:1300,onComplete:()=>r.destroy()});
-    });
-  }
-
-  _burst(){
-    for(let i=0;i<6;i++){
-      const r=this.add.rectangle(this.coupleImg.x+Phaser.Math.Between(-20,20),this.coupleImg.y,6,6,Phaser.Utils.Array.GetRandom([0xffd700,0xff6699,0x44aaff])).setDepth(15);
-      this.tweens.add({targets:r,y:r.y+30,alpha:0,duration:400,onComplete:()=>r.destroy()});
+      });
+      this.themeIndex = nextTheme;
     }
   }
 
-  _tone(f,d=.1,t='sine',v=.14){
-    try{
-      if(!this._audioCtx) this._audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-      const o=this._audioCtx.createOscillator(),g=this._audioCtx.createGain();
-      o.connect(g);g.connect(this._audioCtx.destination);
-      o.type=t;o.frequency.value=f;
-      g.gain.setValueAtTime(v,this._audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001,this._audioCtx.currentTime+d);
-      o.start();o.stop(this._audioCtx.currentTime+d);
-    }catch(e){}
+  _checkCollisions() {
+    const px = this.playerImg.x, py = this.playerImg.y;
+    const pr = 50;
+
+    /* Items */
+    this.items.forEach(item => {
+      if (!item._alive) return;
+      const dx = item.x - px, dy = item.y - py;
+      if (Math.sqrt(dx * dx + dy * dy) > pr) return;
+      item._alive = false;
+
+      switch (item._cat) {
+        case 'points': {
+          const pts = { points_01:100,points_02:200,points_03:300,points_04:150,points_05:250 };
+          const add = pts[item._key] || 100;
+          this.score += add;
+          this._popup(item.x, item.y, `+${add}`, 0xffdd44);
+          chime();
+          break;
+        }
+        case 'block_money':
+          if (this.shielded) { this._popup(item.x, item.y, 'BLOCKED!', 0x44aaff); }
+          else {
+            this.score = Math.max(0, this.score - 200);
+            this._popup(item.x, item.y, '-200 💸', 0xff4444);
+            tone(120, 0.25, 'sawtooth');
+            this._hitEffect();
+          }
+          break;
+        case 'block_life':
+          if (this.shielded) { this._popup(item.x, item.y, 'BLOCKED!', 0x44aaff); }
+          else {
+            this.lives--;
+            this._popup(item.x, item.y, '-1 VIDA 💔', 0xff4444);
+            this._updateLives();
+            tone(120, 0.25, 'sawtooth');
+            this._hitEffect();
+            if (this.lives <= 0) { this._gameOver(); return; }
+          }
+          break;
+        case 'powerup':
+          if (item._key === 'life') {
+            this.lives = Math.min(this.lives + 1, 5);
+            this._updateLives();
+            this._popup(item.x, item.y, '+1 VIDA ❤️', 0xff4444);
+            chime();
+          } else if (item._key === 'shield') {
+            this.shielded = true; this.shieldT = 6000;
+            this._popup(item.x, item.y, '🛡 ¡ESCUDO!', 0x44aaff);
+            chime();
+          } else if (item._key === 'booster') {
+            this.boosted = true; this.boostT = 5000;
+            this._popup(item.x, item.y, '⚡ ¡TURBO!', 0xffaa00);
+            tone(660, 0.2, 'square');
+          }
+          break;
+      }
+      this.tweens.add({ targets: item, alpha: 0, scaleX: 2, scaleY: 2, duration: 300, onComplete: () => item.destroy() });
+    });
+
+    /* Cats */
+    this.cats.forEach(cat => {
+      if (!cat._alive) return;
+      const dx = cat.x - px, dy = cat.y - py;
+      if (Math.sqrt(dx * dx + dy * dy) > pr + 10) return;
+      cat._alive = false;
+      cat._anim && cat._anim.set(ANIMS[cat._catKey].happy, 8);
+
+      switch (cat._effect) {
+        case 'shield':
+          this.shielded = true; this.shieldT = 6000;
+          this._popup(cat.x, cat.y, cat._label, 0x44aaff);
+          chime(); break;
+        case 'points':
+          this.score += 500;
+          this._popup(cat.x, cat.y, cat._label, 0xffdd44);
+          chime(); break;
+        case 'boost':
+          this.boosted = true; this.boostT = 5000;
+          this._popup(cat.x, cat.y, cat._label, 0xffaa00);
+          tone(660, 0.2, 'square'); break;
+      }
+      this.time.delayedCall(600, () => {
+        this.tweens.add({ targets: cat, alpha: 0, y: cat.y - 30, duration: 500, onComplete: () => cat.destroy() });
+      });
+    });
   }
-  _chime(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this._tone(f,.14,'sine'),i*110)); }
+
+  _hitEffect() {
+    if (this.hitCooldown > 0) return;
+    this.hitCooldown = 1500;
+    this.velY = -300;
+    this.isGrounded = false;
+    this.playerAnim.set(ANIMS.novios.hit, 4);
+    this.cameras.main.shake(150, 0.012);
+    this.cameras.main.flash(100, 255, 60, 60);
+    this.time.delayedCall(400, () => {
+      if (!this.victoryStarted) this.playerAnim.set(ANIMS.novios.idle, 5);
+    });
+  }
+
+  _gameOver() {
+    this.victoryStarted = true;
+    this.speed = 0;
+    this._popup(this.playerImg.x, this.playerImg.y - 40, 'GAME OVER', 0xff2222);
+    this.cameras.main.shake(300, 0.02);
+    this.time.delayedCall(2000, () => this.scene.start('Menu'));
+  }
+
+  _startVictory() {
+    this.victoryStarted = true;
+    this.velX = 0;
+
+    /* Vale reacts */
+    this.valeAnim.set(ANIMS.vale.happy, 6);
+
+    /* Fade to win scene */
+    this.cameras.main.fadeOut(1200, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      /* Build win scene in-place */
+      this.cameras.main.setBackgroundColor('#0a0520');
+      this.bgFarA.setAlpha(0); this.bgFarB.setAlpha(0);
+      this.bgMidA.setAlpha(0); this.bgMidB.setAlpha(0);
+      this.gndA.setAlpha(0);   this.gndB.setAlpha(0);
+
+      this.add.image(W / 2, H / 2, 'win_church_background').setDisplaySize(W, H).setDepth(4);
+      this.add.image(W / 2, H / 2, 'win_church_people').setDisplaySize(W, H).setDepth(5);
+      this.add.image(W / 2, H, 'win_floor_church').setDisplaySize(W, H * 0.35).setOrigin(0.5, 1).setDepth(5);
+
+      /* Reset positions */
+      this.playerImg.x = W / 2 - 60;
+      this.playerImg.y = GROUND_Y;
+      this.valeImg.x = W / 2 + 60;
+      this.valeImg.y = GROUND_Y;
+      this.valeImg.setDepth(8);
+
+      this.cameras.main.fadeIn(800);
+
+      /* Walk toward each other */
+      this.playerAnim.set(ANIMS.novios.walk, 6);
+      this.tweens.add({
+        targets: this.playerImg, x: W / 2 - 18, duration: 1400, ease: 'Sine.Out',
+        onComplete: () => {
+          this.playerAnim.set(ANIMS.novios.kiss, 5);
+          this.valeAnim.set(ANIMS.vale.happy, 4);
+          chime();
+          this._confetti();
+
+          const bonus = Math.max(0, Math.floor(5000 - this.elapsed * 10));
+          this.score += bonus;
+          const prev = JSON.parse(localStorage.getItem('boda_scores') || '[]');
+          prev.unshift({ score: this.score, time: Math.round(this.elapsed), date: new Date().toLocaleDateString('es-MX') });
+          prev.sort((a, b) => b.score - a.score);
+          localStorage.setItem('boda_scores', JSON.stringify(prev.slice(0, 10)));
+
+          this.time.delayedCall(1200, () => {
+            this.playerAnim.set(ANIMS.novios.dance, 5);
+            this.time.delayedCall(2000, () => {
+              this.playerAnim.set(ANIMS.novios.win, 6);
+              this.time.delayedCall(1500, () => {
+                this.scene.start('Victory', { score: this.score, elapsed: this.elapsed });
+              });
+            });
+          });
+        }
+      });
+    });
+  }
+
+  _updateHUD() {
+    this.scoreTxt.setText(`PUNTOS  ${this.score}`);
+    const m = Math.floor(this.elapsed / 60);
+    const s = Math.floor(this.elapsed % 60).toString().padStart(2, '0');
+    this.timeTxt.setText(`${m}:${s}`);
+    const prog = Math.min(this.playerX / WORLD_W, 1);
+    this.progBar.clear();
+    this.progBar.fillStyle(0xb89a6a, 1).fillRect(W / 2 - 150, 30, 300 * prog, 10);
+  }
+
+  _updateLives() {
+    let h = '';
+    for (let i = 0; i < this.lives; i++) h += '❤️';
+    this.livesTxt.setText(h);
+  }
+
+  _popup(x, y, msg, col) {
+    const t = this.add.text(
+      Math.max(20, Math.min(x, W - 20)), y - 30, msg,
+      { fontFamily: 'Lato', fontSize: '12px', fontStyle: 'bold', color: '#' + col.toString(16).padStart(6, '0'), stroke: '#000', strokeThickness: 3 }
+    ).setOrigin(0.5, 1).setDepth(60);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 1100, onComplete: () => t.destroy() });
+  }
+
+  _confetti() {
+    const cols = [0xffd700, 0xff6699, 0x44aaff, 0xff8844, 0x44cc88, 0xcc44ff];
+    for (let i = 0; i < 60; i++) this.time.delayedCall(i * 60, () => {
+      const r = this.add.rectangle(
+        Phaser.Math.Between(60, W - 60),
+        Phaser.Math.Between(10, H - 10),
+        8, 8, Phaser.Utils.Array.GetRandom(cols)
+      ).setDepth(70);
+      this.tweens.add({ targets: r, y: r.y + 60, alpha: 0, angle: Phaser.Math.Between(-180, 180), duration: 1400, onComplete: () => r.destroy() });
+    });
+  }
+
+  _burst() {
+    for (let i = 0; i < 6; i++) {
+      const r = this.add.rectangle(
+        this.playerImg.x + Phaser.Math.Between(-20, 20), this.playerImg.y,
+        6, 6, Phaser.Utils.Array.GetRandom([0xffd700, 0xff6699, 0x44aaff])
+      ).setDepth(15);
+      this.tweens.add({ targets: r, y: r.y + 30, alpha: 0, duration: 400, onComplete: () => r.destroy() });
+    }
+  }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    VICTORY SCENE
-═══════════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════ */
 class VictoryScene extends Phaser.Scene {
-  constructor(){ super({key:'Victory'}); }
-  init(d){ this.finalScore=d.score||0; this.elapsed=d.elapsed||0; }
+  constructor() { super({ key: 'Victory' }); }
+  init(d) { this.finalScore = d.score || 0; this.elapsed = d.elapsed || 0; }
 
-  create(){
+  create() {
     this.cameras.main.setBackgroundColor('#0a0a1a');
-    for(let i=0;i<60;i++) this.add.circle(Phaser.Math.Between(0,W),Phaser.Math.Between(0,H),Phaser.Math.Between(1,3),0xffffff,Phaser.Math.FloatBetween(.2,.9));
+    for (let i = 0; i < 60; i++)
+      this.add.circle(
+        Phaser.Math.Between(0, W), Phaser.Math.Between(0, H),
+        Phaser.Math.Between(1, 3), 0xffffff, Phaser.Math.FloatBetween(0.2, 0.9)
+      );
 
-    const p=this.add.graphics();
-    p.fillStyle(0x1a0e00,.96); p.fillRoundedRect(W/2-260,28,520,H-56,12);
-    p.lineStyle(2,0xb89a6a,1); p.strokeRoundedRect(W/2-260,28,520,H-56,12);
+    const p = this.add.graphics();
+    p.fillStyle(0x1a0e00, 0.96); p.fillRoundedRect(W / 2 - 260, 28, 520, H - 56, 12);
+    p.lineStyle(2, 0xb89a6a, 1); p.strokeRoundedRect(W / 2 - 260, 28, 520, H - 56, 12);
 
-    this.add.text(W/2,44,'✦  ¡VIVAN LOS NOVIOS!  ✦',{fontFamily:'Cinzel',fontSize:'13px',color:'#f5d87a',letterSpacing:2}).setOrigin(.5);
-    this.add.text(W/2,66,'La Boda de Cris y José',{fontFamily:'Cinzel',fontSize:'19px',color:'#fff',fontStyle:'italic'}).setOrigin(.5);
+    this.add.text(W / 2, 44, '✦  ¡VIVAN LOS NOVIOS!  ✦', {
+      fontFamily: 'Cinzel', fontSize: '13px', color: '#f5d87a', letterSpacing: 2
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 64, 'La Boda de Cris y José', {
+      fontFamily: 'Cinzel', fontSize: '19px', color: '#fff', fontStyle: 'italic'
+    }).setOrigin(0.5);
 
-    const wk=this.textures.exists('novios_win01')?'novios_win01':'novios_kiss01';
-    this.add.image(W/2,108,wk).setDisplaySize(108,96);
+    const wk = this.textures.exists('novios_win01') ? 'novios_win01' : 'novios_kiss01';
+    this.add.image(W / 2, 108, wk).setDisplaySize(108, 96);
 
-    const m=Math.floor(this.elapsed/60),s=Math.floor(this.elapsed%60).toString().padStart(2,'0');
-    this.add.text(W/2,152,`${this.finalScore}`,{fontFamily:'Cinzel',fontSize:'44px',color:'#f5d87a',fontStyle:'bold'}).setOrigin(.5);
-    this.add.text(W/2,196,'PUNTOS',{fontFamily:'Lato',fontSize:'11px',color:'rgba(255,255,255,.4)',letterSpacing:4}).setOrigin(.5);
-    this.add.text(W/2,213,`Tiempo: ${m}:${s}`,{fontFamily:'Lato',fontSize:'11px',color:'#aaddff'}).setOrigin(.5);
+    const m = Math.floor(this.elapsed / 60);
+    const s = Math.floor(this.elapsed % 60).toString().padStart(2, '0');
+    this.add.text(W / 2, 152, `${this.finalScore}`, {
+      fontFamily: 'Cinzel', fontSize: '44px', color: '#f5d87a', fontStyle: 'bold'
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 194, 'PUNTOS', {
+      fontFamily: 'Lato', fontSize: '11px', color: 'rgba(255,255,255,.4)', letterSpacing: 4
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 212, `Tiempo: ${m}:${s}`, {
+      fontFamily: 'Lato', fontSize: '11px', color: '#aaddff'
+    }).setOrigin(0.5);
 
-    this.add.text(W/2,232,'— TABLA DE LÍDERES —',{fontFamily:'Cinzel',fontSize:'10px',color:'#b89a6a',letterSpacing:3}).setOrigin(.5);
-    const sc=JSON.parse(localStorage.getItem('boda_scores')||'[]').slice(0,5);
-    if(!sc.length) this.add.text(W/2,260,'(sin récords aún)',{fontFamily:'Lato',fontSize:'11px',color:'rgba(255,255,255,.3)'}).setOrigin(.5);
-    sc.forEach((s,i)=>{
-      const y=250+i*21;
-      const isMe=i===0&&s.score===this.finalScore;
-      this.add.text(W/2-130,y,`${'🥇🥈🥉  4  5'.split('').slice(i*2,i*2+2).join('')}  ${s.score} pts`,{fontFamily:'Lato',fontSize:'12px',color:isMe?'#f5d87a':'rgba(255,255,255,.6)',fontStyle:isMe?'bold':''});
-      this.add.text(W/2+55,y,`${s.time}s · ${s.date}`,{fontFamily:'Lato',fontSize:'10px',color:'rgba(255,255,255,.35)'});
+    this.add.text(W / 2, 232, '— TABLA DE LÍDERES —', {
+      fontFamily: 'Cinzel', fontSize: '10px', color: '#b89a6a', letterSpacing: 3
+    }).setOrigin(0.5);
+    const sc = JSON.parse(localStorage.getItem('boda_scores') || '[]').slice(0, 5);
+    if (!sc.length) this.add.text(W / 2, 258, '(sin récords aún)', {
+      fontFamily: 'Lato', fontSize: '11px', color: 'rgba(255,255,255,.3)'
+    }).setOrigin(0.5);
+    const medals = ['🥇', '🥈', '🥉', '4º', '5º'];
+    sc.forEach((entry, i) => {
+      const y = 250 + i * 21;
+      const isMe = i === 0 && entry.score === this.finalScore;
+      this.add.text(W / 2 - 130, y,
+        `${medals[i]}  ${entry.score} pts`,
+        { fontFamily: 'Lato', fontSize: '12px', color: isMe ? '#f5d87a' : 'rgba(255,255,255,.6)', fontStyle: isMe ? 'bold' : '' }
+      );
+      this.add.text(W / 2 + 55, y,
+        `${entry.time}s · ${entry.date}`,
+        { fontFamily: 'Lato', fontSize: '10px', color: 'rgba(255,255,255,.35)' }
+      );
     });
 
-    this._btn(W/2-108,H-66,190,'▶ JUGAR DE NUEVO',()=>this.scene.start('Game'));
-    this._btn(W/2+100,H-66,148,'← MENÚ',()=>this.scene.start('Menu'));
+    this._btn(W / 2 - 108, H - 68, 190, '▶ JUGAR DE NUEVO', () => this.scene.start('Game'));
+    this._btn(W / 2 + 100, H - 68, 148, '← MENÚ', () => this.scene.start('Menu'));
 
-    const cols=[0xffd700,0xff6699,0x44aaff,0xff8844];
-    for(let i=0;i<50;i++){
-      const r=this.add.rectangle(Phaser.Math.Between(0,W),Phaser.Math.Between(-20,0),Phaser.Math.Between(4,10),Phaser.Math.Between(4,10),Phaser.Utils.Array.GetRandom(cols));
-      this.tweens.add({targets:r,y:H+20,angle:Phaser.Math.Between(-360,360),duration:Phaser.Math.Between(2000,5000),delay:Phaser.Math.Between(0,2000),repeat:-1});
+    const cols = [0xffd700, 0xff6699, 0x44aaff, 0xff8844];
+    for (let i = 0; i < 50; i++) {
+      const r = this.add.rectangle(
+        Phaser.Math.Between(0, W), Phaser.Math.Between(-20, 0),
+        Phaser.Math.Between(4, 10), Phaser.Math.Between(4, 10),
+        Phaser.Utils.Array.GetRandom(cols)
+      );
+      this.tweens.add({
+        targets: r, y: H + 20,
+        angle: Phaser.Math.Between(-360, 360),
+        duration: Phaser.Math.Between(2000, 5000),
+        delay: Phaser.Math.Between(0, 2000),
+        repeat: -1
+      });
     }
   }
 
-  _btn(x,y,w,label,cb){
-    const g=this.add.graphics();
-    g.fillStyle(0xb89a6a,.15);g.fillRoundedRect(x-w/2,y-15,w,30,6);
-    g.lineStyle(1.5,0xb89a6a,1);g.strokeRoundedRect(x-w/2,y-15,w,30,6);
-    const t=this.add.text(x,y,label,{fontFamily:'Cinzel',fontSize:'11px',color:'#f5d87a'}).setOrigin(.5);
-    t.setInteractive(new Phaser.Geom.Rectangle(-w/2,-15,w,30),Phaser.Geom.Rectangle.Contains)
-      .on('pointerover',()=>{g.clear();g.fillStyle(0xb89a6a,.5);g.fillRoundedRect(x-w/2,y-15,w,30,6);t.setColor('#fff');})
-      .on('pointerout', ()=>{g.clear();g.fillStyle(0xb89a6a,.15);g.fillRoundedRect(x-w/2,y-15,w,30,6);g.lineStyle(1.5,0xb89a6a,1);g.strokeRoundedRect(x-w/2,y-15,w,30,6);t.setColor('#f5d87a');})
-      .on('pointerdown',cb);
+  _btn(x, y, w, label, cb) {
+    const g = this.add.graphics();
+    g.fillStyle(0xb89a6a, 0.15); g.fillRoundedRect(x - w / 2, y - 15, w, 30, 6);
+    g.lineStyle(1.5, 0xb89a6a, 1); g.strokeRoundedRect(x - w / 2, y - 15, w, 30, 6);
+    const t = this.add.text(x, y, label, { fontFamily: 'Cinzel', fontSize: '11px', color: '#f5d87a' }).setOrigin(0.5);
+    t.setInteractive(new Phaser.Geom.Rectangle(-w / 2, -15, w, 30), Phaser.Geom.Rectangle.Contains)
+      .on('pointerover', () => { g.clear(); g.fillStyle(0xb89a6a, 0.5); g.fillRoundedRect(x - w / 2, y - 15, w, 30, 6); t.setColor('#fff'); })
+      .on('pointerout',  () => { g.clear(); g.fillStyle(0xb89a6a, 0.15); g.fillRoundedRect(x - w / 2, y - 15, w, 30, 6); g.lineStyle(1.5, 0xb89a6a, 1); g.strokeRoundedRect(x - w / 2, y - 15, w, 30, 6); t.setColor('#f5d87a'); })
+      .on('pointerdown', cb);
   }
 }
 
 /* ─── Launch ─── */
 new Phaser.Game({
-  type:Phaser.AUTO, width:W, height:H, backgroundColor:'#1a0a00',
-  parent:'game-container',
-  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
-  physics:{default:'arcade',arcade:{gravity:{y:0},debug:false}},
-  scene:[BootScene,MenuScene,GameScene,VictoryScene],
+  type: Phaser.AUTO,
+  width: W, height: H,
+  backgroundColor: '#1a0a00',
+  parent: 'game-container',
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+  scene: [BootScene, MenuScene, GameScene, VictoryScene],
 });
 
-document.getElementById('game-container').addEventListener('dblclick',()=>{
-  document.fullscreenElement?document.exitFullscreen():document.getElementById('game-container').requestFullscreen?.();
+document.getElementById('game-container').addEventListener('dblclick', () => {
+  document.fullscreenElement
+    ? document.exitFullscreen()
+    : document.getElementById('game-container').requestFullscreen?.();
 });
 </script>
-<!--
-════════════════════════════════════════════════════════
-  ESTRUCTURA DE CARPETAS
-  Wedding/
-  ├── game.html
-  └── assets/
-      ├── characters/
-      │   ├── novios_idle01.png
-      │   ├── novios_running01.png  ... (todos los de la lista)
-      │   ├── vale_idle-Stand01.png ... vale_surpise01.png
-      │   ├── iker_idle01.png       ... iker_sleeping01.png
-      │   ├── finch_idle01.png      ... finch_sleeping01.png
-      │   └── pilly_idle01.png      ... pilly_sleeping01.png
-      └── bg/
-          ├── bg_far.png
-          ├── bg_mid.png
-          ├── bg_near.png
-          ├── ground_tile.png
-          └── portada.png
-════════════════════════════════════════════════════════
--->
 </body>
 </html>
