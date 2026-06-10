@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Run!</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+  canvas { display: block; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = 960;
+const H = 540;
+canvas.width = W;
+canvas.height = H;
+
+// ─── CONSTANTS ───────────────────────────────────────────────
+const GRAVITY      = 0.45;
+const JUMP_FORCE   = -12;
+const WALK_SPEED   = 2.8;   // player walk speed (pixels/frame)
+const GROUND_Y     = H - 90;
+const PLAYER_W     = 80;
+const PLAYER_H     = 100;
+
+// Each theme zone is this many world-pixels wide before the next one begins
+const ZONE_WIDTH   = 3200;
+// Camera only scrolls when player approaches this margin from right edge
+const CAM_RIGHT_MARGIN = W * 0.62;
+const CAM_LEFT_MARGIN  = W * 0.25;
+
+// ─── IMAGE LOADER ─────────────────────────────────────────────
+const imgs = {};
+let loadedCount = 0;
+let totalImages = 0;
+
+function loadImg(key, src) {
+  totalImages++;
+  const img = new Image();
+  img.onload  = () => { loadedCount++; };
+  img.onerror = () => { loadedCount++; };
+  img.src = src;
+  imgs[key] = img;
+}
+
+// Backgrounds
+const THEMES = ['church', 'beach', 'city', 'desert', 'halloween', 'mexican'];
+THEMES.forEach(t => {
+  loadImg(`bg_far_${t}`,  `assets/bg/bg_${t}_far.png`);
+  loadImg(`bg_mid_${t}`,  `assets/bg/bg_${t}_mid.png`);
+  loadImg(`floor_${t}`,   `assets/bg/floor_${t}.png`);
+});
+
+// Player (novios)
+loadImg('novios_run1',  'assets/characters/novios_running01.png');
+loadImg('novios_run2',  'assets/characters/novios_running02.png');
+loadImg('novios_idle1', 'assets/characters/novios_idle01.png');
+loadImg('novios_idle2', 'assets/characters/novios_idle02.png');
+loadImg('novios_jump1', 'assets/characters/novios_jumping01.png');
+loadImg('novios_jump2', 'assets/characters/novios_jumping02.png');
+loadImg('novios_hit',   'assets/characters/novios_hit01.png');
+loadImg('novios_kiss1', 'assets/characters/novios_kiss01.png');
+loadImg('novios_kiss2', 'assets/characters/novios_kiss02.png');
+loadImg('novios_win1',  'assets/characters/novios_win01.png');
+loadImg('novios_win2',  'assets/characters/novios_win02.png');
+
+// Static NPCs
+loadImg('vale_idle1',  'assets/characters/vale_idle-Stand01.png');
+loadImg('vale_idle2',  'assets/characters/vale_idle-Cel01.png');
+loadImg('vale_happy',  'assets/characters/vale_happy.png');
+loadImg('finch_idle1', 'assets/characters/finch_idle01.png');
+loadImg('finch_idle2', 'assets/characters/finch_idle02.png');
+loadImg('finch_meow',  'assets/characters/finch_meow01.png');
+loadImg('finch_sleep', 'assets/characters/finch_sleeping01.png');
+loadImg('iker_idle1',  'assets/characters/iker_idle01.png');
+loadImg('iker_idle2',  'assets/characters/iker_idle02.png');
+loadImg('iker_meow',   'assets/characters/iker_meow01.png');
+loadImg('iker_sleep',  'assets/characters/iker_sleeping01.png');
+loadImg('pilly_idle1', 'assets/characters/pilly_idle01.png');
+loadImg('pilly_idle2', 'assets/characters/pilly_idle02.png');
+loadImg('pilly_meow',  'assets/characters/pilly_meow01.png');
+loadImg('pilly_sleep', 'assets/characters/pilly_sleeping01.png');
+
+// Collectibles
+loadImg('points1', 'assets/props/points_01.png');
+loadImg('points2', 'assets/props/points_02.png');
+loadImg('points3', 'assets/props/points_03.png');
+loadImg('points4', 'assets/props/points_04.png');
+loadImg('points5', 'assets/props/points_05.png');
+loadImg('booster', 'assets/props/booster.png');
+loadImg('shield',  'assets/props/shield.png');
+loadImg('life',    'assets/props/life.png');
+
+// Blockers — credit cards & babies (shared across all themes for now)
+loadImg('blocker_cc1',   'assets/props/blocker_money_01.png');
+loadImg('blocker_cc2',   'assets/props/blocker_money_02.png');
+loadImg('blocker_cc3',   'assets/props/blocker_money_03.png');
+loadImg('blocker_cc4',   'assets/props/blocker_money-04.png');
+loadImg('blocker_baby1', 'assets/props/blocker_life-01.png');
+loadImg('blocker_baby2', 'assets/props/blocker_life-02.png');
+loadImg('blocker_baby3', 'assets/props/blocker_life-03.png');
+
+// UI
+loadImg('ui_portada',  'assets/UI/GamePortada.png');
+loadImg('ui_score',    'assets/UI/UI-Score.png');
+loadImg('ui_besttime', 'assets/UI/UI-BestTime.png');
+
+// ─── THEME BLOCKER CONFIG ─────────────────────────────────────
+// Each theme picks from its blocker pool (ready to swap per-theme assets later)
+const THEME_BLOCKERS = {
+  church:    ['cc', 'baby'],
+  beach:     ['cc', 'baby'],
+  city:      ['cc', 'baby'],
+  desert:    ['cc', 'baby'],
+  halloween: ['cc', 'baby'],
+  mexican:   ['cc', 'baby'],
+};
+
+// ─── WORLD / CAMERA STATE ─────────────────────────────────────
+let camX = 0;       // leftmost world-x currently visible
+let worldEnd = 0;   // total world width (set on game start)
+
+// ─── GAME STATE ───────────────────────────────────────────────
+let state = 'title';
+let score = 0;
+let bestScore = 0;
+let lives = 3;
+let shieldActive  = false;
+let shieldTimer   = 0;
+let boosterActive = false;
+let boosterTimer  = 0;
+let hitCooldown   = 0;
+let frameCount    = 0;
+
+// ─── PARALLAX STATE (per-theme offsets, world-space) ──────────
+// We derive screen offsets from camX each frame, no separate scroll vars needed.
+
+// ─── PLAYER ───────────────────────────────────────────────────
+const player = {
+  wx: 200,          // world x
+  y: GROUND_Y - PLAYER_H,
+  vy: 0,
+  vx: 0,
+  onGround: false,
+  facing: 1,        // 1 = right, -1 = left
+  animFrame: 0,
+  animTimer: 0,
+  jumping: false,
+  hitAnim: 0,
+  moving: false,
+};
+
+// ─── ENTITIES (world-space x) ─────────────────────────────────
+let platforms   = [];
+let blockers    = [];
+let collectibles = [];
+let staticChars = [];
+
+// ─── INPUT ────────────────────────────────────────────────────
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (state === 'title' && (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowRight')) startGame();
+  if (state === 'dead'  && (e.code === 'Space' || e.code === 'ArrowUp')) startGame();
+  if (state === 'win'   && (e.code === 'Space' || e.code === 'ArrowUp')) state = 'title';
+  e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (state === 'title') { startGame(); return; }
+  if (state === 'dead')  { startGame(); return; }
+  if (state === 'win')   { state = 'title'; return; }
+  keys['Space'] = true;
+}, { passive: false });
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  keys['Space'] = false;
+}, { passive: false });
+
+// ─── HELPERS ──────────────────────────────────────────────────
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+
+function themeAt(wx) {
+  const idx = Math.min(Math.floor(wx / ZONE_WIDTH), THEMES.length - 1);
+  return THEMES[idx];
+}
+
+function drawImg(key, x, y, w, h, flipH) {
+  const img = imgs[key];
+  if (img && img.complete && img.naturalWidth > 0) {
+    if (flipH) {
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, -x - w, y, w, h);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, x, y, w, h);
+    }
+  } else {
+    ctx.fillStyle = '#ff69b4';
+    ctx.fillRect(x, y, w, h);
+  }
+}
+
+function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+// world x → screen x
+function sx(wx) { return wx - camX; }
+
+// ─── WORLD GENERATION ─────────────────────────────────────────
+function buildWorld() {
+  platforms   = [];
+  blockers    = [];
+  collectibles = [];
+  staticChars  = [];
+
+  const numZones = THEMES.length;
+  worldEnd = numZones * ZONE_WIDTH;
+
+  for (let z = 0; z < numZones; z++) {
+    const zoneStart = z * ZONE_WIDTH;
+    const theme = THEMES[z];
+
+    // Platforms — 5–8 per zone, spread out
+    const numPlat = randInt(5, 8);
+    const platSpacing = ZONE_WIDTH / (numPlat + 1);
+    for (let i = 0; i < numPlat; i++) {
+      const wx = zoneStart + platSpacing * (i + 1) + rand(-80, 80);
+      const wy = randInt(GROUND_Y - 260, GROUND_Y - 120);
+      const pw = randInt(130, 240);
+      platforms.push({ wx, y: wy, w: pw, h: 20, theme });
+    }
+
+    // Blockers — 6–10 per zone, always on ground
+    const numBlock = randInt(6, 10);
+    const blockSpacing = ZONE_WIDTH / (numBlock + 1);
+    for (let i = 0; i < numBlock; i++) {
+      const wx = zoneStart + 400 + blockSpacing * (i + 1) + rand(-60, 60);
+      const pool = THEME_BLOCKERS[theme];
+      const kind = pool[randInt(0, pool.length - 1)];
+      const w = 54, h = 70;
+      const wy = GROUND_Y - h;
+      const frame = kind === 'cc' ? randInt(1, 4) : randInt(1, 3);
+      blockers.push({ wx, y: wy, w, h, kind, frame, theme });
+    }
+
+    // Collectibles — scattered, some on platforms
+    const numCollect = randInt(8, 14);
+    for (let i = 0; i < numCollect; i++) {
+      const wx = zoneStart + 200 + rand(0, ZONE_WIDTH - 300);
+      const roll = Math.random();
+      let kind, key;
+      if (roll < 0.50)      { const n = randInt(1,5); kind='points'; key=`points${n}`; }
+      else if (roll < 0.65) { kind='shield';  key='shield';  }
+      else if (roll < 0.78) { kind='booster'; key='booster'; }
+      else                  { kind='life';    key='life';    }
+      const wy = GROUND_Y - randInt(40, 220);
+      collectibles.push({ wx, y: wy, w: 40, h: 40, kind, key });
+    }
+
+    // Static chars — one per zone (vale in first, then cats)
+    const charX = zoneStart + ZONE_WIDTH * 0.5 + rand(-100, 100);
+    if (z === 0) {
+      const h = 90, w = 60;
+      staticChars.push({ kind:'vale',  wx: charX, y: GROUND_Y - h, w, h, animTimer:0, animFrame:0 });
+    } else {
+      const cats = ['finch','iker','pilly'];
+      const cat  = cats[(z - 1) % cats.length];
+      const h = 50, w = 50;
+      staticChars.push({ kind: cat, wx: charX, y: GROUND_Y - h, w, h, animTimer:0, animFrame:0 });
+    }
+  }
+}
+
+// ─── GAME INIT ────────────────────────────────────────────────
+function startGame() {
+  state        = 'playing';
+  score        = 0;
+  lives        = 3;
+  shieldActive = false; shieldTimer  = 0;
+  boosterActive= false; boosterTimer = 0;
+  hitCooldown  = 0;
+  frameCount   = 0;
+  camX         = 0;
+
+  player.wx       = 200;
+  player.y        = GROUND_Y - PLAYER_H;
+  player.vy       = 0;
+  player.vx       = 0;
+  player.onGround = true;
+  player.facing   = 1;
+  player.animFrame= 0;
+  player.animTimer= 0;
+  player.jumping  = false;
+  player.hitAnim  = 0;
+  player.moving   = false;
+
+  buildWorld();
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────
+function update() {
+  if (state !== 'playing') return;
+  frameCount++;
+
+  const moveSpeed = boosterActive ? WALK_SPEED * 1.5 : WALK_SPEED;
+
+  // ── Input → velocity ──
+  const leftPressed  = keys['ArrowLeft']  || keys['KeyA'];
+  const rightPressed = keys['ArrowRight'] || keys['KeyD'];
+  const jumpPressed  = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+
+  player.vx = 0;
+  player.moving = false;
+  if (rightPressed) { player.vx =  moveSpeed; player.facing = 1;  player.moving = true; }
+  if (leftPressed)  { player.vx = -moveSpeed; player.facing = -1; player.moving = true; }
+
+  // ── Physics ──
+  player.vy += GRAVITY;
+  player.y  += player.vy;
+  player.wx += player.vx;
+
+  // Clamp world left edge
+  if (player.wx < 80) player.wx = 80;
+  // Clamp world right edge
+  if (player.wx > worldEnd - PLAYER_W) { triggerWin(); return; }
+
+  player.onGround = false;
+
+  // Ground
+  if (player.y + PLAYER_H >= GROUND_Y) {
+    player.y        = GROUND_Y - PLAYER_H;
+    player.vy       = 0;
+    player.onGround = true;
+    player.jumping  = false;
+  }
+
+  // Platforms
+  for (const p of platforms) {
+    const psx = sx(p.wx);
+    if (psx + p.w < -20 || psx > W + 20) continue; // skip off-screen
+    if (
+      player.vy > 0 &&
+      player.wx + PLAYER_W - 10 > p.wx &&
+      player.wx + 10           < p.wx + p.w &&
+      player.y + PLAYER_H      > p.y &&
+      player.y + PLAYER_H      < p.y + p.h + 12
+    ) {
+      player.y        = p.y - PLAYER_H;
+      player.vy       = 0;
+      player.onGround = true;
+      player.jumping  = false;
+    }
+  }
+
+  // Jump
+  if (jumpPressed && player.onGround) {
+    player.vy      = JUMP_FORCE;
+    player.jumping = true;
+  }
+
+  // ── Camera follow ──
+  const screenX = player.wx - camX;
+  if (screenX > CAM_RIGHT_MARGIN) camX = player.wx - CAM_RIGHT_MARGIN;
+  if (screenX < CAM_LEFT_MARGIN)  camX = player.wx - CAM_LEFT_MARGIN;
+  camX = Math.max(0, Math.min(camX, worldEnd - W));
+
+  // ── Timers ──
+  if (hitCooldown   > 0) hitCooldown--;
+  if (shieldActive)  { shieldTimer--;  if (shieldTimer  <= 0) shieldActive  = false; }
+  if (boosterActive) { boosterTimer--; if (boosterTimer <= 0) boosterActive = false; }
+
+  // ── Player animation ──
+  player.animTimer++;
+  if (player.hitAnim > 0) {
+    player.hitAnim--;
+  } else if (!player.onGround) {
+    if (player.animTimer % 8 === 0) player.animFrame ^= 1;
+  } else if (player.moving) {
+    if (player.animTimer % 9 === 0) player.animFrame ^= 1;
+  } else {
+    if (player.animTimer % 30 === 0) player.animFrame ^= 1; // slow idle
+  }
+
+  // ── Animate static chars ──
+  for (const s of staticChars) {
+    s.animTimer++;
+    if (s.animTimer % 45 === 0) s.animFrame ^= 1;
+  }
+
+  // ── Blocker collision ──
+  if (hitCooldown === 0) {
+    for (let i = blockers.length - 1; i >= 0; i--) {
+      const b = blockers[i];
+      const m = 18;
+      if (aabb(
+        player.wx + m,    player.y + m,    PLAYER_W - m*2, PLAYER_H - m*2,
+        b.wx,             b.y,             b.w,            b.h
+      )) {
+        if (shieldActive) {
+          shieldActive = false; shieldTimer = 0;
+          blockers.splice(i, 1);
+        } else {
+          lives--;
+          player.hitAnim = 40;
+          hitCooldown    = 90;
+          blockers.splice(i, 1);
+          if (lives <= 0) { state = 'dead'; bestScore = Math.max(bestScore, score); return; }
+        }
+        break;
+      }
+    }
+  }
+
+  // ── Collectible collision ──
+  for (let i = collectibles.length - 1; i >= 0; i--) {
+    const c = collectibles[i];
+    const m = 10;
+    if (aabb(
+      player.wx + m, player.y + m, PLAYER_W - m*2, PLAYER_H - m*2,
+      c.wx,          c.y,          c.w,             c.h
+    )) {
+      if      (c.kind === 'points')              score += randInt(50, 200);
+      else if (c.kind === 'shield')              { shieldActive  = true; shieldTimer  = 360; }
+      else if (c.kind === 'booster')             { boosterActive = true; boosterTimer = 280; }
+      else if (c.kind === 'life' && lives < 5)   lives++;
+      collectibles.splice(i, 1);
+    }
+  }
+
+  // Score ticks up as you walk right
+  score = Math.max(score, Math.floor((player.wx - 200) / 8));
+}
+
+// ─── WIN ──────────────────────────────────────────────────────
+function triggerWin() {
+  state     = 'win';
+  bestScore = Math.max(bestScore, score);
+}
+
+// ─── DRAW HELPERS ─────────────────────────────────────────────
+function drawBackground() {
+  // Determine visible themes (camera may straddle a zone boundary)
+  const leftThemeIdx  = Math.floor(camX / ZONE_WIDTH);
+  const rightThemeIdx = Math.floor((camX + W) / ZONE_WIDTH);
+
+  ctx.fillStyle = '#87ceeb';
+  ctx.fillRect(0, 0, W, H);
+
+  for (let ti = leftThemeIdx; ti <= Math.min(rightThemeIdx, THEMES.length - 1); ti++) {
+    const t         = THEMES[ti];
+    const zoneWorldX = ti * ZONE_WIDTH;
+    const zoneScreenX = zoneWorldX - camX;
+
+    // clip to this zone's visible strip
+    ctx.save();
+    const clipLeft  = Math.max(0, zoneScreenX);
+    const clipRight = Math.min(W, zoneScreenX + ZONE_WIDTH);
+    ctx.beginPath();
+    ctx.rect(clipLeft, 0, clipRight - clipLeft, H);
+    ctx.clip();
+
+    const farImg   = imgs[`bg_far_${t}`];
+    const midImg   = imgs[`bg_mid_${t}`];
+    const floorImg = imgs[`floor_${t}`];
+
+    const drawTiled = (img, parallaxFactor, yy, hh) => {
+      if (!img || !img.complete || !img.naturalWidth) return;
+      const scale = hh / img.naturalHeight;
+      const sw    = img.naturalWidth * scale;
+      // world offset with parallax
+      const worldOff = camX * parallaxFactor;
+      const ox = (((-worldOff + zoneWorldX * (1 - parallaxFactor)) % sw) + sw) % sw;
+      for (let x = ox - sw + zoneScreenX; x < zoneScreenX + ZONE_WIDTH + sw; x += sw) {
+        if (x + sw < clipLeft || x > clipRight) continue;
+        ctx.drawImage(img, x, yy, sw, hh);
+      }
+    };
+
+    drawTiled(farImg,   0.25, 0,        H);
+    drawTiled(midImg,   0.55, 0,        H);
+    drawTiled(floorImg, 1.0,  GROUND_Y, 90);
+
+    if (!floorImg || !floorImg.complete || !floorImg.naturalWidth) {
+      ctx.fillStyle = '#8B6914';
+      ctx.fillRect(clipLeft, GROUND_Y, clipRight - clipLeft, 90);
+    }
+
+    ctx.restore();
+
+    // Zone separator line (subtle)
+    if (ti < THEMES.length - 1) {
+      const sepX = (ti + 1) * ZONE_WIDTH - camX;
+      if (sepX > 0 && sepX < W) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(sepX, 0);
+        ctx.lineTo(sepX, GROUND_Y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Zone label
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        const nextTheme = THEMES[ti + 1];
+        ctx.fillText(`▶ ${nextTheme.toUpperCase()}`, sepX + 60, 40);
+      }
+    }
+  }
+}
+
+function drawPlatforms() {
+  for (const p of platforms) {
+    const screenX = sx(p.wx);
+    if (screenX + p.w < 0 || screenX > W) continue;
+
+    ctx.fillStyle = '#a0522d';
+    ctx.fillRect(screenX, p.y, p.w, p.h);
+    ctx.fillStyle = '#c68642';
+    ctx.fillRect(screenX, p.y, p.w, 6);
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 1;
+    for (let i = 40; i < p.w; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(screenX + i, p.y);
+      ctx.lineTo(screenX + i, p.y + p.h);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPlayer() {
+  const p  = player;
+  const px = sx(p.wx);
+  let key;
+
+  if (p.hitAnim > 0)             key = 'novios_hit';
+  else if (!p.onGround)          key = p.animFrame === 0 ? 'novios_jump1' : 'novios_jump2';
+  else if (p.moving)             key = p.animFrame === 0 ? 'novios_run1'  : 'novios_run2';
+  else                           key = p.animFrame === 0 ? 'novios_idle1' : 'novios_idle2';
+
+  // Shield glow
+  if (shieldActive) {
+    ctx.save();
+    ctx.globalAlpha = 0.35 + 0.2 * Math.sin(frameCount * 0.18);
+    ctx.fillStyle = '#00bfff';
+    ctx.beginPath();
+    ctx.ellipse(px + PLAYER_W/2, p.y + PLAYER_H/2, PLAYER_W*0.7, PLAYER_H*0.6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Hit flash
+  if (hitCooldown > 0 && Math.floor(hitCooldown / 6) % 2 === 0) ctx.globalAlpha = 0.3;
+  drawImg(key, px, p.y, PLAYER_W, PLAYER_H, p.facing === -1);
+  ctx.globalAlpha = 1;
+}
+
+function drawBlockers() {
+  for (const b of blockers) {
+    const bx = sx(b.wx);
+    if (bx + b.w < -10 || bx > W + 10) continue;
+    const key = b.kind === 'cc' ? `blocker_cc${b.frame}` : `blocker_baby${b.frame}`;
+    drawImg(key, bx, b.y, b.w, b.h);
+  }
+}
+
+function drawCollectibles() {
+  for (const c of collectibles) {
+    const cx = sx(c.wx);
+    if (cx + c.w < -10 || cx > W + 10) continue;
+    const bob = Math.sin(frameCount * 0.09 + c.wx * 0.005) * 5;
+    drawImg(c.key, cx, c.y + bob, c.w, c.h);
+  }
+}
+
+function drawStaticChars() {
+  for (const s of staticChars) {
+    const scx = sx(s.wx);
+    if (scx + s.w < -10 || scx > W + 10) continue;
+    let key;
+    switch(s.kind) {
+      case 'vale':  key = s.animFrame === 0 ? 'vale_idle1'  : 'vale_idle2';  break;
+      case 'finch': key = s.animFrame === 0 ? 'finch_idle1' : 'finch_meow';  break;
+      case 'iker':  key = s.animFrame === 0 ? 'iker_idle1'  : 'iker_meow';   break;
+      case 'pilly': key = s.animFrame === 0 ? 'pilly_idle1' : 'pilly_meow';  break;
+    }
+    drawImg(key, scx, s.y, s.w, s.h);
+  }
+}
+
+function drawHUD() {
+  // Score
+  drawImg('ui_score', 10, 10, 140, 40);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(score, 112, 36);
+
+  // Best score
+  drawImg('ui_besttime', 10, 56, 140, 40);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(bestScore, 112, 82);
+
+  // Lives
+  ctx.font = '22px Arial';
+  ctx.textAlign = 'left';
+  for (let i = 0; i < lives; i++) ctx.fillText('❤', W - 30 - i * 30, 36);
+
+  // Power-up timers
+  if (shieldActive) {
+    ctx.fillStyle = '#00bfff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`🛡 ${Math.ceil(shieldTimer / 60)}s`, W - 10, 60);
+  }
+  if (boosterActive) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`⚡ ${Math.ceil(boosterTimer / 60)}s`, W - 10, 80);
+  }
+
+  // Progress bar (zones as segments)
+  const barX = W/2 - 180, barY = 12, barW = 360, barH = 14;
+  const prog = Math.min(1, (player.wx - 200) / (worldEnd - 400));
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(barX, barY, barW, barH);
+
+  // Zone segments coloring
+  const segW = barW / THEMES.length;
+  const zoneColors = ['#e8c080','#7ec8e3','#aaa','#e8c04a','#9b59b6','#e74c3c'];
+  THEMES.forEach((t, i) => {
+    ctx.fillStyle = zoneColors[i] + '99';
+    ctx.fillRect(barX + i * segW, barY, segW, barH);
+  });
+
+  // Fill
+  ctx.fillStyle = '#ff69b4';
+  ctx.fillRect(barX, barY, barW * prog, barH);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barW, barH);
+  // segment dividers
+  for (let i = 1; i < THEMES.length; i++) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.moveTo(barX + i * segW, barY);
+    ctx.lineTo(barX + i * segW, barY + barH);
+    ctx.stroke();
+  }
+
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('💒', barX + barW + 16, barY + 11);
+  ctx.fillText('👫', barX + barW * prog, barY - 1);
+
+  // Current zone label
+  const curTheme = themeAt(player.wx);
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(barX, barY + barH + 2, barW, 16);
+  ctx.fillStyle = '#fff';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(curTheme.toUpperCase(), barX + barW/2, barY + barH + 13);
+
+  // Controls hint (fades out after a while)
+  if (frameCount < 300) {
+    ctx.globalAlpha = Math.max(0, 1 - frameCount / 200);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(W/2 - 200, H - 38, 400, 28);
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('← → / A D  to walk   |   ↑ / W / SPACE  to jump', W/2, H - 18);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ─── SCREENS ──────────────────────────────────────────────────
+function drawTitleScreen() {
+  const img = imgs['ui_portada'];
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.drawImage(img, 0, 0, W, H);
+  } else {
+    ctx.fillStyle = '#1a0a2e';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ff69b4';
+    ctx.font = 'bold 64px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('WEDDING RUN!', W/2, H/2 - 60);
+  }
+  const pulse = 0.6 + 0.4 * Math.sin(frameCount * 0.07);
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('PRESS → / SPACE / TAP TO START', W/2, H - 60);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '15px Arial';
+  ctx.fillText('Walk through 6 wedding destinations • Avoid credit cards & babies!', W/2, H - 28);
+}
+
+function drawDeadScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#ff4444';
+  ctx.font = 'bold 56px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('OH NO!', W/2, H/2 - 80);
+  drawImg('novios_hit', W/2 - 50, H/2 - 60, 100, 120);
+  ctx.fillStyle = '#fff';
+  ctx.font = '26px Arial';
+  ctx.fillText(`Score: ${score}`, W/2, H/2 + 80);
+  ctx.fillText(`Best:  ${bestScore}`, W/2, H/2 + 115);
+  const pulse = 0.6 + 0.4 * Math.sin(frameCount * 0.07);
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText('PRESS SPACE / TAP TO TRY AGAIN', W/2, H/2 + 160);
+  ctx.globalAlpha = 1;
+}
+
+function drawWinScreen() {
+  const winBg = imgs['bg_far_church'];
+  ctx.fillStyle = '#1a0a2e';
+  ctx.fillRect(0, 0, W, H);
+  if (winBg && winBg.complete && winBg.naturalWidth > 0) {
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(winBg, 0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
+  const kissKey = Math.floor(frameCount / 30) % 2 === 0 ? 'novios_kiss1' : 'novios_kiss2';
+  drawImg(kissKey, W/2 - 80, H/2 - 100, 160, 180);
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 52px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('¡FELICIDADES!', W/2, H/2 - 110);
+  ctx.fillStyle = '#fff';
+  ctx.font = '24px Arial';
+  ctx.fillText('You made it to the wedding! 💒', W/2, H/2 + 100);
+  ctx.fillText(`Final Score: ${score}`, W/2, H/2 + 134);
+  const pulse = 0.6 + 0.4 * Math.sin(frameCount * 0.07);
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = '#ff69b4';
+  ctx.font = 'bold 22px Arial';
+  ctx.fillText('PRESS SPACE / TAP TO RETURN', W/2, H/2 + 178);
+  ctx.globalAlpha = 1;
+}
+
+// ─── MAIN LOOP ────────────────────────────────────────────────
+function loop() {
+  ctx.clearRect(0, 0, W, H);
+  frameCount++;
+
+  switch (state) {
+    case 'title':
+      drawTitleScreen();
+      break;
+    case 'playing':
+      update();
+      // update() may change state, re-check
+      if (state === 'playing') {
+        drawBackground();
+        drawPlatforms();
+        drawStaticChars();
+        drawBlockers();
+        drawCollectibles();
+        drawPlayer();
+        drawHUD();
+      } else {
+        // drew nothing for this frame — fall through to re-render on next frame
+      }
+      break;
+    case 'dead':
+      drawBackground();
+      drawPlatforms();
+      drawStaticChars();
+      drawBlockers();
+      drawCollectibles();
+      drawPlayer();
+      drawHUD();
+      drawDeadScreen();
+      break;
+    case 'win':
+      drawWinScreen();
+      break;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────
+function boot() {
+  if (loadedCount >= totalImages * 0.75 || loadedCount === totalImages) {
+    loop();
+  } else {
+    ctx.fillStyle = '#1a0a2e';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading...', W/2, H/2 - 20);
+    ctx.fillStyle = '#ff69b4';
+    ctx.fillRect(W/2 - 150, H/2 + 10, 300 * (loadedCount / totalImages), 20);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(W/2 - 150, H/2 + 10, 300, 20);
+    requestAnimationFrame(boot);
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
