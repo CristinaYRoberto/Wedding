@@ -1169,57 +1169,52 @@ class GameScene extends Phaser.Scene {
 }
 
 /* ════════════════════════════════════════════════════
-   LEVEL EDITOR SCENE  — full visual editor
+   LEVEL EDITOR — mini engine dedicado al juego
    ─────────────────────────────────────────────────
-   LEFT PANEL (200px): tools, item picker, scales
-   CANVAS AREA: drag objects, resize handles, scroll
-   BOTTOM BAR: ruler, coords
-
-   Tabs: OBJETOS | ESCALA | MUNDO
-   - OBJETOS: add/select/delete platforms, collectibles, obstacles
-   - ESCALA:  sliders for player size, prop sizes, platform height,
-              bg far/mid Y-offset and scale, floor height
-   - MUNDO:   worldW, GROUND_Y, goal X
-
-   Scale values stored in EditorScene._scales and written
-   to EXPORT so Game scene constants can be tuned.
+   Panel 240px · Canvas 720px
+   Tabs: OBJETOS | FONDOS | ESCALA | MUNDO
+   · Sprites reales en canvas
+   · Cambio de assets BG / floor por nivel
+   · Undo Ctrl+Z (20 pasos)
+   · Mouse wheel scroll
+   · Grid snap G
+   · Apply escribe de vuelta en LEVELS
 ════════════════════════════════════════════════════ */
 class EditorScene extends Phaser.Scene {
   constructor() { super({ key:'Editor' }); }
 
+  /* ════ STATE ════ */
   init() {
-    this._lvIdx  = 0;
-    this._camX   = 0;
-    this._objs   = [];
-    this._drag   = null;   /* {obj, offX, offY} | {resize, obj, startW, startX} */
-    this._mode   = 'platform';
-    this._selKey = 'points_01';
-    this._patrol = 0;
-    this._tab    = 'objects';   /* 'objects' | 'scale' | 'world' */
-    /* Scale overrides — start from game defaults */
-    this._scales = {
-      playerH:    P_H,        /* player display height px   */
-      propH:      38,         /* collectible display height  */
-      obstH:      44,         /* obstacle display height     */
-      platH:      18,         /* platform thickness px       */
-      bgFarScaleY: 1.0,       /* extra Y scale on far bg     */
-      bgMidScaleY: 1.0,
-      floorH:     TILE_H,     /* floor strip height px       */
-      goalX:      null,       /* null = use lv.goal          */
-      worldW:     null,       /* null = use lv.worldW        */
+    this._lvIdx     = 0;
+    this._camX      = 0;
+    this._objs      = [];
+    this._drag      = null;
+    this._mode      = 'platform';
+    this._selKey    = 'points_01';
+    this._patrol    = 0;
+    this._tab       = 'objects';
+    this._gridSnap  = false;
+    this._undoStack = [];
+    this._lvBg      = { bgFar:null, bgMid:null, floor:null };
+    this._scales    = {
+      playerH:P_H, propH:48, obstH:60, platH:20,
+      bgFarScaleY:1.0, bgMidScaleY:1.0, floorH:TILE_H,
+      goalX:null, worldW:null,
     };
-    /* Preview sprites */
-    this._previewPlayer = null;
-    this._previewVale   = null;
   }
 
-  get _lv() { return LEVELS[this._lvIdx]; }
-  get PW()  { return 200; }   /* left panel width */
-  get PX()  { return 0; }     /* left panel X */
-  get CX()  { return this.PW; } /* canvas area starts here */
-  get CW()  { return W - this.PW; } /* canvas width */
+  get _lv()  { return LEVELS[this._lvIdx]; }
+  get PW()   { return 240; }
+  get PX()   { return 0; }
+  get CX()   { return this.PW; }
+  get CW()   { return W - this.PW; }
 
-  /* ── CREATE ── */
+  _texH(key, fb=668) {
+    if (!this.textures.exists(key)) return fb;
+    return this.textures.get(key).getSourceImage().height || fb;
+  }
+
+  /* ════ CREATE ════ */
   create() {
     this.cameras.main.setBackgroundColor('#0d0d14');
     this._buildBGLayer();
@@ -1231,56 +1226,58 @@ class EditorScene extends Phaser.Scene {
     this.input.on('pointerdown', this._onDown, this);
     this.input.on('pointermove', this._onMove, this);
     this.input.on('pointerup',   this._onUp,   this);
+    /* Mouse-wheel horizontal scroll */
+    this.input.on('wheel', (_p, _o, _dx, dy) => {
+      const maxX = (this._scales.worldW || this._lv.worldW) - this.CW;
+      this._camX = Phaser.Math.Clamp(this._camX + dy * 1.8, 0, Math.max(0, maxX));
+      this._refreshBG(); this._redrawAll(); this._updateCoords(0, 0);
+    });
     this._refreshBG();
+    this._snapshot();
   }
 
-  /* ── BACKGROUND ── */
-  _texH(key, fb = 668) {
-    if (!this.textures.exists(key)) return fb;
-    return this.textures.get(key).getSourceImage().height || fb;
-  }
-
+  /* ════ BACKGROUND ════ */
   _buildBGLayer() {
-    const lv = this._lv;
-    const s  = this._scales;
+    const lv  = this._lv;
+    const s   = this._scales;
+    const far = this._lvBg.bgFar  || lv.bgFar;
+    const mid = this._lvBg.bgMid  || lv.bgMid;
+    const flr = this._lvBg.floor  || lv.floor;
 
-    /* Base scales from actual texture heights */
-    this._farScaleBase = H / this._texH(lv.bgFar, 668);
-    this._midScaleBase = H / this._texH(lv.bgMid, 668);
-    this._flrScaleBase = TILE_H / this._texH(lv.floor, 668);
+    this._farScaleBase = H / this._texH(far, 668);
+    this._midScaleBase = H / this._texH(mid, 668);
+    this._flrScaleBase = TILE_H / this._texH(flr, 668);
 
     const scaleH = this._farScaleBase * s.bgFarScaleY;
     const midH   = this._midScaleBase * s.bgMidScaleY;
     const floorS = this._flrScaleBase;
 
-    this._bgFarSprite   = this.add.tileSprite(this.CX, 0, this.CW, H, lv.bgFar)
-      .setOrigin(0, 0).setDepth(0).setTileScale(scaleH);
-    this._bgMidSprite   = this.add.tileSprite(this.CX, 0, this.CW, H, lv.bgMid)
-      .setOrigin(0, 0).setDepth(1).setTileScale(midH);
-    this._bgFloorSprite = this.add.tileSprite(this.CX, GROUND_Y, this.CW, s.floorH, lv.floor)
-      .setOrigin(0, 0).setDepth(2).setTileScale(floorS);
-
-    this._groundLine = this.add.rectangle(this.CX, GROUND_Y, this.CW, 1, 0xffffff, 0.25)
-      .setOrigin(0, 0).setDepth(5);
+    this._bgFarSprite   = this.add.tileSprite(this.CX, 0, this.CW, H, far)
+      .setOrigin(0,0).setDepth(0).setTileScale(scaleH);
+    this._bgMidSprite   = this.add.tileSprite(this.CX, 0, this.CW, H, mid)
+      .setOrigin(0,0).setDepth(1).setTileScale(midH);
+    this._bgFloorSprite = this.add.tileSprite(this.CX, GROUND_Y, this.CW, s.floorH, flr)
+      .setOrigin(0,0).setDepth(2).setTileScale(floorS);
+    this._groundLine    = this.add.rectangle(this.CX, GROUND_Y, this.CW, 2, 0xffffff, 0.3)
+      .setOrigin(0,0).setDepth(5);
     this._gridGfx = this.add.graphics().setDepth(4);
     this._drawGrid();
   }
 
   _drawGrid() {
     this._gridGfx.clear();
-    this._gridGfx.fillStyle(0xffffff, 0.04);
+    this._gridGfx.fillStyle(0xffffff, this._gridSnap ? 0.06 : 0.025);
     const step = 40;
-    for(let x=this.CX; x<W; x+=step)
-      for(let y=0; y<H; y+=step)
+    for (let x = this.CX; x < W; x += step)
+      for (let y = 0; y < H; y += step)
         this._gridGfx.fillRect(x, y, 1, 1);
   }
 
   _refreshBG() {
-    const s = this._scales;
-    /* Use stored base scales derived from actual texture heights */
-    const scaleH = (this._farScaleBase || H / 668) * s.bgFarScaleY;
-    const midH   = (this._midScaleBase || H / 668) * s.bgMidScaleY;
-    const floorS =  this._flrScaleBase || TILE_H / 668;
+    const s     = this._scales;
+    const scaleH = (this._farScaleBase || H/668) * s.bgFarScaleY;
+    const midH   = (this._midScaleBase || H/668) * s.bgMidScaleY;
+    const floorS =  this._flrScaleBase || TILE_H/668;
 
     this._bgFarSprite.setTileScale(scaleH);
     this._bgMidSprite.setTileScale(midH);
@@ -1294,44 +1291,68 @@ class EditorScene extends Phaser.Scene {
     this._bgFloorSprite.tilePositionX = this._camX          / floorS;
   }
 
-  /* ── PREVIEW SPRITES ── */
+  _swapBG(layer, key) {
+    /* Swap a BG layer at runtime without restarting */
+    this._lvBg[layer] = key;
+    if (!this.textures.exists(key)) { this._refreshBG(); return; }
+    const th = this._texH(key, 668);
+    if (layer === 'bgFar') {
+      this._farScaleBase = H / th;
+      this._bgFarSprite.setTexture(key);
+    } else if (layer === 'bgMid') {
+      this._midScaleBase = H / th;
+      this._bgMidSprite.setTexture(key);
+    } else {
+      this._flrScaleBase = TILE_H / th;
+      this._bgFloorSprite.setTexture(key);
+    }
+    this._refreshBG();
+  }
+
+  /* ════ PREVIEW SPRITES ════ */
   _buildPreviewSprites() {
-    const s = this._scales;
-    /* Player preview at left edge */
+    const s  = this._scales;
+    const pH = this._texH('novios_idle01', 230);
+    const vH = this._texH('vale_idle-Stand01', 316);
     this._previewPlayer = this.add.image(this.CX+60, GROUND_Y, 'novios_idle01')
-      .setOrigin(0.5,1).setDepth(12).setAlpha(0.7);
-    this._previewPlayer.setScale(s.playerH/230);
-
-    /* Vale preview near goal */
-    this._previewVale = this.add.image(this.CX+this.CW-60, GROUND_Y, 'vale_idle-Stand01')
-      .setOrigin(0.5,1).setDepth(12).setAlpha(0.7);
-    this._previewVale.setScale(s.playerH*1.4/316);
-
-    this._refreshPreviewSprites();
+      .setOrigin(0.5,1).setDepth(12).setAlpha(0.65).setScale(s.playerH/pH);
+    this._previewVale   = this.add.image(this.CX+this.CW-60, GROUND_Y, 'vale_idle-Stand01')
+      .setOrigin(0.5,1).setDepth(12).setAlpha(0.65).setScale(s.playerH*1.4/vH);
   }
 
   _refreshPreviewSprites() {
-    const s = this._scales;
-    this._previewPlayer.setScale(s.playerH/230);
-    this._previewVale.setScale(s.playerH*1.4/316);
+    const s  = this._scales;
+    const pH = this._texH('novios_idle01', 230);
+    const vH = this._texH('vale_idle-Stand01', 316);
+    this._previewPlayer.setScale(s.playerH/pH);
+    this._previewVale.setScale(s.playerH*1.4/vH);
   }
 
-  /* ── LOAD LEVEL DATA ── */
+  /* ════ LEVEL DATA ════ */
   _loadLevelData() {
     this._objs = [];
     const lv = this._lv;
-    lv.platforms.forEach(p   => this._addObj({type:'platform', wx:p.x, wy:p.y, w:p.w}));
-    lv.collectibles.forEach(c=> this._addObj({type:'collect',  wx:c.x, wy:c.y, key:c.key, pts:c.pts}));
-    lv.obstacles.forEach(o   => this._addObj({type:'obstacle', wx:o.x, wy:o.y, key:o.key, obsType:o.type, patrol:o.patrol}));
+    lv.platforms.forEach(p    => this._addObj({type:'platform',wx:p.x,wy:p.y,w:p.w}));
+    lv.collectibles.forEach(c => this._addObj({type:'collect', wx:c.x,wy:c.y,key:c.key,pts:c.pts}));
+    lv.obstacles.forEach(o    => this._addObj({type:'obstacle',wx:o.x,wy:o.y,key:o.key,obsType:o.type,patrol:o.patrol}));
   }
 
-  /* ── ADD / DRAW OBJECTS ── */
+  /* ════ OBJECTS — ADD / DRAW ════ */
   _addObj(data) {
-    const gfx = this.add.graphics().setDepth(10);
-    const lbl = this.add.text(0,0,'',{fontFamily:'Lato',fontSize:'8px',color:'#fff',stroke:'#000',strokeThickness:2}).setDepth(11);
-    /* resize handle (right edge for platforms) */
+    const gfx   = this.add.graphics().setDepth(10);
+    const lbl   = this.add.text(0,0,'',{fontFamily:'Lato',fontSize:'8px',color:'#fff',stroke:'#000',strokeThickness:2}).setDepth(12);
     const rhGfx = this.add.graphics().setDepth(13);
-    const obj = {...data, gfx, lbl, rhGfx, _selected:false};
+
+    /* Real sprite on canvas */
+    let spr = null;
+    if (data.key && this.textures.exists(data.key)) {
+      const targetH = data.type==='obstacle' ? this._scales.obstH : this._scales.propH;
+      spr = this.add.image(0, 0, data.key)
+        .setOrigin(0.5, 1).setDepth(9).setAlpha(0.92)
+        .setScale(targetH / this._texH(data.key));
+    }
+
+    const obj = {...data, gfx, lbl, rhGfx, spr, _selected:false};
     this._objs.push(obj);
     this._redrawObj(obj);
     return obj;
@@ -1350,450 +1371,602 @@ class EditorScene extends Phaser.Scene {
     obj.gfx.clear();
     obj.rhGfx.clear();
 
-    if(obj.type==='platform') {
-      const w = obj.w || 120;
-      obj.gfx.fillStyle(col, obj._selected?0.65:0.35);
-      obj.gfx.fillRoundedRect(sx, sy, w, ph, 3);
-      obj.gfx.lineStyle(1.5, col, 0.9);
-      obj.gfx.strokeRoundedRect(sx, sy, w, ph, 3);
-      /* top highlight */
-      obj.gfx.fillStyle(0xffffff,0.15);
-      obj.gfx.fillRect(sx+2, sy, w-4, 3);
-      obj.lbl.setText(`${w}px`).setPosition(sx+2, sy-11);
-      /* resize handle — right edge */
-      if(obj._selected) {
-        obj.rhGfx.fillStyle(0xffffff,0.9);
-        obj.rhGfx.fillRect(sx+w-5, sy, 5, ph);
-        obj.rhGfx.lineStyle(1,0x000000,0.5);
-        obj.rhGfx.strokeRect(sx+w-5, sy, 5, ph);
-      }
-    } else if(obj.type==='collect') {
-      const r = 12;
-      obj.gfx.fillStyle(col, obj._selected?0.9:0.65);
-      obj.gfx.fillCircle(sx, sy, r);
-      obj.gfx.lineStyle(2, 0xffffff, 0.5);
-      obj.gfx.strokeCircle(sx, sy, r);
-      /* item icon overlay */
-      if(this.textures.exists(obj.key)) {
-        /* drawn as gfx only; sprite overlays handled in separate layer */
-      }
-      obj.lbl.setText(obj.key||'').setPosition(sx-20, sy-26);
-    } else {
-      /* obstacle */
-      const hw=16, hh=20;
-      obj.gfx.fillStyle(col, obj._selected?0.75:0.5);
-      obj.gfx.fillRect(sx-hw, sy-hh*2, hw*2, hh*2);
-      obj.gfx.lineStyle(2, col, 0.9);
-      obj.gfx.strokeRect(sx-hw, sy-hh*2, hw*2, hh*2);
-      /* patrol range */
-      const p = obj.patrol||0;
-      if(p>0) {
-        obj.gfx.lineStyle(1, 0xffaa00, 0.45);
-        obj.gfx.strokeRect(sx-hw-p, sy-hh*2, hw*2+p*2, hh*2);
-      }
-      obj.lbl.setText(obj.key||'').setPosition(sx-20, sy-hh*2-12);
-    }
+    /* Update real sprite position */
+    if (obj.spr) obj.spr.setPosition(sx, sy);
 
-    /* selection outline */
-    if(obj._selected) {
-      const bx=sx-(obj.type==='platform'?0:18);
-      const bw=obj.type==='platform'?(obj.w||120):36;
-      const bh=obj.type==='platform'?ph:obj.type==='collect'?24:40;
-      const by=obj.type==='collect'?sy-12:obj.type==='platform'?sy:sy-40;
-      obj.gfx.lineStyle(1.5,0xffffff,0.5);
-      obj.gfx.strokeRect(bx-2,by-2,bw+4,bh+4);
+    if (obj.type === 'platform') {
+      const w = obj.w || 120;
+      /* Platform body */
+      obj.gfx.fillStyle(col, obj._selected ? 0.55 : 0.28);
+      obj.gfx.fillRoundedRect(sx, sy, w, ph, 4);
+      obj.gfx.lineStyle(obj._selected ? 2 : 1.5, col, 0.95);
+      obj.gfx.strokeRoundedRect(sx, sy, w, ph, 4);
+      /* Top highlight stripe */
+      obj.gfx.fillStyle(0xffffff, 0.18);
+      obj.gfx.fillRect(sx+3, sy+1, w-6, 4);
+      /* Width label */
+      obj.lbl.setText(`${w}px`).setPosition(sx+3, sy-12);
+      /* Resize handle */
+      if (obj._selected) {
+        obj.rhGfx.fillStyle(0xffd700, 1);
+        obj.rhGfx.fillTriangle(sx+w-1,sy, sx+w+10,sy+ph/2, sx+w-1,sy+ph);
+        obj.rhGfx.lineStyle(1,0x000,0.4);
+        obj.rhGfx.strokeTriangle(sx+w-1,sy, sx+w+10,sy+ph/2, sx+w-1,sy+ph);
+      }
+    } else {
+      /* Collectible / obstacle — draw selection ring only (sprite shows icon) */
+      const r = obj.type==='collect' ? 14 : 18;
+      if (obj._selected) {
+        obj.gfx.lineStyle(2.5, 0xffd700, 0.95);
+        obj.gfx.strokeCircle(sx, sy - r, r + 4);
+      } else {
+        obj.gfx.lineStyle(1.5, col, 0.55);
+        obj.gfx.strokeCircle(sx, sy - r, r + 2);
+      }
+      /* Patrol range arc for obstacles */
+      if (obj.type==='obstacle' && obj.patrol > 0) {
+        obj.gfx.lineStyle(1, 0xffaa00, 0.35);
+        obj.gfx.strokeRect(sx - obj.patrol, sy - r*2 - 4, obj.patrol*2, r*2 + 4);
+      }
+      /* Label only if no sprite */
+      if (!obj.spr) obj.lbl.setText(obj.key||'').setPosition(sx-20, sy - r*2 - 14);
+      else obj.lbl.setText('').setPosition(sx, sy);
     }
   }
 
-  /* ── PANEL ── */
+  /* ════ PANEL ════ */
   _buildPanel() {
-    const PW=this.PW, PX=this.PX;
+    const PW = this.PW, PX = this.PX;
+    this.add.rectangle(PX,0,PW,H,0x08080f,0.97).setOrigin(0,0).setDepth(80);
 
-    /* Panel bg */
-    this.add.rectangle(PX,0,PW,H,0x080810,0.95).setOrigin(0,0).setDepth(80);
-    this.add.text(PX+8,6,'⬛ EDITOR',{fontFamily:'Cinzel',fontSize:'12px',color:'#f5d87a'}).setDepth(81);
+    /* Header */
+    this.add.text(PX+10, 7, '🎮 EDITOR', {fontFamily:'Cinzel',fontSize:'11px',color:'#f5d87a'}).setDepth(81);
 
-    /* Level tabs */
-    this.add.text(PX+6,24,'Nivel:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(81);
-    LEVELS.forEach((l,i)=>{
-      const bx=PX+6+i*31, by=34;
-      const bg=this.add.graphics().setDepth(81);
-      bg.fillStyle(l.color,this._lvIdx===i?0.9:0.25);
-      bg.fillRoundedRect(bx,by,26,18,3);
-      const t=this.add.text(bx+13,by+9,`${l.id}`,{fontFamily:'Cinzel',fontSize:'9px',color:'#fff'}).setOrigin(0.5).setDepth(82);
-      const z=this.add.zone(bx+13,by+9,26,18).setInteractive().setDepth(83);
-      z.on('pointerdown',()=>{ sfxClick(); this._lvIdx=i; this.scene.restart(); });
+    /* Level selector */
+    this.add.text(PX+6, 26, 'NIVEL:', {fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(81);
+    LEVELS.forEach((l, i) => {
+      const bx = PX + 6 + i*36, by = 35;
+      const bg = this.add.graphics().setDepth(81);
+      const sel = this._lvIdx === i;
+      bg.fillStyle(l.color, sel ? 0.9 : 0.2);
+      bg.fillRoundedRect(bx, by, 30, 18, 4);
+      if (sel) { bg.lineStyle(1.5, 0xffd700, 1); bg.strokeRoundedRect(bx,by,30,18,4); }
+      this.add.text(bx+15, by+9, `${l.id}`, {fontFamily:'Cinzel',fontSize:'9px',color:'#fff'})
+        .setOrigin(0.5).setDepth(82);
+      this.add.zone(bx+15, by+9, 30, 18).setInteractive().setDepth(83)
+        .on('pointerdown', () => { sfxClick(); this._applyToLevel(); this._lvIdx=i; this.scene.restart(); });
     });
 
-    /* Tab switcher */
-    const tabs=[['objects','OBJETOS'],['scale','ESCALA'],['world','MUNDO']];
-    const tabGfx=[], tabTxts=[];
-    const drawTabs=()=>{
-      tabs.forEach(([key,lbl],i)=>{
-        const tx=PX+4+i*(PW-8)/3, ty=58, tw=(PW-8)/3-2;
-        tabGfx[i].clear();
-        const sel=this._tab===key;
-        tabGfx[i].fillStyle(sel?0xb89a6a:0x222230,sel?0.9:0.7);
-        tabGfx[i].fillRoundedRect(tx,ty,tw,18,3);
-        tabTxts[i].setColor(sel?'#000':'#888');
+    /* ── 4 tabs ── */
+    const TABS = [['objects','OBJETOS'],['assets','FONDOS'],['scale','ESCALA'],['world','MUNDO']];
+    const TW   = (PW-8)/4 - 2;
+    this._tabGfxList = [];
+    this._tabTxtList = [];
+    const drawTabs = () => {
+      TABS.forEach(([key], i) => {
+        const g = this._tabGfxList[i];
+        g.clear();
+        const sel = this._tab === key;
+        g.fillStyle(sel ? 0xb89a6a : 0x1a1a28, sel ? 0.95 : 0.8);
+        g.fillRoundedRect(PX+4+i*(TW+2), 59, TW, 18, 3);
+        this._tabTxtList[i].setColor(sel ? '#000' : '#666');
       });
     };
-    tabs.forEach(([key,lbl],i)=>{
-      const tx=PX+4+i*(PW-8)/3, ty=58, tw=(PW-8)/3-2;
-      const g=this.add.graphics().setDepth(81); tabGfx.push(g);
-      const t=this.add.text(tx+tw/2,ty+9,lbl,{fontFamily:'Lato',fontSize:'7px',color:'#888'}).setOrigin(0.5).setDepth(82); tabTxts.push(t);
-      const z=this.add.zone(tx+tw/2,ty+9,tw,18).setInteractive().setDepth(83);
-      z.on('pointerdown',()=>{ sfxClick(); this._tab=key; drawTabs(); this._showTabContent(); });
+    TABS.forEach(([key, lbl], i) => {
+      const tx = PX+4+i*(TW+2), ty = 59;
+      const g = this.add.graphics().setDepth(81); this._tabGfxList.push(g);
+      const t = this.add.text(tx+TW/2, ty+9, lbl, {fontFamily:'Lato',fontSize:'7px'})
+        .setOrigin(0.5).setDepth(82); this._tabTxtList.push(t);
+      this.add.zone(tx+TW/2, ty+9, TW, 18).setInteractive().setDepth(83)
+        .on('pointerdown', () => { sfxClick(); this._tab=key; drawTabs(); this._showTabContent(); });
     });
     drawTabs();
 
-    /* Content container — destroyed and rebuilt on tab switch */
-    this._tabContainer=[];
+    /* Divider */
+    this.add.rectangle(PX+6, 80, PW-12, 1, 0x333355, 1).setOrigin(0,0).setDepth(81);
+
+    this._tabContainer = [];
     this._showTabContent();
   }
 
   _clearTabContent() {
-    this._tabContainer.forEach(o=>o.destroy());
-    this._tabContainer=[];
+    this._tabContainer.forEach(o => o?.destroy?.());
+    this._tabContainer = [];
   }
 
   _showTabContent() {
     this._clearTabContent();
-    if(this._tab==='objects') this._buildObjectsTab();
-    else if(this._tab==='scale') this._buildScaleTab();
-    else this._buildWorldTab();
+    /* Rebuild action buttons cleanly each time */
+    this._buildActions();
+    if      (this._tab==='objects') this._buildObjectsTab();
+    else if (this._tab==='assets')  this._buildAssetsTab();
+    else if (this._tab==='scale')   this._buildScaleTab();
+    else                             this._buildWorldTab();
   }
 
-  /* ─── TAB: OBJECTS ─── */
+  _buildActions() {
+    const PW = this.PW, PX = this.PX;
+    const hw = Math.floor((PW-12)/2);
+    const add = o => { this._tabContainer.push(o); return o; };
+
+    const mkBtn = (x,y,w,lbl,col,cb) => {
+      const bg = add(this.add.graphics().setDepth(81));
+      const redraw = (h) => {
+        bg.clear(); bg.fillStyle(col,h?0.5:0.2); bg.fillRoundedRect(x,y,w,22,4);
+        if(!h){bg.lineStyle(1.5,col,0.65);bg.strokeRoundedRect(x,y,w,22,4);}
+      };
+      redraw(false);
+      add(this.add.text(x+w/2,y+11,lbl,{fontFamily:'Cinzel',fontSize:'8px',color:'#'+col.toString(16).padStart(6,'0')}).setOrigin(0.5).setDepth(82));
+      const z=add(this.add.zone(x+w/2,y+11,w,22).setInteractive().setDepth(83));
+      z.on('pointerover',()=>redraw(true)).on('pointerout',()=>redraw(false)).on('pointerdown',cb);
+    };
+
+    mkBtn(PX+4,      H-115, PW-8, '✔ APLICAR AL JUEGO', 0x44ff88, ()=>{ sfxClick(); this._applyToLevel(); this._toast('¡Aplicado!',0x44ff88); });
+    mkBtn(PX+4,      H-89,  hw,   '📋 JSON',             0x44aaff, ()=>{ sfxClick(); this._export(); });
+    mkBtn(PX+4+hw+4, H-89,  hw,   '↩ UNDO (Z)',          0xffaa44, ()=>{ sfxClick(); this._undo(); });
+    mkBtn(PX+4,      H-63,  PW-8, '← SALIR',             0xff6666, ()=>{ sfxClick(); this.scene.start('Menu'); });
+  }
+
+  /* ─── TAB: OBJETOS ─── */
   _buildObjectsTab() {
     const PW=this.PW, PX=this.PX;
-    const add=(o)=>{ this._tabContainer.push(o); return o; };
-    const lv=this._lv;
+    const add = o => { this._tabContainer.push(o); return o; };
+    const lv  = this._lv;
 
-    /* Mode buttons */
-    add(this.add.text(PX+6,82,'Modo:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
-    const modes=[['platform','Plataforma',lv.color],['collect','Coleccionable',0xffdd44],['obstacle','Obstáculo',0xff5555]];
-    const modeGfx=[];
-    const drawModes=()=>modes.forEach(([m,,col],i)=>{
-      modeGfx[i].clear();
-      const sel=this._mode===m;
-      modeGfx[i].fillStyle(col,sel?0.45:0.12);
-      modeGfx[i].fillRoundedRect(PX+4,92+i*23,PW-8,20,3);
-      modeGfx[i].lineStyle(1.5,col,sel?1:0.35);
-      modeGfx[i].strokeRoundedRect(PX+4,92+i*23,PW-8,20,3);
+    add(this.add.text(PX+6, 84, 'MODO:', {fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
+
+    const MODES = [['platform','Plataforma',lv.color],['collect','Coleccionable',0xffdd44],['obstacle','Obstáculo',0xff5555]];
+    const mBgs  = [];
+    const redrawModes = () => MODES.forEach(([m,,c],i) => {
+      const g = mBgs[i]; g.clear();
+      const sel = this._mode===m;
+      g.fillStyle(c, sel?0.45:0.1);  g.fillRoundedRect(PX+4, 93+i*24, PW-8, 21, 4);
+      g.lineStyle(1.5, c, sel?1:0.3); g.strokeRoundedRect(PX+4, 93+i*24, PW-8, 21, 4);
     });
-    modes.forEach(([mode,lbl,col],i)=>{
-      const g=add(this.add.graphics().setDepth(81)); modeGfx.push(g);
-      add(this.add.text(PX+10,92+i*23+10,lbl,{fontFamily:'Lato',fontSize:'10px',color:'#'+col.toString(16).padStart(6,'0')}).setOrigin(0,0.5).setDepth(82));
-      const z=add(this.add.zone(PX+PW/2,92+i*23+10,PW-8,20).setInteractive().setDepth(83));
-      z.on('pointerdown',()=>{ sfxClick(); this._mode=mode; drawModes(); });
+    MODES.forEach(([mode,lbl,col],i) => {
+      const g = add(this.add.graphics().setDepth(81)); mBgs.push(g);
+      add(this.add.text(PX+10, 93+i*24+10, lbl, {fontFamily:'Lato',fontSize:'10px',color:'#'+col.toString(16).padStart(6,'0')}).setOrigin(0,0.5).setDepth(82));
+      add(this.add.zone(PX+PW/2,93+i*24+10,PW-8,21).setInteractive().setDepth(83))
+        .on('pointerdown',()=>{ sfxClick(); this._mode=mode; redrawModes(); this._showTabContent(); });
     });
-    drawModes();
+    redrawModes();
 
-    /* Item key list */
-    add(this.add.text(PX+6,162,'Item:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
-    const allKeys=['points_01','points_02','points_03','points_04','points_05',
-                   'shield','booster','life',
-                   'blocker_money_01','blocker_money_02','blocker_life-01','blocker_life-02'];
-    const keyTxts=[];
-    allKeys.forEach((k,i)=>{
-      const t=add(this.add.text(PX+8,172+i*13,k,{fontFamily:'Lato',fontSize:'9px',color:this._selKey===k?'#f5d87a':'#666'}).setDepth(82));
-      keyTxts.push(t);
-      t.setInteractive();
-      t.on('pointerdown',()=>{ sfxClick(); this._selKey=k; keyTxts.forEach((tt,j)=>tt.setColor(allKeys[j]===k?'#f5d87a':'#666')); });
-    });
+    /* ── Asset picker grid ── */
+    const COLLECT_KEYS = ['points_01','points_02','points_03','points_04','points_05','shield','booster','life'];
+    const OBST_KEYS    = ['blocker_money_01','blocker_money_02','blocker_money_03','blocker_money-04',
+                          'blocker_life-01','blocker_life-02','blocker_life-03'];
+    const pickerKeys   = this._mode==='collect' ? COLLECT_KEYS : this._mode==='obstacle' ? OBST_KEYS : [];
 
-    /* Patrol */
-    add(this.add.text(PX+6,346,'Patrulla:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
-    const patTxt=add(this.add.text(PX+100,346,`${this._patrol}px`,{fontFamily:'Lato',fontSize:'9px',color:'#f5d87a'}).setDepth(82));
-    const patSliderBg=add(this.add.rectangle(PX+8,360,PW-16,10,0x333344).setOrigin(0,0.5).setDepth(82));
-    const patSliderFill=add(this.add.rectangle(PX+8,360,Math.max(2,(this._patrol/200)*(PW-16)),10,0xb89a6a).setOrigin(0,0.5).setDepth(83));
-    const patSliderZ=add(this.add.zone(PX+PW/2,360,PW-16,18).setInteractive().setDepth(84));
-    patSliderZ.on('pointerdown',e=>{ this._patrol=Math.round(((e.x-(PX+8))/(PW-16))*200); patTxt.setText(`${this._patrol}px`); patSliderFill.width=Math.max(2,(this._patrol/200)*(PW-16)); });
+    if (pickerKeys.length) {
+      add(this.add.text(PX+6, 166, 'ASSET:', {fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
+      const COLS=4, SZ=48, GAP=3;
+      pickerKeys.forEach((k, i) => {
+        const col = i%COLS, row = Math.floor(i/COLS);
+        const bx  = PX+4 + col*(SZ+GAP);
+        const by  = 177  + row*(SZ+GAP);
+        const bg  = add(this.add.graphics().setDepth(81));
+        const sel = this._selKey===k;
+        bg.fillStyle(sel?0xffd700:0x1a1a28, sel?0.5:0.6);
+        bg.fillRoundedRect(bx, by, SZ, SZ, 4);
+        bg.lineStyle(sel?2:1, sel?0xffd700:0x333355, 1);
+        bg.strokeRoundedRect(bx, by, SZ, SZ, 4);
 
-    /* Width adjustment for selected platform */
-    add(this.add.text(PX+6,374,'Ancho sel.:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
-    const wTxt=add(this.add.text(PX+110,374,'—',{fontFamily:'Lato',fontSize:'9px',color:'#f5d87a'}).setDepth(82));
-    const sel=this._objs.find(o=>o._selected&&o.type==='platform');
-    if(sel) wTxt.setText(`${sel.w||120}px`);
-    const wSliderBg=add(this.add.rectangle(PX+8,386,PW-16,10,0x333344).setOrigin(0,0.5).setDepth(82));
-    const wSliderFill=add(this.add.rectangle(PX+8,386,Math.max(2,((sel?.w||120)/400)*(PW-16)),10,0x4488ff).setOrigin(0,0.5).setDepth(83));
-    const wZ=add(this.add.zone(PX+PW/2,386,PW-16,18).setInteractive().setDepth(84));
-    wZ.on('pointerdown',e=>{
-      const selObj=this._objs.find(o=>o._selected&&o.type==='platform');
-      if(!selObj) return;
-      selObj.w=Math.round(((e.x-(PX+8))/(PW-16))*400)+40;
-      wTxt.setText(`${selObj.w}px`);
-      wSliderFill.width=Math.max(2,(selObj.w/400)*(PW-16));
-      this._redrawObj(selObj);
-    });
+        if (this.textures.exists(k)) {
+          const src = this.textures.get(k).getSourceImage();
+          const sc  = Math.min((SZ-6)/src.width, (SZ-6)/src.height);
+          add(this.add.image(bx+SZ/2, by+SZ/2, k).setOrigin(0.5).setScale(sc).setDepth(82));
+        } else {
+          add(this.add.text(bx+SZ/2, by+SZ/2, k.slice(0,8), {fontFamily:'Lato',fontSize:'6px',color:'#aaa'}).setOrigin(0.5).setDepth(82));
+        }
+        add(this.add.zone(bx+SZ/2, by+SZ/2, SZ, SZ).setInteractive().setDepth(83))
+          .on('pointerdown', () => { sfxClick(); this._selKey=k; this._showTabContent(); });
+      });
+    }
 
-    /* Delete */
-    const delG=add(this.add.graphics().setDepth(81));
-    delG.fillStyle(0x441111,0.8); delG.fillRoundedRect(PX+4,H-50,PW-8,20,4);
-    add(this.add.text(PX+PW/2,H-40,'BORRAR (DEL)',{fontFamily:'Lato',fontSize:'9px',color:'#ffaaaa'}).setOrigin(0.5).setDepth(82));
-    const delZ=add(this.add.zone(PX+PW/2,H-40,PW-8,20).setInteractive().setDepth(83));
-    delZ.on('pointerdown',()=>this._deleteSelected());
+    /* ── Platform width slider (when platform selected) ── */
+    const selPlat = this._objs.find(o=>o._selected&&o.type==='platform');
+    if (selPlat) {
+      const topY = 300;
+      add(this.add.text(PX+6, topY, `ANCHO: ${selPlat.w||120}px`, {fontFamily:'Lato',fontSize:'8px',color:'#aaa'}).setDepth(82));
+      const wFill = add(this.add.rectangle(PX+8, topY+16, Math.max(2,((selPlat.w||120)/500)*(PW-16)), 8, 0x4488ff).setOrigin(0,0.5).setDepth(83));
+      add(this.add.rectangle(PX+8, topY+16, PW-16, 8, 0x222233).setOrigin(0,0.5).setDepth(82));
+      add(this.add.zone(PX+PW/2, topY+16, PW-16, 16).setInteractive().setDepth(84))
+        .on('pointerdown', e => { selPlat.w=Math.round(((e.x-(PX+8))/(PW-16))*500)+40; wFill.width=Math.max(2,((selPlat.w)/500)*(PW-16)); this._redrawObj(selPlat); })
+        .on('pointermove', e => { if(this.input.activePointer.isDown){ selPlat.w=Math.round(((e.x-(PX+8))/(PW-16))*500)+40; wFill.width=Math.max(2,(selPlat.w/500)*(PW-16)); this._redrawObj(selPlat); } });
+    }
+
+    /* ── Patrol slider ── */
+    const patY = 326;
+    const patLbl  = add(this.add.text(PX+6, patY, `PATRULLA: ${this._patrol}px`, {fontFamily:'Lato',fontSize:'8px',color:'#aaa'}).setDepth(82));
+    add(this.add.rectangle(PX+8, patY+16, PW-16, 8, 0x222233).setOrigin(0,0.5).setDepth(82));
+    const patFill = add(this.add.rectangle(PX+8, patY+16, Math.max(2,(this._patrol/200)*(PW-16)), 8, 0xffaa44).setOrigin(0,0.5).setDepth(83));
+    const updPat  = (ex) => {
+      this._patrol = Math.round(((ex-(PX+8))/(PW-16))*200);
+      patFill.width= Math.max(2,(this._patrol/200)*(PW-16));
+      patLbl.setText(`PATRULLA: ${this._patrol}px`);
+    };
+    add(this.add.zone(PX+PW/2, patY+16, PW-16, 16).setInteractive().setDepth(84))
+      .on('pointerdown',e=>updPat(e.x)).on('pointermove',e=>{ if(this.input.activePointer.isDown) updPat(e.x); });
+
+    /* ── Grid snap toggle ── */
+    const snapY = 354;
+    const snapBg = add(this.add.graphics().setDepth(81));
+    const drawSnap = () => {
+      snapBg.clear();
+      snapBg.fillStyle(this._gridSnap?0x44ff88:0x222233, 0.6);
+      snapBg.fillRoundedRect(PX+4, snapY, PW-8, 20, 4);
+    };
+    drawSnap();
+    add(this.add.text(PX+PW/2, snapY+10, `SNAP GRID (G): ${this._gridSnap?'ON':'OFF'}`, {fontFamily:'Lato',fontSize:'9px',color:this._gridSnap?'#44ff88':'#666'}).setOrigin(0.5).setDepth(82));
+    add(this.add.zone(PX+PW/2, snapY+10, PW-8, 20).setInteractive().setDepth(83))
+      .on('pointerdown', () => { this._gridSnap=!this._gridSnap; this._drawGrid(); this._showTabContent(); });
+
+    /* ── Selected object info ── */
+    const selObj = this._objs.find(o=>o._selected);
+    if (selObj) {
+      add(this.add.text(PX+6, 380, `SEL: ${selObj.type}`, {fontFamily:'Lato',fontSize:'8px',color:'#f5d87a'}).setDepth(82));
+      add(this.add.text(PX+6, 390, `wx:${Math.round(selObj.wx)}  wy:${Math.round(selObj.wy)}`, {fontFamily:'Lato',fontSize:'8px',color:'#aaa'}).setDepth(82));
+      if (selObj.key) add(this.add.text(PX+6, 400, selObj.key, {fontFamily:'Lato',fontSize:'8px',color:'#888'}).setDepth(82));
+      /* Duplicate */
+      const dupG = add(this.add.graphics().setDepth(81));
+      dupG.fillStyle(0x4488ff,0.25); dupG.fillRoundedRect(PX+4,408,PW-8,20,4);
+      dupG.lineStyle(1,0x4488ff,0.6); dupG.strokeRoundedRect(PX+4,408,PW-8,20,4);
+      add(this.add.text(PX+PW/2,418,'DUPLICAR (D)',{fontFamily:'Lato',fontSize:'9px',color:'#88aaff'}).setOrigin(0.5).setDepth(82));
+      add(this.add.zone(PX+PW/2,418,PW-8,20).setInteractive().setDepth(83))
+        .on('pointerdown',()=>{ sfxClick(); this._duplicateSelected(); });
+    }
   }
 
-  /* ─── TAB: SCALE ─── */
+  /* ─── TAB: FONDOS ─── */
+  _buildAssetsTab() {
+    const PW=this.PW, PX=this.PX;
+    const add = o => { this._tabContainer.push(o); return o; };
+    const lv  = this._lv;
+
+    const FAR_KEYS   = ['bg_city_far','bg_desert_far','bg_beach_far','bg_halloween_far','bg_mexican_far','bg_church_far'];
+    const MID_KEYS   = ['bg_city_mid','bg_desert_mid','bg_beach_mid','bg_halloween_mid','bg_mexican_mid','bg_church_mid'];
+    const FLOOR_KEYS = ['floor_city','floor_desert','floor_beach','floor_halloween','floor_mexican','floor_church','win_floor_church'];
+    const WORLD_COLS = [0x4488ff,0xffaa44,0x44ddcc,0xaa44ff,0xff4488,0xffd700];
+
+    const section = (label, keys, layer, currentKey, startY) => {
+      add(this.add.text(PX+6, startY, label, {fontFamily:'Cinzel',fontSize:'9px',color:'#b89a6a',letterSpacing:1}).setDepth(82));
+      keys.forEach((k, i) => {
+        const by  = startY+14 + Math.floor(i/2)*22;
+        const bx  = PX+4 + (i%2)*(PW/2-2);
+        const sel = (this._lvBg[layer]||currentKey) === k;
+        const col = WORLD_COLS[i % WORLD_COLS.length];
+        const bg  = add(this.add.graphics().setDepth(81));
+        bg.fillStyle(col, sel?0.45:0.12);
+        bg.fillRoundedRect(bx, by, PW/2-4, 20, 3);
+        bg.lineStyle(sel?2:1, col, sel?1:0.35);
+        bg.strokeRoundedRect(bx, by, PW/2-4, 20, 3);
+        const shortName = k.replace('bg_','').replace('floor_','').replace('_far','FAR').replace('_mid','MID');
+        add(this.add.text(bx+(PW/2-4)/2, by+10, shortName.toUpperCase(), {fontFamily:'Lato',fontSize:'7px',color:sel?'#fff':'#888'}).setOrigin(0.5).setDepth(82));
+        add(this.add.zone(bx+(PW/2-4)/2, by+10, PW/2-4, 20).setInteractive().setDepth(83))
+          .on('pointerdown', () => { sfxClick(); this._swapBG(layer, k); this._showTabContent(); });
+      });
+      return startY + 14 + Math.ceil(keys.length/2)*22 + 6;
+    };
+
+    let y = 84;
+    y = section('FONDO FAR',   FAR_KEYS,   'bgFar', lv.bgFar,  y);
+    add(this.add.rectangle(PX+6, y, PW-12, 1, 0x333355).setOrigin(0,0).setDepth(81));
+    y += 4;
+    y = section('FONDO MID',   MID_KEYS,   'bgMid', lv.bgMid,  y);
+    add(this.add.rectangle(PX+6, y, PW-12, 1, 0x333355).setOrigin(0,0).setDepth(81));
+    y += 4;
+    y = section('PISO (FLOOR)',FLOOR_KEYS, 'floor', lv.floor,  y);
+
+    /* Reset BG button */
+    add(this.add.graphics().setDepth(81)).fillStyle(0x441111,0.4).fillRoundedRect(PX+4,y+4,PW-8,20,4);
+    add(this.add.text(PX+PW/2,y+14,'RESET FONDOS',{fontFamily:'Lato',fontSize:'9px',color:'#ff8888'}).setOrigin(0.5).setDepth(82));
+    add(this.add.zone(PX+PW/2,y+14,PW-8,20).setInteractive().setDepth(83))
+      .on('pointerdown',()=>{ sfxClick(); this._lvBg={bgFar:null,bgMid:null,floor:null}; this.scene.restart(); });
+  }
+
+  /* ─── TAB: ESCALA ─── */
   _buildScaleTab() {
     const PW=this.PW, PX=this.PX;
-    const add=(o)=>{ this._tabContainer.push(o); return o; };
-    const s=this._scales;
+    const add = o => { this._tabContainer.push(o); return o; };
+    const s   = this._scales;
 
-    const sliders=[
-      { lbl:'Jugador altura', key:'playerH',    min:30,  max:120, step:1  },
-      { lbl:'Props altura',   key:'propH',       min:16,  max:80,  step:1  },
-      { lbl:'Obstáculo alt',  key:'obstH',       min:20,  max:90,  step:1  },
-      { lbl:'Plataforma H',   key:'platH',       min:6,   max:40,  step:1  },
-      { lbl:'Piso alto',      key:'floorH',      min:30,  max:160, step:2  },
-      { lbl:'BG Far escala',  key:'bgFarScaleY', min:0.4, max:2.0, step:0.05 },
-      { lbl:'BG Mid escala',  key:'bgMidScaleY', min:0.4, max:2.0, step:0.05 },
+    const SLIDERS = [
+      {lbl:'Jugador H',  key:'playerH',    min:30,  max:130, step:1   },
+      {lbl:'Props H',    key:'propH',       min:16,  max:90,  step:1   },
+      {lbl:'Obstáculo H',key:'obstH',       min:20,  max:100, step:1   },
+      {lbl:'Plataforma H',key:'platH',      min:6,   max:40,  step:1   },
+      {lbl:'Piso H',     key:'floorH',      min:30,  max:180, step:2   },
+      {lbl:'BG Far Esc', key:'bgFarScaleY', min:0.3, max:2.5, step:0.05},
+      {lbl:'BG Mid Esc', key:'bgMidScaleY', min:0.3, max:2.5, step:0.05},
     ];
 
-    add(this.add.text(PX+6,82,'Tamaños:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
+    add(this.add.text(PX+6,84,'TAMAÑOS:', {fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
 
-    sliders.forEach((sl,i)=>{
-      const y=95+i*46;
-      add(this.add.text(PX+6,y,sl.lbl,{fontFamily:'Lato',fontSize:'9px',color:'#aaa'}).setDepth(82));
-      const valTxt=add(this.add.text(PX+PW-8,y,`${s[sl.key]}`,{fontFamily:'Lato',fontSize:'9px',color:'#f5d87a'}).setOrigin(1,0).setDepth(82));
-      /* track */
-      add(this.add.rectangle(PX+8,y+18,PW-16,8,0x222233).setOrigin(0,0.5).setDepth(82));
-      const range=sl.max-sl.min;
-      const fillW=Math.max(2,((s[sl.key]-sl.min)/range)*(PW-16));
-      const fill=add(this.add.rectangle(PX+8,y+18,fillW,8,0xb89a6a).setOrigin(0,0.5).setDepth(83));
-      /* handle */
-      const handle=add(this.add.circle(PX+8+fillW,y+18,7,0xf5d87a).setDepth(84));
-      /* interaction */
-      const zone=add(this.add.zone(PX+PW/2,y+18,PW-16,20).setInteractive().setDepth(85));
-      const update=(ex)=>{
-        const t=Phaser.Math.Clamp((ex-(PX+8))/(PW-16),0,1);
-        let v=sl.min+t*range;
-        /* snap to step */
-        v=Math.round(v/sl.step)*sl.step;
-        v=Phaser.Math.Clamp(v,sl.min,sl.max);
-        s[sl.key]=v;
-        valTxt.setText(typeof v==='number'&&!Number.isInteger(v)?v.toFixed(2):`${v}`);
-        const fw=Math.max(2,((v-sl.min)/range)*(PW-16));
-        fill.width=fw;
-        handle.x=PX+8+fw;
-        this._refreshBG();
-        this._refreshPreviewSprites();
+    SLIDERS.forEach((sl, i) => {
+      const y = 96 + i*44;
+      add(this.add.text(PX+6, y, sl.lbl, {fontFamily:'Lato',fontSize:'8px',color:'#aaa'}).setDepth(82));
+      const valTxt = add(this.add.text(PX+PW-6, y, `${s[sl.key]}`, {fontFamily:'Lato',fontSize:'8px',color:'#f5d87a'}).setOrigin(1,0).setDepth(82));
+      add(this.add.rectangle(PX+8, y+18, PW-16, 8, 0x1a1a2e).setOrigin(0,0.5).setDepth(82));
+      const range = sl.max - sl.min;
+      const fw    = Math.max(2,((s[sl.key]-sl.min)/range)*(PW-16));
+      const fill  = add(this.add.rectangle(PX+8, y+18, fw, 8, 0xb89a6a).setOrigin(0,0.5).setDepth(83));
+      const hdl   = add(this.add.circle(PX+8+fw, y+18, 6, 0xf5d87a).setDepth(84));
+      const upd   = (ex) => {
+        const t = Phaser.Math.Clamp((ex-(PX+8))/(PW-16),0,1);
+        let v = Math.round((sl.min+t*range)/sl.step)*sl.step;
+        v = Phaser.Math.Clamp(v, sl.min, sl.max);
+        s[sl.key] = v;
+        valTxt.setText(Number.isInteger(v)?`${v}`:v.toFixed(2));
+        const nfw = Math.max(2,((v-sl.min)/range)*(PW-16));
+        fill.width = nfw; hdl.x = PX+8+nfw;
+        this._refreshBG(); this._refreshPreviewSprites();
+        /* Update sprite scales on existing objects */
+        this._objs.forEach(o => {
+          if (!o.spr || !o.key) return;
+          const tH = o.type==='obstacle' ? s.obstH : s.propH;
+          o.spr.setScale(tH / this._texH(o.key));
+        });
         this._redrawAll();
       };
-      zone.on('pointerdown',e=>update(e.x));
-      zone.on('pointermove',e=>{ if(this.input.activePointer.isDown) update(e.x); });
+      add(this.add.zone(PX+PW/2,y+18,PW-16,16).setInteractive().setDepth(85))
+        .on('pointerdown',e=>upd(e.x)).on('pointermove',e=>{ if(this.input.activePointer.isDown) upd(e.x); });
     });
 
-    add(this.add.text(PX+6,H-55,'Preview jogador:',{fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
-    add(this.add.text(PX+6,H-42,'(ver canvas izq.)',{fontFamily:'Lato',fontSize:'8px',color:'#444'}).setDepth(82));
+    /* Reset button */
+    const resetY = 96 + SLIDERS.length*44 + 4;
+    const rg = add(this.add.graphics().setDepth(81));
+    rg.fillStyle(0x333322,0.7); rg.fillRoundedRect(PX+4,resetY,PW-8,22,4);
+    add(this.add.text(PX+PW/2,resetY+11,'RESET ESCALAS',{fontFamily:'Lato',fontSize:'9px',color:'#cccc88'}).setOrigin(0.5).setDepth(82));
+    add(this.add.zone(PX+PW/2,resetY+11,PW-8,22).setInteractive().setDepth(83))
+      .on('pointerdown',()=>{
+        sfxClick();
+        this._scales = {playerH:P_H,propH:48,obstH:60,platH:20,bgFarScaleY:1,bgMidScaleY:1,floorH:TILE_H,goalX:null,worldW:null};
+        this._refreshBG(); this._refreshPreviewSprites(); this._redrawAll(); this._showTabContent();
+      });
   }
 
-  /* ─── TAB: WORLD ─── */
+  /* ─── TAB: MUNDO ─── */
   _buildWorldTab() {
     const PW=this.PW, PX=this.PX;
-    const add=(o)=>{ this._tabContainer.push(o); return o; };
-    const lv=this._lv;
-    const s=this._scales;
+    const add = o => { this._tabContainer.push(o); return o; };
+    const lv  = this._lv;
+    const s   = this._scales;
 
-    add(this.add.text(PX+6,82,'Mundo:',{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
+    add(this.add.text(PX+6,84,'CONFIGURACIÓN MUNDO:', {fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
 
-    /* worldW */
-    const wwVal=s.worldW||lv.worldW;
-    add(this.add.text(PX+6,98,'Ancho mundo',{fontFamily:'Lato',fontSize:'9px',color:'#aaa'}).setDepth(82));
-    const wwTxt=add(this.add.text(PX+PW-8,98,`${wwVal}px`,{fontFamily:'Lato',fontSize:'9px',color:'#f5d87a'}).setOrigin(1,0).setDepth(82));
-    add(this.add.rectangle(PX+8,116,PW-16,8,0x222233).setOrigin(0,0.5).setDepth(82));
-    const wwFw=Math.max(2,((wwVal-1000)/7000)*(PW-16));
-    const wwFill=add(this.add.rectangle(PX+8,116,wwFw,8,0x44aaff).setOrigin(0,0.5).setDepth(83));
-    const wwH=add(this.add.circle(PX+8+wwFw,116,7,0x88ccff).setDepth(84));
-    const wwZ=add(this.add.zone(PX+PW/2,116,PW-16,20).setInteractive().setDepth(85));
-    const updWW=(ex)=>{
-      const t=Phaser.Math.Clamp((ex-(PX+8))/(PW-16),0,1);
-      const v=Math.round((1000+t*7000)/100)*100;
-      s.worldW=v; wwTxt.setText(`${v}px`);
-      const fw=Math.max(2,((v-1000)/7000)*(PW-16)); wwFill.width=fw; wwH.x=PX+8+fw;
+    const mkSlider = (label, y, curVal, min, max, step, onVal) => {
+      add(this.add.text(PX+6, y, label, {fontFamily:'Lato',fontSize:'8px',color:'#aaa'}).setDepth(82));
+      const vTxt = add(this.add.text(PX+PW-6, y, `${curVal}`, {fontFamily:'Lato',fontSize:'8px',color:'#f5d87a'}).setOrigin(1,0).setDepth(82));
+      add(this.add.rectangle(PX+8,y+18,PW-16,8,0x1a1a2e).setOrigin(0,0.5).setDepth(82));
+      const range = max-min;
+      const fw0   = Math.max(2,((curVal-min)/range)*(PW-16));
+      const fill  = add(this.add.rectangle(PX+8,y+18,fw0,8,0x44aaff).setOrigin(0,0.5).setDepth(83));
+      const hdl   = add(this.add.circle(PX+8+fw0,y+18,6,0x88ccff).setDepth(84));
+      const upd   = (ex) => {
+        const t = Phaser.Math.Clamp((ex-(PX+8))/(PW-16),0,1);
+        const v = Math.round((min+t*range)/step)*step;
+        vTxt.setText(`${v}`);
+        const fw = Math.max(2,((v-min)/range)*(PW-16)); fill.width=fw; hdl.x=PX+8+fw;
+        onVal(v);
+      };
+      add(this.add.zone(PX+PW/2,y+18,PW-16,16).setInteractive().setDepth(85))
+        .on('pointerdown',e=>upd(e.x)).on('pointermove',e=>{ if(this.input.activePointer.isDown) upd(e.x); });
     };
-    wwZ.on('pointerdown',e=>updWW(e.x));
-    wwZ.on('pointermove',e=>{ if(this.input.activePointer.isDown) updWW(e.x); });
 
-    /* goalX */
-    const gxVal=s.goalX||lv.goal;
-    add(this.add.text(PX+6,132,'Meta (Vale X)',{fontFamily:'Lato',fontSize:'9px',color:'#aaa'}).setDepth(82));
-    const gxTxt=add(this.add.text(PX+PW-8,132,`${gxVal}px`,{fontFamily:'Lato',fontSize:'9px',color:'#f5d87a'}).setOrigin(1,0).setDepth(82));
-    add(this.add.rectangle(PX+8,150,PW-16,8,0x222233).setOrigin(0,0.5).setDepth(82));
-    const gxFw=Math.max(2,((gxVal-500)/7000)*(PW-16));
-    const gxFill=add(this.add.rectangle(PX+8,150,gxFw,8,0xffd700).setOrigin(0,0.5).setDepth(83));
-    const gxHnd=add(this.add.circle(PX+8+gxFw,150,7,0xffd700).setDepth(84));
-    const gxZ=add(this.add.zone(PX+PW/2,150,PW-16,20).setInteractive().setDepth(85));
-    const updGX=(ex)=>{
-      const t=Phaser.Math.Clamp((ex-(PX+8))/(PW-16),0,1);
-      const v=Math.round((500+t*7000)/50)*50;
-      s.goalX=v; gxTxt.setText(`${v}px`);
-      const fw=Math.max(2,((v-500)/7000)*(PW-16)); gxFill.width=fw; gxHnd.x=PX+8+fw;
-    };
-    gxZ.on('pointerdown',e=>updGX(e.x));
-    gxZ.on('pointermove',e=>{ if(this.input.activePointer.isDown) updGX(e.x); });
+    mkSlider('Ancho Mundo (px)', 96,  s.worldW||lv.worldW, 1000, 12000, 100, v=>{ s.worldW=v; });
+    mkSlider('Meta - Vale X',    148, s.goalX||lv.goal,    200,  12000, 50,  v=>{ s.goalX=v; });
+    mkSlider('Nivel Y piso',     200, GROUND_Y,             200,  H-20,  4,   v=>{ /* informational */});
 
-    /* info */
-    add(this.add.text(PX+6,175,'GROUND_Y fijo por TILE_H',{fontFamily:'Lato',fontSize:'8px',color:'#555'}).setDepth(82));
-    add(this.add.text(PX+6,186,'Ajusta TILE_H en pestaña ESCALA',{fontFamily:'Lato',fontSize:'8px',color:'#555'}).setDepth(82));
+    /* Level info */
+    add(this.add.text(PX+6,254,`Nivel ${lv.id}: ${lv.label}`,{fontFamily:'Cinzel',fontSize:'10px',color:('#'+lv.color.toString(16).padStart(6,'0'))}).setDepth(82));
+    add(this.add.text(PX+6,268,`Plataformas: ${this._objs.filter(o=>o.type==='platform').length}`,{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
+    add(this.add.text(PX+6,280,`Coleccionables: ${this._objs.filter(o=>o.type==='collect').length}`,{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
+    add(this.add.text(PX+6,292,`Obstáculos: ${this._objs.filter(o=>o.type==='obstacle').length}`,{fontFamily:'Lato',fontSize:'9px',color:'#888'}).setDepth(82));
 
-    /* Reset to defaults */
-    const rG=add(this.add.graphics().setDepth(81));
-    rG.fillStyle(0x333322,0.8); rG.fillRoundedRect(PX+4,210,PW-8,22,4);
-    add(this.add.text(PX+PW/2,221,'RESET ESCALAS',{fontFamily:'Lato',fontSize:'9px',color:'#cccc88'}).setOrigin(0.5).setDepth(82));
-    const rZ=add(this.add.zone(PX+PW/2,221,PW-8,22).setInteractive().setDepth(83));
-    rZ.on('pointerdown',()=>{
-      sfxClick();
-      this._scales={playerH:P_H,propH:38,obstH:44,platH:18,bgFarScaleY:1,bgMidScaleY:1,floorH:TILE_H,goalX:null,worldW:null};
-      this._refreshBG(); this._refreshPreviewSprites(); this._redrawAll();
-      this._showTabContent();
+    /* Minimap */
+    const mmY=310, mmW=PW-12, mmH=24;
+    add(this.add.text(PX+6,mmY-12,'MAPA NIVEL:',{fontFamily:'Lato',fontSize:'8px',color:'#666'}).setDepth(82));
+    const mmBg = add(this.add.graphics().setDepth(81));
+    mmBg.fillStyle(0x111122,0.9); mmBg.fillRoundedRect(PX+6,mmY,mmW,mmH,3);
+    const ww = s.worldW||lv.worldW;
+    /* Objects dots on minimap */
+    this._objs.forEach(o => {
+      const mx = PX+6 + (o.wx/ww)*mmW;
+      const col = o.type==='platform'?lv.color:o.type==='collect'?0xffdd44:0xff5555;
+      mmBg.fillStyle(col,0.8);
+      mmBg.fillRect(Math.round(mx),mmY+mmH-4,2,4);
     });
+    /* Camera position */
+    const cx = PX+6 + (this._camX/ww)*mmW;
+    mmBg.fillStyle(0xffffff,0.5); mmBg.fillRect(Math.round(cx),mmY,Math.round((this.CW/ww)*mmW),mmH);
   }
 
-  /* ── BOTTOM BAR ── */
+  /* ════ BOTTOM BAR ════ */
   _buildBottomBar() {
-    this.add.rectangle(this.CX,H-18,this.CW,18,0x000000,0.7).setOrigin(0,0).setDepth(80);
-    this._coordTxt=this.add.text(this.CX+6,H-9,'wx:0 wy:0  camX:0',{fontFamily:'Lato',fontSize:'8px',color:'rgba(255,255,255,.5)'}).setOrigin(0,0.5).setDepth(81);
-    this._hintTxt=this.add.text(W-6,H-9,'Click=añadir  Drag=mover  Del=borrar  ← →=scroll',{fontFamily:'Lato',fontSize:'8px',color:'rgba(255,255,255,.3)'}).setOrigin(1,0.5).setDepth(81);
-
-    /* Bottom: export + exit */
-    const expG=this.add.graphics().setDepth(81);
-    expG.fillStyle(0x1a3322,0.95); expG.fillRoundedRect(this.PX+4,H-82,this.PW-8,24,4);
-    this.add.text(this.PX+this.PW/2,H-70,'📋 EXPORTAR JSON',{fontFamily:'Cinzel',fontSize:'9px',color:'#aaffaa'}).setOrigin(0.5).setDepth(82);
-    const expZ=this.add.zone(this.PX+this.PW/2,H-70,this.PW-8,24).setInteractive().setDepth(83);
-    expZ.on('pointerdown',()=>{ sfxClick(); this._export(); });
-
-    const exG=this.add.graphics().setDepth(81);
-    exG.fillStyle(0x2a1111,0.95); exG.fillRoundedRect(this.PX+4,H-52,this.PW-8,22,4);
-    this.add.text(this.PX+this.PW/2,H-41,'← SALIR',{fontFamily:'Cinzel',fontSize:'9px',color:'#ffaaaa'}).setOrigin(0.5).setDepth(82);
-    const exZ=this.add.zone(this.PX+this.PW/2,H-41,this.PW-8,22).setInteractive().setDepth(83);
-    exZ.on('pointerdown',()=>{ sfxClick(); this.scene.start('Menu'); });
+    this.add.rectangle(this.CX, H-18, this.CW, 18, 0x000000, 0.75).setOrigin(0,0).setDepth(80);
+    this._coordTxt = this.add.text(this.CX+6, H-9, 'wx:0 wy:0  camX:0',
+      {fontFamily:'Lato',fontSize:'8px',color:'rgba(255,255,255,.45)'}).setOrigin(0,0.5).setDepth(81);
+    this.add.text(W-6, H-9, 'Click=colocar  Drag=mover  Del=borrar  Wheel/←→=scroll  G=grid  Z=undo  D=dup',
+      {fontFamily:'Lato',fontSize:'7px',color:'rgba(255,255,255,.22)'}).setOrigin(1,0.5).setDepth(81);
   }
 
-  /* ── KEYBOARD ── */
+  /* ════ KEYBOARD ════ */
   _buildKeyboard() {
-    const kb=this.input.keyboard;
-    kb.on('keydown-ESC',   ()=>this.scene.start('Menu'));
-    kb.on('keydown-LEFT',  ()=>{ this._camX=Math.max(0,this._camX-60); this._refreshBG(); this._redrawAll(); this._updateCoords(0,0); });
-    kb.on('keydown-RIGHT', ()=>{ this._camX=Math.min((this._scales.worldW||this._lv.worldW),this._camX+60); this._refreshBG(); this._redrawAll(); this._updateCoords(0,0); });
-    kb.on('keydown-DELETE',()=>this._deleteSelected());
+    const kb = this.input.keyboard;
+    const scroll = (dx) => {
+      const maxX = (this._scales.worldW||this._lv.worldW) - this.CW;
+      this._camX = Phaser.Math.Clamp(this._camX+dx, 0, Math.max(0,maxX));
+      this._refreshBG(); this._redrawAll(); this._updateCoords(0,0);
+    };
+    kb.on('keydown-ESC',    () => this.scene.start('Menu'));
+    kb.on('keydown-LEFT',   () => scroll(-60));
+    kb.on('keydown-RIGHT',  () => scroll(60));
+    kb.on('keydown-DELETE', () => { this._snapshot(); this._deleteSelected(); });
+    kb.on('keydown-G',      () => { this._gridSnap=!this._gridSnap; this._drawGrid(); this._showTabContent(); });
+    kb.on('keydown-Z',      () => { sfxClick(); this._undo(); });
+    kb.on('keydown-D',      () => { sfxClick(); this._duplicateSelected(); });
   }
 
-  /* ── INTERACTION ── */
-  _onDown(ptr) {
-    if(ptr.x<this.CX) return; /* panel */
-    if(ptr.y>H-18) return;     /* bottom bar */
+  /* ════ INTERACTION ════ */
+  _snapToGrid(v) { return this._gridSnap ? Math.round(v/40)*40 : v; }
 
-    /* Check resize handle first (platform right edge) */
-    const selPlat=this._objs.find(o=>o._selected&&o.type==='platform');
-    if(selPlat) {
-      const sx=(selPlat.wx-this._camX)+this.CX;
-      const w=selPlat.w||120;
-      const handleX=sx+w;
-      if(Math.abs(ptr.x-handleX)<8 && ptr.y>=selPlat.wy && ptr.y<=selPlat.wy+this._scales.platH) {
-        this._drag={resize:true, obj:selPlat, startW:w, startX:ptr.x};
+  _onDown(ptr) {
+    if (ptr.x < this.CX) return;
+    if (ptr.y > H-18)    return;
+
+    /* Resize handle — triangle at right edge of selected platform */
+    const selPlat = this._objs.find(o=>o._selected&&o.type==='platform');
+    if (selPlat) {
+      const sx = (selPlat.wx-this._camX)+this.CX;
+      if (ptr.x>=sx+(selPlat.w||120)-2 && ptr.x<=sx+(selPlat.w||120)+14 && ptr.y>=selPlat.wy && ptr.y<=selPlat.wy+this._scales.platH+10) {
+        this._drag = {resize:true, obj:selPlat, startW:selPlat.w||120, startX:ptr.x};
         return;
       }
     }
 
-    /* Hit test existing objects */
-    let hit=null;
-    for(let i=this._objs.length-1;i>=0;i--) {
-      const o=this._objs[i];
-      const sx=(o.wx-this._camX)+this.CX;
-      const sy=o.wy;
-      let inside=false;
-      const ph=this._scales.platH;
-      if(o.type==='platform') inside=ptr.x>=sx&&ptr.x<=sx+(o.w||120)&&ptr.y>=sy&&ptr.y<=sy+ph;
-      else inside=Math.hypot(ptr.x-sx,ptr.y-sy)<18;
-      if(inside){ hit=o; break; }
+    /* Hit test — collect & obstacle first (sprites are bigger now) */
+    let hit = null;
+    for (let i=this._objs.length-1; i>=0; i--) {
+      const o  = this._objs[i];
+      const sx = (o.wx-this._camX)+this.CX;
+      const sy = o.wy;
+      const ph = this._scales.platH;
+      let inside = false;
+      if (o.type==='platform') inside = ptr.x>=sx && ptr.x<=sx+(o.w||120) && ptr.y>=sy && ptr.y<=sy+ph;
+      else                      inside = Math.hypot(ptr.x-sx, ptr.y-sy) < 28;
+      if (inside) { hit=o; break; }
     }
 
-    if(hit) {
+    if (hit) {
       this._objs.forEach(o=>{ o._selected=false; this._redrawObj(o); });
-      hit._selected=true; this._redrawObj(hit);
-      this._drag={obj:hit, offX:ptr.x-((hit.wx-this._camX)+this.CX), offY:ptr.y-hit.wy};
-      if(this._tab==='objects') this._showTabContent(); /* refresh width slider */
+      hit._selected = true; this._redrawObj(hit);
+      this._drag = {obj:hit, offX:ptr.x-((hit.wx-this._camX)+this.CX), offY:ptr.y-hit.wy};
+      this._showTabContent();
     } else {
+      this._snapshot();
       this._objs.forEach(o=>{ o._selected=false; this._redrawObj(o); });
-      /* Snap Y to ground or platform if close */
-      const wx=(ptr.x-this.CX)+this._camX;
-      let wy=ptr.y;
-      /* snap to ground */
-      if(Math.abs(wy-GROUND_Y)<20) wy=GROUND_Y;
-      /* snap to nearest platform top */
-      this._objs.filter(o=>o.type==='platform').forEach(p=>{
-        if(Math.abs(wy-p.wy)<16) wy=p.wy;
-      });
+      let wx = this._snapToGrid((ptr.x-this.CX)+this._camX);
+      let wy = ptr.y;
+      /* Y snap: ground or platform tops */
+      if (Math.abs(wy-GROUND_Y) < 24)  wy = GROUND_Y;
+      this._objs.filter(o=>o.type==='platform').forEach(p => { if(Math.abs(wy-p.wy)<18) wy=p.wy; });
+      wy = this._snapToGrid(wy);
 
-      if(this._mode==='platform') {
-        this._addObj({type:'platform',wx,wy,w:120});
-      } else if(this._mode==='collect') {
-        const isPts=this._selKey.startsWith('points');
-        this._addObj({type:'collect',wx,wy,key:this._selKey,pts:isPts?100:0});
-      } else {
-        const isLife=this._selKey.includes('life');
-        this._addObj({type:'obstacle',wx,wy,key:this._selKey,obsType:isLife?'life':'money',patrol:this._patrol});
-      }
+      if      (this._mode==='platform') this._addObj({type:'platform',wx,wy,w:120});
+      else if (this._mode==='collect')  this._addObj({type:'collect', wx,wy,key:this._selKey,pts:this._selKey.startsWith('points')?100:0});
+      else                               this._addObj({type:'obstacle',wx,wy,key:this._selKey,obsType:this._selKey.includes('life')?'life':'money',patrol:this._patrol});
     }
   }
 
   _onMove(ptr) {
     this._updateCoords(ptr.x, ptr.y);
-    if(!this._drag) return;
+    if (!this._drag) return;
 
-    if(this._drag.resize) {
-      const obj=this._drag.obj;
-      const newW=Math.max(40, this._drag.startW+(ptr.x-this._drag.startX));
-      obj.w=Math.round(newW);
-      this._redrawObj(obj);
+    if (this._drag.resize) {
+      this._drag.obj.w = Math.max(40, Math.round(this._drag.startW+(ptr.x-this._drag.startX)));
+      this._redrawObj(this._drag.obj);
       return;
     }
 
-    const o=this._drag.obj;
-    o.wx=(ptr.x - this._drag.offX) - this.CX + this._camX;
-    o.wy=ptr.y-this._drag.offY;
-    /* snap wy to ground */
-    if(Math.abs(o.wy-GROUND_Y)<14) o.wy=GROUND_Y;
+    const o = this._drag.obj;
+    let wx = this._snapToGrid((ptr.x-this._drag.offX)-this.CX+this._camX);
+    let wy = ptr.y - this._drag.offY;
+    if (Math.abs(wy-GROUND_Y) < 16) wy = GROUND_Y;
+    if (this._gridSnap) wy = this._snapToGrid(wy);
+    o.wx = wx; o.wy = wy;
     this._redrawObj(o);
   }
 
-  _onUp() { this._drag=null; }
+  _onUp() {
+    if (this._drag) this._snapshot();
+    this._drag = null;
+  }
 
   _deleteSelected() {
-    const sel=this._objs.filter(o=>o._selected);
-    sel.forEach(o=>{ o.gfx.destroy(); o.lbl.destroy(); o.rhGfx.destroy(); });
-    this._objs=this._objs.filter(o=>!o._selected);
+    this._objs.filter(o=>o._selected).forEach(o => {
+      o.gfx?.destroy(); o.lbl?.destroy(); o.rhGfx?.destroy(); o.spr?.destroy();
+    });
+    this._objs = this._objs.filter(o=>!o._selected);
+    this._redrawAll();
+    this._showTabContent();
+  }
+
+  _duplicateSelected() {
+    const sel = this._objs.find(o=>o._selected);
+    if (!sel) return;
+    this._snapshot();
+    const copy = {...sel, wx:sel.wx+40, wy:sel.wy, gfx:undefined, lbl:undefined, rhGfx:undefined, spr:undefined, _selected:false};
+    delete copy.gfx; delete copy.lbl; delete copy.rhGfx; delete copy.spr;
+    this._addObj(copy);
   }
 
   _redrawAll() { this._objs.forEach(o=>this._redrawObj(o)); }
 
-  _updateCoords(px,py) {
-    const wx=Math.round((px-this.CX)+this._camX);
-    const wy=Math.round(py);
-    this._coordTxt.setText(`wx:${wx}  wy:${wy}  camX:${Math.round(this._camX)}`);
+  _updateCoords(px, py) {
+    const wx = Math.round((px-this.CX)+this._camX);
+    const wy = Math.round(py);
+    this._coordTxt.setText(`wx:${wx}  wy:${wy}  camX:${Math.round(this._camX)}  objetos:${this._objs.length}`);
   }
 
-  /* ── EXPORT ── */
+  /* ════ UNDO ════ */
+  _snapshot() {
+    const data = this._objs.map(o => ({
+      type:o.type, wx:o.wx, wy:o.wy, w:o.w,
+      key:o.key, pts:o.pts, obsType:o.obsType, patrol:o.patrol
+    }));
+    this._undoStack.push(JSON.stringify(data));
+    if (this._undoStack.length > 25) this._undoStack.shift();
+  }
+
+  _undo() {
+    if (this._undoStack.length < 2) { this._toast('Nada que deshacer',0xff8844); return; }
+    this._undoStack.pop();
+    const data = JSON.parse(this._undoStack[this._undoStack.length-1]);
+    this._objs.forEach(o => { o.gfx?.destroy(); o.lbl?.destroy(); o.rhGfx?.destroy(); o.spr?.destroy(); });
+    this._objs = [];
+    data.forEach(d => this._addObj(d));
+    this._redrawAll();
+    this._showTabContent();
+    this._toast('Deshecho ↩',0xffaa44);
+  }
+
+  /* ════ APPLY TO LEVELS ════ */
+  _applyToLevel() {
+    const lv = this._lv;
+    const s  = this._scales;
+    lv.platforms    = this._objs.filter(o=>o.type==='platform').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),w:o.w||120}));
+    lv.collectibles = this._objs.filter(o=>o.type==='collect') .map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,pts:o.pts||0}));
+    lv.obstacles    = this._objs.filter(o=>o.type==='obstacle').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,type:o.obsType||'money',patrol:o.patrol||0}));
+    if (this._lvBg.bgFar)  lv.bgFar  = this._lvBg.bgFar;
+    if (this._lvBg.bgMid)  lv.bgMid  = this._lvBg.bgMid;
+    if (this._lvBg.floor)  lv.floor  = this._lvBg.floor;
+    if (s.worldW)          lv.worldW = s.worldW;
+    if (s.goalX)           lv.goal   = s.goalX;
+  }
+
+  /* ════ EXPORT ════ */
   _export() {
-    const lv=this._lv;
-    const s=this._scales;
-    const platforms   =this._objs.filter(o=>o.type==='platform').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),w:o.w||120}));
-    const collectibles=this._objs.filter(o=>o.type==='collect').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,pts:o.pts||0}));
-    const obstacles   =this._objs.filter(o=>o.type==='obstacle').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,type:o.obsType||'money',patrol:o.patrol||0}));
-    const scales={
-      playerH:s.playerH, propH:s.propH, obstH:s.obstH, platH:s.platH,
-      floorH:s.floorH, bgFarScaleY:s.bgFarScaleY, bgMidScaleY:s.bgMidScaleY,
-      worldW:s.worldW||lv.worldW, goalX:s.goalX||lv.goal
+    const lv = this._lv;
+    const s  = this._scales;
+    const out = {
+      id: lv.id, label: lv.label,
+      platforms:    this._objs.filter(o=>o.type==='platform').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),w:o.w||120})),
+      collectibles: this._objs.filter(o=>o.type==='collect') .map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,pts:o.pts||0})),
+      obstacles:    this._objs.filter(o=>o.type==='obstacle').map(o=>({x:Math.round(o.wx),y:Math.round(o.wy),key:o.key,type:o.obsType||'money',patrol:o.patrol||0})),
+      bg: { far:this._lvBg.bgFar||lv.bgFar, mid:this._lvBg.bgMid||lv.bgMid, floor:this._lvBg.floor||lv.floor },
+      world: { worldW:s.worldW||lv.worldW, goalX:s.goalX||lv.goal },
     };
-    const out={id:lv.id,label:lv.label,platforms,collectibles,obstacles,scales};
     console.log('=== LEVEL EXPORT ===\n'+JSON.stringify(out,null,2));
-    const t=this.add.text(this.CX+this.CW/2,H/2,'✔ Exportado — F12 → Console',
-      {fontFamily:'Lato',fontSize:'13px',color:'#aaffaa',backgroundColor:'#002200',padding:{x:12,y:8}})
-      .setOrigin(0.5).setDepth(100);
-    this.tweens.add({targets:t,alpha:0,delay:2200,duration:500,onComplete:()=>t.destroy()});
+    this._toast('Exportado → F12 Console', 0x44aaff);
+  }
+
+  /* ════ TOAST ════ */
+  _toast(msg, col=0xffffff) {
+    const t = this.add.text(this.CX+this.CW/2, H/2, msg,
+      {fontFamily:'Lato',fontSize:'13px',color:'#'+col.toString(16).padStart(6,'0'),
+       backgroundColor:'#001122',padding:{x:14,y:8},borderRadius:6})
+      .setOrigin(0.5).setDepth(200);
+    this.tweens.add({targets:t,alpha:0,y:t.y-30,delay:1600,duration:500,onComplete:()=>t.destroy()});
   }
 }
 
