@@ -611,6 +611,10 @@ class GameScene extends Phaser.Scene {
     this._farScale   = 1;
     this._midScale   = 1;
     this._flrScale   = 1;
+    this.loveMeter   = 50;  /* 0-100 */
+    this.sliding     = false;
+    this.slideT      = 0;   /* ms remaining in slide */
+    this.slideCool   = 0;   /* ms cooldown after slide */
   }
 
   /* Safe texture height lookup */
@@ -776,11 +780,17 @@ class GameScene extends Phaser.Scene {
 
   _buildHUD(lv) {
     const depth = 50;
-    /* Score */
+    /* Score + Love Meter box */
     const sg=this.add.graphics().setDepth(depth).setScrollFactor(0);
-    sg.fillStyle(0x000000,0.55); sg.fillRoundedRect(8,8,200,42,6);
+    sg.fillStyle(0x000000,0.58); sg.fillRoundedRect(8,8,210,62,6);
     this._scoreTxt=this.add.text(16,14,'PUNTOS  0',{fontFamily:'Cinzel',fontSize:'12px',color:'#f5d87a'}).setDepth(depth+1).setScrollFactor(0);
     this._livesTxt=this.add.text(16,31,'❤️❤️❤️',{fontFamily:'Lato',fontSize:'11px',color:'#ff6666'}).setDepth(depth+1).setScrollFactor(0);
+    /* Love Meter */
+    this.add.text(16,48,'💕',{fontFamily:'Lato',fontSize:'10px'}).setDepth(depth+1).setScrollFactor(0);
+    const loveBgG=this.add.graphics().setDepth(depth).setScrollFactor(0);
+    loveBgG.fillStyle(0x441122,0.8); loveBgG.fillRect(34,50,164,8);
+    this._loveFill=this.add.graphics().setDepth(depth+1).setScrollFactor(0);
+    this._loveTxt=this.add.text(202,48,'50%',{fontFamily:'Lato',fontSize:'8px',color:'#ff88aa'}).setOrigin(1,0).setDepth(depth+1).setScrollFactor(0);
 
     /* Timer */
     const tg=this.add.graphics().setDepth(depth).setScrollFactor(0);
@@ -810,10 +820,12 @@ class GameScene extends Phaser.Scene {
       left: kb.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT),
       right:kb.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT),
       up:   kb.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
+      down: kb.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
       space:kb.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
       a:    kb.addKey(Phaser.Input.Keyboard.KeyCodes.A),
       d:    kb.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       w:    kb.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      s:    kb.addKey(Phaser.Input.Keyboard.KeyCodes.S),
     };
     kb.on('keydown-UP',   ()=>this._jump());
     kb.on('keydown-SPACE',()=>this._jump());
@@ -868,22 +880,34 @@ class GameScene extends Phaser.Scene {
     this._pAnim.update(dt);
     this._valeAnim.update(dt);
 
-    if (this.hitCD  > 0) { this.hitCD  -= dt; }
-    if (this.shieldT > 0) { this.shieldT -= dt; if (this.shieldT <= 0) this.shielded = false; }
-    if (this.boostT  > 0) { this.boostT  -= dt; if (this.boostT  <= 0) this.boosted  = false; }
+    if (this.hitCD    > 0) { this.hitCD    -= dt; }
+    if (this.shieldT  > 0) { this.shieldT  -= dt; if (this.shieldT  <= 0) this.shielded = false; }
+    if (this.boostT   > 0) { this.boostT   -= dt; if (this.boostT   <= 0) this.boosted  = false; }
+    if (this.sliding)      { this.slideT   -= dt; if (this.slideT   <= 0) { this.sliding=false; this.slideCool=300; } }
+    if (this.slideCool > 0) this.slideCool -= dt;
 
     if (!this.done && Math.abs(this._px - this._valeWX) < 80) this._winLevel();
   }
 
   _handleInput(dts) {
+    if (this.sliding) return; /* lock input during slide */
+
     const goLeft  = this._keys.left.isDown  || this._keys.a.isDown || this.touch.left;
     const goRight = this._keys.right.isDown || this._keys.d.isDown || this.touch.right;
+    const goDown  = this._keys.down.isDown  || this._keys.s.isDown;
     const spd = this.boosted ? P_SPEED * 1.55 : P_SPEED;
 
     /* Instant full-speed on press, instant stop on release — no acceleration */
     if      (goRight) this.velX =  spd;
     else if (goLeft)  this.velX = -spd;
     else              this.velX =  0;
+
+    /* Slide — down while running on ground, after cooldown */
+    if (goDown && this.onGround && Math.abs(this.velX) > 50 && this.slideCool <= 0) {
+      this.sliding = true;
+      this.slideT  = 400;
+      this._slideBurst();
+    }
 
     /* Buffered jump: fires when ground is regained within buffer window */
     if (this.jumpBuf > 0) {
@@ -948,14 +972,20 @@ class GameScene extends Phaser.Scene {
     else if (this.velX > 0) this._pImg.setFlipX(false);
 
     /* ── Animation state ── */
-    if (this.hitCD > 800) {
+    if (this.sliding) {
+      /* Slide squish — wider and lower */
+      this._pImg.setScale(this._pScale * 1.15, this._pScale * 0.44);
+      this._pImg.setAlpha(1);
+      this._pAnim.set(['novios_walking01','novios_walking02'], 14);
+    } else if (this.hitCD > 800) {
+      this._pImg.setScale(this._pScale);
       this._pAnim.set(['novios_hit01'], 4);
       /* Invincibility flicker — fast alpha strobe */
       this._pImg.setAlpha(Math.sin(this.hitCD * 0.022) > 0 ? 1 : 0.30);
     } else {
+      this._pImg.setScale(this._pScale);
       this._pImg.setAlpha(1);
       if (!this.onGround && this.jumpCount >= 2) {
-        /* Double-jump: reverse frame order gives a slightly different look */
         this._pAnim.set(['novios_jumping02', 'novios_jumping01'], 7);
       } else if (!this.onGround) {
         this._pAnim.set(['novios_jumping01', 'novios_jumping02'], 6);
@@ -966,9 +996,13 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    /* ── Shadow — shrinks and fades when airborne ── */
+    /* ── Shadow — shrinks/fades when airborne, stretches during slide ── */
     const air = Phaser.Math.Clamp((PLAYER_STAND_Y - this._py) / 160, 0, 1);
-    this._shadow.setScale(1 - air * 0.5, 1).setAlpha(0.18 * (1 - air * 0.55));
+    if (this.sliding) {
+      this._shadow.setScale(1.5, 0.6).setAlpha(0.28);
+    } else {
+      this._shadow.setScale(1 - air * 0.5, 1).setAlpha(0.18 * (1 - air * 0.55));
+    }
 
     /* ── Shield ring ── */
     this._shieldGfx.clear();
@@ -1010,8 +1044,16 @@ class GameScene extends Phaser.Scene {
     this._obstacles.forEach(obs=>{
       if(!obs._alive) return;
       const dx=Math.abs(obs._wx-px), dy=Math.abs(obs._wy-py);
-      if(dx<34&&dy<48){
-        if(this.shielded){
+      /* Slide shrinks hitbox significantly */
+      const hw = this.sliding ? 20 : 34;
+      const hh = this.sliding ? 16 : 48;
+      if(dx<hw&&dy<hh){
+        if(this.sliding && obs._type==='money'){
+          /* Slide dodge — duck under money obstacle */
+          this._popup(this._wx2sx(obs._wx),obs._wy-50,'¡ESQUIVADO! 💨',0xaaffaa);
+          this.loveMeter=Math.min(100,this.loveMeter+8);
+          obs._alive=false; this._popSprite(obs);
+        } else if(this.shielded){
           this._popup(this._wx2sx(obs._wx),obs._wy-50,'¡BLOQUEADO! 🛡',0x44aaff);
           obs._alive=false; this._popSprite(obs);
         } else {
@@ -1026,19 +1068,31 @@ class GameScene extends Phaser.Scene {
     const sx=this._wx2sx(item._wx);
     if(item._type==='collect'){
       this.score+=item._val;
+      this.loveMeter=Math.min(100,this.loveMeter+10);
       this._popup(sx,item._wy-40,`+${item._val}`,0xffdd44);
       this._sparkBurst(sx,item._wy);
     } else {
       sfxPower();
-      if(item._key==='shield'){ this.shielded=true; this.shieldT=8000; this._popup(sx,item._wy-40,'🛡 ¡ESCUDO!',0x44aaff); }
-      else if(item._key==='booster'){ this.boosted=true; this.boostT=6000; this._popup(sx,item._wy-40,'⚡ ¡TURBO!',0xffaa00); }
-      else if(item._key==='life'){ this.lives=Math.min(5,this.lives+1); this._popup(sx,item._wy-40,'+1 Vida ❤️',0xff6688); }
+      if(item._key==='shield'){
+        this.shielded=true; this.shieldT=8000;
+        this.loveMeter=Math.min(100,this.loveMeter+15);
+        this._popup(sx,item._wy-40,'🛡 ¡ESCUDO!',0x44aaff);
+      } else if(item._key==='booster'){
+        this.boosted=true; this.boostT=6000;
+        this.loveMeter=Math.min(100,this.loveMeter+12);
+        this._popup(sx,item._wy-40,'⚡ ¡TURBO!',0xffaa00);
+      } else if(item._key==='life'){
+        this.lives=Math.min(5,this.lives+1);
+        this.loveMeter=Math.min(100,this.loveMeter+20);
+        this._popup(sx,item._wy-40,'+1 Vida 💕',0xff6688);
+      }
     }
     this._popSprite(item);
   }
 
   _hit(obs) {
     this.hitCD=1500;
+    this.loveMeter=Math.max(0,this.loveMeter-20);
     if(obs._type==='life'){ this.lives--; this._popup(this._wx2sx(obs._wx),obs._wy-50,'-1 Vida 💔',0xff4444); if(this.lives<=0){this._gameOver();return;} }
     else{ this.score=Math.max(0,this.score-150); this._popup(this._wx2sx(obs._wx),obs._wy-50,'-150 💸',0xff8844); }
     sfxHit();
@@ -1068,7 +1122,8 @@ class GameScene extends Phaser.Scene {
     this._valeAnim.set(['vale_happy'],6); this._valeImg.setFlipX(true);
     this._pAnim.set(['novios_dancing01','novios_dancing02','novios_dancing03'],6);
     const timeBonus=Math.max(0,Math.floor(3000-this.elapsed*12));
-    this.score+=timeBonus;
+    const loveBonus=Math.floor(this.loveMeter*2);
+    this.score+=timeBonus+loveBonus;
     STATE.totalScore+=this.score;
     this._confetti();
 
@@ -1078,7 +1133,7 @@ class GameScene extends Phaser.Scene {
       pan.fillStyle(0x0a0510,0.93); pan.fillRoundedRect(W/2-220,H/2-66,440,132,12);
       pan.lineStyle(2,lv.color,0.9); pan.strokeRoundedRect(W/2-220,H/2-66,440,132,12);
       this.add.text(W/2,H/2-48,'¡NIVEL COMPLETADO!',{fontFamily:'Cinzel',fontSize:'20px',color:'#'+lv.color.toString(16).padStart(6,'0'),fontStyle:'bold'}).setOrigin(0.5).setDepth(91).setScrollFactor(0);
-      this.add.text(W/2,H/2-20,`Puntos: ${this.score}   Bonus tiempo: +${timeBonus}`,{fontFamily:'Lato',fontSize:'12px',color:'rgba(255,255,255,.75)'}).setOrigin(0.5).setDepth(91).setScrollFactor(0);
+      this.add.text(W/2,H/2-20,`Puntos: ${this.score - timeBonus - loveBonus}  +${timeBonus} tiempo  +${loveBonus} 💕`,{fontFamily:'Lato',fontSize:'12px',color:'rgba(255,255,255,.75)'}).setOrigin(0.5).setDepth(91).setScrollFactor(0);
       this.add.text(W/2,H/2+2,`Total acumulado: ${STATE.totalScore}`,{fontFamily:'Lato',fontSize:'11px',color:'rgba(255,215,100,.8)'}).setOrigin(0.5).setDepth(91).setScrollFactor(0);
       const isLast=STATE.level>=LEVELS.length;
       const nextLbl=isLast?'🎊  ¡FINAL!':'► SIGUIENTE NIVEL';
@@ -1115,10 +1170,20 @@ class GameScene extends Phaser.Scene {
     this._mmFill.clear();
     this._mmFill.fillStyle(0xf5d87a,1); this._mmFill.fillCircle(8+200*prog,57,4);
 
+    /* Love Meter bar */
+    this._loveFill.clear();
+    const lm=this.loveMeter/100;
+    const lmCol=lm>0.65?0xff6699:lm>0.35?0xff9944:0xff3333;
+    this._loveFill.fillStyle(lmCol,0.92);
+    this._loveFill.fillRect(34,50,Math.round(164*lm),8);
+    if(lm>=1){ this._loveFill.lineStyle(1.5,0xffffff,0.55); this._loveFill.strokeRect(34,50,164,8); }
+    this._loveTxt.setText(`${Math.round(this.loveMeter)}%`);
+
     /* status */
     const parts=[];
     if(this.shielded) parts.push(`🛡 ${(this.shieldT/1000).toFixed(1)}s`);
     if(this.boosted)  parts.push(`⚡ ${(this.boostT/1000).toFixed(1)}s`);
+    if(this.sliding)  parts.push('💨 SLIDE');
     this._statusTxt.setText(parts.join('   '));
   }
 
@@ -1140,6 +1205,17 @@ class GameScene extends Phaser.Scene {
       const r=this.add.rectangle(sx+Phaser.Math.Between(-16,16),this._py,5,5,
         [0xffd700,0xff99cc,0x88ccff][i%3]).setDepth(15).setScrollFactor(0);
       this.tweens.add({targets:r,y:r.y+22,alpha:0,duration:360,onComplete:()=>r.destroy()});
+    }
+  }
+
+  _slideBurst(){
+    const sx=this._wx2sx(this._px);
+    const dir=this.velX>=0?-1:1;
+    for(let i=0;i<8;i++){
+      const r=this.add.rectangle(sx+dir*Phaser.Math.Between(10,50),
+        this._py-Phaser.Math.Between(4,24),Phaser.Math.Between(4,10),3,
+        [0xffffff,0xddddff,0xaaccff][i%3],0.7).setDepth(15).setScrollFactor(0);
+      this.tweens.add({targets:r,x:r.x+dir*Phaser.Math.Between(20,60),alpha:0,duration:320,ease:'Cubic.Out',onComplete:()=>r.destroy()});
     }
   }
 
