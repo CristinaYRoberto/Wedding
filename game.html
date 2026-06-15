@@ -9,120 +9,102 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #fdf8f0;
-      font-family: 'Georgia', serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    .card-scene {
-      width: 100%;
-      height: 100%;
-      perspective: 800px;
-    }
+    body { background: #fdf8f0; font-family: Georgia, serif; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Card flip ─────────────────────────────────────── */
+    .card-scene { width: 100%; height: 100%; perspective: 900px; }
     .card-inner {
-      width: 100%;
-      height: 100%;
-      position: relative;
+      width: 100%; height: 100%; position: relative;
       transform-style: preserve-3d;
-      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .card-inner.flipped { transform: rotateY(180deg); }
     .card-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 10px;
-      overflow: hidden;
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; border-radius: 10px; overflow: hidden;
     }
-    .card-back { background: #fdf8f0; }
+    .card-back  { background: #fdf8f0; }
     .card-front { transform: rotateY(180deg); }
+
+    /* ── Match glow ────────────────────────────────────── */
     @keyframes matchGlow {
       0%   { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
-      40%  { box-shadow: 0 0 20px 8px rgba(201,168,76,0.8); }
+      35%  { box-shadow: 0 0 24px 10px rgba(201,168,76,0.85); }
       100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
     }
-    .card-matched { animation: matchGlow 1s ease forwards; }
+    .card-matched { animation: matchGlow 0.9s ease forwards; }
+
+    /* ── Screen transitions ────────────────────────────── */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     .fade-in { animation: fadeIn 0.5s ease forwards; }
+
+    @keyframes bgReveal {
+      0%   { opacity: 0; transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes revealMsg {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+      40%  { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
+      70%  { transform: translate(-50%,-50%) scale(0.97); }
+      100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    }
+    @keyframes cardFloatUp {
+      0%   { opacity:1; transform: translateY(0) scale(1); }
+      100% { opacity:0.92; transform: translateY(-6px) scale(1.015); }
+    }
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
-      50%       { transform: scale(1.05); }
+      50%       { transform: scale(1.04); }
     }
+
+    /* ── Buttons ───────────────────────────────────────── */
     .btn-primary {
       background: linear-gradient(135deg, #c9a84c, #e8c96b);
-      color: #3d2b00;
-      border: none;
-      padding: 12px 32px;
-      font-size: 1rem;
-      font-family: 'Playfair Display', Georgia, serif;
-      font-weight: 600;
-      border-radius: 30px;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-      box-shadow: 0 4px 15px rgba(201,168,76,0.4);
+      color: #3d2b00; border: none; padding: 12px 32px;
+      font-size: 1rem; font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 600; border-radius: 30px; cursor: pointer;
+      letter-spacing: 0.05em; box-shadow: 0 4px 15px rgba(201,168,76,0.4);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(201,168,76,0.6);
-    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(201,168,76,0.6); }
     .btn-secondary {
-      background: transparent;
-      color: #8b4a6b;
-      border: 2px solid #8b4a6b;
-      padding: 10px 24px;
-      font-size: 0.9rem;
+      background: transparent; color: #8b4a6b; border: 2px solid #8b4a6b;
+      padding: 10px 24px; font-size: 0.9rem;
       font-family: 'Playfair Display', Georgia, serif;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: all 0.2s;
+      border-radius: 30px; cursor: pointer; transition: all 0.2s;
     }
-    .btn-secondary:hover {
-      background: #8b4a6b;
-      color: #fff;
-    }
+    .btn-secondary:hover { background: #8b4a6b; color: #fff; }
+
+    /* ── Input ─────────────────────────────────────────── */
     input[type="text"] {
-      background: rgba(255,255,255,0.8);
-      border: 2px solid #c9a84c;
-      border-radius: 25px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      font-family: 'Playfair Display', Georgia, serif;
-      color: #3d2b00;
-      outline: none;
-      width: 100%;
-      max-width: 300px;
-      text-align: center;
+      background: rgba(255,255,255,0.85); border: 2px solid #c9a84c;
+      border-radius: 25px; padding: 10px 20px; font-size: 1rem;
+      font-family: 'Playfair Display', Georgia, serif; color: #3d2b00;
+      outline: none; width: 100%; max-width: 300px; text-align: center;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     input[type="text"]:focus {
-      border-color: #8b4a6b;
-      box-shadow: 0 0 0 3px rgba(139,74,107,0.15);
+      border-color: #8b4a6b; box-shadow: 0 0 0 3px rgba(139,74,107,0.15);
     }
+
+    /* ── Modal ─────────────────────────────────────────── */
     .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(61,43,0,0.5);
-      backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
-      animation: fadeIn 0.3s ease;
+      position: fixed; inset: 0; background: rgba(61,43,0,0.5);
+      backdrop-filter: blur(4px); display: flex; align-items: center;
+      justify-content: center; z-index: 200; animation: fadeIn 0.3s ease;
     }
     .modal-box {
       background: linear-gradient(145deg, #fdf8f0, #fff9f0);
-      border: 2px solid #c9a84c;
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 480px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(61,43,0,0.3);
+      border: 2px solid #c9a84c; border-radius: 20px; padding: 36px 40px;
+      max-width: 460px; width: 90%;
+      box-shadow: 0 20px 60px rgba(61,43,0,0.35);
       text-align: center;
-      animation: fadeIn 0.4s ease;
     }
+
+    /* ── Scrollbar ─────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #fdf8f0; }
     ::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }
@@ -131,199 +113,190 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-
 const { useState, useEffect, useRef, useCallback } = React;
 
-// ── Storage (window.storage if available, else localStorage) ──────────────────
+/* ── Persistent storage ──────────────────────────────────────────────────── */
 const storage = window.storage || {
-  getItem: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-  setItem: (k, v) => { try { localStorage.setItem(k, v); } catch {} }
+  getItem:  (k)    => { try { return localStorage.getItem(k); }    catch { return null; } },
+  setItem:  (k, v) => { try { localStorage.setItem(k, v); }        catch {} },
 };
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+/* ── Character pool (20 sprites) ─────────────────────────────────────────── */
+const ALL_CHARACTERS = [
+  'assets/characters/finch_idle01.png',
+  'assets/characters/finch_meow01.png',
+  'assets/characters/finch_walking01.png',
+  'assets/characters/iker_idle01.png',
+  'assets/characters/iker_jumping01.png',
+  'assets/characters/iker_meow01.png',
+  'assets/characters/iker_sleeping01.png',
+  'assets/characters/iker_walking02.png',
+  'assets/characters/novios_dancing01.png',
+  'assets/characters/novios_dancing02.png',
+  'assets/characters/novios_idle01.png',
+  'assets/characters/novios_idle02.png',
+  'assets/characters/novios_jumping02.png',
+  'assets/characters/novios_kiss02.png',
+  'assets/characters/novios_walking01.png',
+  'assets/characters/pilly_idle01.png',
+  'assets/characters/pilly_sleeping01.png',
+  'assets/characters/vale_angry01.png',
+  'assets/characters/vale_idle-Cel01.png',
+  'assets/characters/vale_jumping01.png',
+];
+
+/* ── Difficulties ─────────────────────────────────────────────────────────── */
 const DIFFICULTIES = {
-  Easy:   { cards: 8,  cols: 4, rows: 2, pairs: 4,  base: 1000 },
-  Medium: { cards: 16, cols: 4, rows: 4, pairs: 8,  base: 2500 },
-  Hard:   { cards: 32, cols: 8, rows: 4, pairs: 16, base: 5000 },
+  Easy:   { pairs: 4,  gridCols: 4, base: 1000 },
+  Medium: { pairs: 8,  gridCols: 4, base: 2500 },
+  Hard:   { pairs: 16, gridCols: 8, base: 5000 },
 };
 const WEDDING_IMAGE = 'assets/UI/GamePortada.png';
 
-// ── Floral SVG corner decoration ──────────────────────────────────────────────
-const FloralCorner = ({ style }) => (
-  <svg style={style} width="80" height="80" viewBox="0 0 80 80" fill="none">
-    <g opacity="0.5">
-      <circle cx="10" cy="10" r="4" fill="#c9a84c"/>
-      <circle cx="22" cy="8" r="3" fill="#8b4a6b"/>
-      <circle cx="8" cy="22" r="3" fill="#8b4a6b"/>
-      <circle cx="30" cy="14" r="2" fill="#c9a84c"/>
-      <circle cx="14" cy="30" r="2" fill="#c9a84c"/>
-      <path d="M10 10 Q20 2 30 14" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
-      <path d="M10 10 Q2 20 14 30" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
-      <path d="M22 8 Q35 5 38 18" stroke="#8b4a6b" strokeWidth="1" fill="none"/>
-      <path d="M8 22 Q5 35 18 38" stroke="#8b4a6b" strokeWidth="1" fill="none"/>
-      <text x="4" y="52" fontSize="20" fill="#c9a84c" opacity="0.6">✿</text>
-      <text x="30" y="75" fontSize="14" fill="#8b4a6b" opacity="0.5">❀</text>
-      <text x="60" y="28" fontSize="14" fill="#c9a84c" opacity="0.4">❀</text>
-    </g>
-  </svg>
-);
-
-// ── Card back SVG pattern ─────────────────────────────────────────────────────
-const CardBackSVG = () => (
-  <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" fill="#fdf8f0"/>
-    <rect x="4" y="4" width="92" height="92" rx="6" fill="none" stroke="#c9a84c" strokeWidth="1.5"/>
-    <rect x="8" y="8" width="84" height="84" rx="4" fill="none" stroke="#c9a84c" strokeWidth="0.5" strokeDasharray="3,3"/>
-    <circle cx="38" cy="50" r="10" fill="none" stroke="#c9a84c" strokeWidth="2"/>
-    <circle cx="52" cy="50" r="10" fill="none" stroke="#c9a84c" strokeWidth="2"/>
-    <path d="M50 30 C50 27 46 24 43 27 C40 30 44 34 50 38 C56 34 60 30 57 27 C54 24 50 27 50 30Z" fill="#8b4a6b" opacity="0.7"/>
-    <path d="M50 72 C50 70 48 68 46 70 C44 72 46 74 50 76 C54 74 56 72 54 70 C52 68 50 70 50 72Z" fill="#c9a84c" opacity="0.6"/>
-    <text x="12" y="24" fontSize="12" fill="#c9a84c" opacity="0.5">✿</text>
-    <text x="74" y="24" fontSize="12" fill="#c9a84c" opacity="0.5">✿</text>
-    <text x="12" y="96" fontSize="12" fill="#c9a84c" opacity="0.5">✿</text>
-    <text x="74" y="96" fontSize="12" fill="#c9a84c" opacity="0.5">✿</text>
-  </svg>
-);
-
-// ── Canvas image slicer ───────────────────────────────────────────────────────
-function sliceImage(src, cols, rows, cb) {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const tileW = img.width / cols;
-    const tileH = img.height / rows;
-    const tiles = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const canvas = document.createElement('canvas');
-        canvas.width = tileW;
-        canvas.height = tileH;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, c * tileW, r * tileH, tileW, tileH, 0, 0, tileW, tileH);
-        tiles.push(canvas.toDataURL());
-      }
-    }
-    cb(tiles);
-  };
-  img.onerror = () => {
-    const tiles = [];
-    const colors = ['#c9a84c','#8b4a6b','#d4956a','#6b8b4a','#4a6b8b','#8b6b4a','#6b4a8b','#4a8b6b',
-                    '#e8c96b','#c96b8b','#6bc9a8','#a86bc9','#c9a86b','#6b8bc9','#c96ba8','#8bc96b'];
-    const totalTiles = cols * rows;
-    for (let i = 0; i < totalTiles; i++) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 200; canvas.height = 150;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.fillRect(0, 0, 200, 150);
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.font = '40px Georgia';
-      ctx.textAlign = 'center';
-      ctx.fillText(['💑','💒','💍','💐','🥂','🎊','❤️','✨'][i % 8], 100, 90);
-      tiles.push(canvas.toDataURL());
-    }
-    cb(tiles);
-  };
-  img.src = src;
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
+function formatTime(s) {
+  return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
 }
-
-// ── Leaderboard helpers ───────────────────────────────────────────────────────
-function getLeaderboard(difficulty) {
-  try {
-    const raw = storage.getItem('wedding_lb_' + difficulty);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+function calcScore(diff, errors, secs) {
+  return Math.max(DIFFICULTIES[diff].base - errors * 50 - secs, 0);
 }
-function saveLeaderboard(difficulty, entries) {
-  try { storage.setItem('wedding_lb_' + difficulty, JSON.stringify(entries)); } catch {}
+function getLeaderboard(diff) {
+  try { const r = storage.getItem('wedding_lb_' + diff); return r ? JSON.parse(r) : []; }
+  catch { return []; }
 }
-function addEntry(difficulty, entry) {
-  const lb = getLeaderboard(difficulty);
+function saveLeaderboard(diff, entries) {
+  try { storage.setItem('wedding_lb_' + diff, JSON.stringify(entries)); } catch {}
+}
+function addEntry(diff, entry) {
+  const lb = getLeaderboard(diff);
   lb.push(entry);
   lb.sort((a, b) => b.score - a.score);
-  const top10 = lb.slice(0, 10);
-  saveLeaderboard(difficulty, top10);
-  const rank = top10.findIndex(e => e.timestamp === entry.timestamp) + 1;
-  return rank;
+  const top = lb.slice(0, 10);
+  saveLeaderboard(diff, top);
+  return top.findIndex(e => e.timestamp === entry.timestamp) + 1;
 }
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return m + ':' + s;
-}
-function calcScore(difficulty, errors, seconds) {
-  const { base } = DIFFICULTIES[difficulty];
-  return Math.max(base - errors * 50 - seconds, 0);
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// LEADERBOARD SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
+/* ── Floral corner decoration ────────────────────────────────────────────── */
+function FloralCorner({ style }) {
+  return (
+    <svg style={style} width="90" height="90" viewBox="0 0 90 90" fill="none">
+      <g opacity="0.45">
+        <circle cx="12" cy="12" r="5" fill="#c9a84c"/>
+        <circle cx="26" cy="9"  r="3.5" fill="#8b4a6b"/>
+        <circle cx="9"  cy="26" r="3.5" fill="#8b4a6b"/>
+        <circle cx="36" cy="16" r="2.5" fill="#c9a84c"/>
+        <circle cx="16" cy="36" r="2.5" fill="#c9a84c"/>
+        <path d="M12 12 Q22 3 36 16" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
+        <path d="M12 12 Q3 22 16 36" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
+        <path d="M26 9 Q42 6 44 22" stroke="#8b4a6b" strokeWidth="1" fill="none"/>
+        <path d="M9 26 Q6 42 22 44" stroke="#8b4a6b" strokeWidth="1" fill="none"/>
+        <text x="4"  y="62" fontSize="22" fill="#c9a84c" opacity="0.55">✿</text>
+        <text x="34" y="84" fontSize="16" fill="#8b4a6b" opacity="0.45">❀</text>
+        <text x="66" y="30" fontSize="16" fill="#c9a84c" opacity="0.35">❀</text>
+      </g>
+    </svg>
+  );
+}
+
+/* ── Card back SVG ───────────────────────────────────────────────────────── */
+function CardBackSVG() {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="130" fill="#fdf8f0"/>
+      <rect x="4" y="4" width="92" height="122" rx="7" fill="none" stroke="#c9a84c" strokeWidth="1.8"/>
+      <rect x="8" y="8" width="84" height="114" rx="5" fill="none" stroke="#c9a84c" strokeWidth="0.5" strokeDasharray="3,3"/>
+      {/* Linked rings */}
+      <circle cx="38" cy="60" r="11" fill="none" stroke="#c9a84c" strokeWidth="2.2"/>
+      <circle cx="53" cy="60" r="11" fill="none" stroke="#c9a84c" strokeWidth="2.2"/>
+      {/* Heart */}
+      <path d="M50 36 C50 32 45 28 41 32 C37 36 42 41 50 47 C58 41 63 36 59 32 C55 28 50 32 50 36Z" fill="#8b4a6b" opacity="0.65"/>
+      {/* Small heart bottom */}
+      <path d="M50 88 C50 86 47 84 45 86 C43 88 46 91 50 93 C54 91 57 88 55 86 C53 84 50 86 50 88Z" fill="#c9a84c" opacity="0.6"/>
+      {/* Corner florals */}
+      <text x="10" y="26"  fontSize="12" fill="#c9a84c" opacity="0.45">✿</text>
+      <text x="76" y="26"  fontSize="12" fill="#c9a84c" opacity="0.45">✿</text>
+      <text x="10" y="126" fontSize="12" fill="#c9a84c" opacity="0.45">✿</text>
+      <text x="76" y="126" fontSize="12" fill="#c9a84c" opacity="0.45">✿</text>
+    </svg>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LEADERBOARD SCREEN
+══════════════════════════════════════════════════════════════════════════ */
 function LeaderboardScreen({ onBack, highlightEntry }) {
   const [tab, setTab] = useState((highlightEntry && highlightEntry.difficulty) || 'Easy');
   const entries = getLeaderboard(tab);
   const medals = ['🥇','🥈','🥉'];
 
   return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#fdf8f0,#fff5e6)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', padding:'20px', position:'relative', overflow:'hidden' }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#fdf8f0,#fff5e6)', display:'flex', flexDirection:'column', alignItems:'center', padding:'20px', position:'relative', overflow:'hidden' }}>
       <FloralCorner style={{ position:'absolute', top:0, left:0 }}/>
       <FloralCorner style={{ position:'absolute', top:0, right:0, transform:'scaleX(-1)' }}/>
       <FloralCorner style={{ position:'absolute', bottom:0, left:0, transform:'scaleY(-1)' }}/>
       <FloralCorner style={{ position:'absolute', bottom:0, right:0, transform:'scale(-1,-1)' }}/>
 
-      <div className="fade-in" style={{ width:'100%', maxWidth:600, marginTop:20 }}>
+      <div className="fade-in" style={{ width:'100%', maxWidth:620, marginTop:20 }}>
         <div style={{ textAlign:'center', marginBottom:24 }}>
           <div style={{ fontSize:'2.2rem', color:'#c9a84c', marginBottom:4 }}>🏆</div>
           <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'2rem', fontWeight:700 }}>Leaderboard</h1>
           <div style={{ width:60, height:2, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'10px auto' }}/>
         </div>
 
+        {/* Tabs */}
         <div style={{ display:'flex', justifyContent:'center', gap:8, marginBottom:20 }}>
-          {Object.keys(DIFFICULTIES).map(function(d) {
-            return (
-              <button key={d} onClick={function(){ setTab(d); }} style={{
-                padding:'8px 20px', borderRadius:20, border:'2px solid #c9a84c',
-                background: tab===d ? 'linear-gradient(135deg,#c9a84c,#e8c96b)' : 'transparent',
-                color: tab===d ? '#3d2b00' : '#c9a84c',
-                fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600,
-                cursor:'pointer', transition:'all 0.2s'
-              }}>{d}</button>
-            );
-          })}
+          {Object.keys(DIFFICULTIES).map(d => (
+            <button key={d} onClick={() => setTab(d)} style={{
+              padding:'8px 22px', borderRadius:20, border:'2px solid #c9a84c',
+              background: tab===d ? 'linear-gradient(135deg,#c9a84c,#e8c96b)' : 'transparent',
+              color: tab===d ? '#3d2b00' : '#c9a84c',
+              fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, cursor:'pointer', transition:'all 0.2s',
+            }}>{d}</button>
+          ))}
         </div>
 
-        <div style={{ background:'rgba(255,255,255,0.7)', border:'1px solid #e8d8a0', borderRadius:16, overflow:'hidden', marginBottom:20 }}>
-          {entries.length === 0 ? (
-            <div style={{ padding:40, textAlign:'center', color:'#999', fontStyle:'italic' }}>No scores yet. Be the first!</div>
-          ) : (
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr style={{ background:'linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.25))' }}>
-                  {['Rank','Name','Score','Time','Errors','Date'].map(function(h) {
-                    return <th key={h} style={{ padding:'10px 12px', color:'#8b6a00', fontSize:'0.8rem', fontWeight:700, letterSpacing:'0.05em', textAlign:'center', borderBottom:'1px solid #e8d8a0' }}>{h}</th>;
+        {/* Table */}
+        <div style={{ background:'rgba(255,255,255,0.75)', border:'1px solid #e8d8a0', borderRadius:16, overflow:'hidden', marginBottom:24 }}>
+          {entries.length === 0
+            ? <div style={{ padding:40, textAlign:'center', color:'#aaa', fontStyle:'italic' }}>No scores yet — be the first!</div>
+            : (
+              <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                <thead>
+                  <tr style={{ background:'linear-gradient(90deg,rgba(201,168,76,0.12),rgba(201,168,76,0.22))' }}>
+                    {['Rank','Name','Score','Time','Errors','Date'].map(h =>
+                      <th key={h} style={{ padding:'10px 10px', color:'#8b6a00', fontSize:'0.78rem', fontWeight:700, letterSpacing:'0.05em', textAlign:'center', borderBottom:'1px solid #e8d8a0' }}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((e, i) => {
+                    const hi = highlightEntry && e.timestamp === highlightEntry.timestamp;
+                    return (
+                      <tr key={i} style={{
+                        background: hi ? 'rgba(201,168,76,0.18)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.5)',
+                        borderLeft: hi ? '4px solid #c9a84c' : '4px solid transparent',
+                      }}>
+                        <td style={{ padding:'10px 10px', textAlign:'center', fontSize:'1.1rem' }}>{medals[i] || '#'+(i+1)}</td>
+                        <td style={{ padding:'10px 10px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#3d2b00' }}>{e.name}</td>
+                        <td style={{ padding:'10px 10px', textAlign:'center', color:'#c9a84c', fontWeight:700 }}>{e.score.toLocaleString()}</td>
+                        <td style={{ padding:'10px 10px', textAlign:'center', color:'#666' }}>{e.time}</td>
+                        <td style={{ padding:'10px 10px', textAlign:'center', color:'#8b4a6b' }}>{e.errors}</td>
+                        <td style={{ padding:'10px 10px', textAlign:'center', color:'#aaa', fontSize:'0.78rem' }}>{e.date}</td>
+                      </tr>
+                    );
                   })}
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map(function(e, i) {
-                  const isHighlight = highlightEntry && e.timestamp === highlightEntry.timestamp;
-                  return (
-                    <tr key={i} style={{
-                      background: isHighlight ? 'rgba(201,168,76,0.2)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.5)',
-                      borderLeft: isHighlight ? '3px solid #c9a84c' : '3px solid transparent'
-                    }}>
-                      <td style={{ padding:'10px 12px', textAlign:'center', fontSize:'1rem' }}>{medals[i] || ('#'+(i+1))}</td>
-                      <td style={{ padding:'10px 12px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#3d2b00' }}>{e.name}</td>
-                      <td style={{ padding:'10px 12px', textAlign:'center', color:'#c9a84c', fontWeight:700 }}>{e.score.toLocaleString()}</td>
-                      <td style={{ padding:'10px 12px', textAlign:'center', color:'#666' }}>{e.time}</td>
-                      <td style={{ padding:'10px 12px', textAlign:'center', color:'#8b4a6b' }}>{e.errors}</td>
-                      <td style={{ padding:'10px 12px', textAlign:'center', color:'#999', fontSize:'0.8rem' }}>{e.date}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+                </tbody>
+              </table>
+            )
+          }
         </div>
 
         <div style={{ textAlign:'center' }}>
@@ -334,9 +307,9 @@ function LeaderboardScreen({ onBack, highlightEntry }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ENTRY SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
+   ENTRY SCREEN
+══════════════════════════════════════════════════════════════════════════ */
 function EntryScreen({ onPlay, onLeaderboard }) {
   const [name, setName] = useState('');
   const [difficulty, setDifficulty] = useState('Medium');
@@ -355,58 +328,69 @@ function EntryScreen({ onPlay, onLeaderboard }) {
       <FloralCorner style={{ position:'absolute', bottom:0, right:0, transform:'scale(-1,-1)' }}/>
 
       <div className="fade-in" style={{ textAlign:'center', maxWidth:500, width:'100%' }}>
+        {/* Header */}
         <div style={{ marginBottom:8 }}>
-          <div style={{ fontSize:'1rem', color:'#8b4a6b', letterSpacing:'0.2em', textTransform:'uppercase', marginBottom:4 }}>You're invited to celebrate</div>
-          <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(2rem,6vw,3.2rem)', color:'#3d2b00', fontWeight:700, lineHeight:1.2 }}>Vale & Iker</h1>
-          <div style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'1.1rem', color:'#8b4a6b', fontStyle:'italic', marginTop:4 }}>Wedding Memory Game</div>
-        </div>
-
-        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'20px auto', maxWidth:300 }}>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,#c9a84c)' }}/>
-          <span style={{ color:'#c9a84c', fontSize:'1.2rem' }}>❧</span>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,#c9a84c,transparent)' }}/>
-        </div>
-
-        <div style={{ width:260, height:190, margin:'0 auto 24px', borderRadius:14, overflow:'hidden', border:'3px solid #c9a84c', boxShadow:'0 8px 30px rgba(201,168,76,0.3)' }}>
-          <img src={WEDDING_IMAGE} alt="Vale & Iker" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }}
-            onError={function(e){ e.target.parentNode.style.background='linear-gradient(135deg,#c9a84c,#8b4a6b)'; e.target.style.display='none'; }}
-          />
-        </div>
-
-        <div style={{ marginBottom:20 }}>
-          <label style={{ display:'block', color:'#8b4a6b', marginBottom:8, fontFamily:"'Playfair Display',Georgia,serif", fontSize:'0.95rem', fontStyle:'italic' }}>Enter your name to play</label>
-          <input
-            type="text"
-            value={name}
-            onChange={function(e){ setName(e.target.value); }}
-            onKeyDown={function(e){ if(e.key==='Enter') handlePlay(); }}
-            placeholder="Your name..."
-            maxLength={20}
-          />
-        </div>
-
-        <div style={{ marginBottom:28 }}>
-          <div style={{ color:'#8b4a6b', marginBottom:10, fontSize:'0.9rem', letterSpacing:'0.05em' }}>Difficulty</div>
-          <div style={{ display:'flex', justifyContent:'center', gap:10 }}>
-            {Object.entries(DIFFICULTIES).map(function([d, cfg]) {
-              return (
-                <button key={d} onClick={function(){ setDifficulty(d); }} style={{
-                  padding:'8px 16px', borderRadius:20, border:'2px solid #c9a84c',
-                  background: difficulty===d ? 'linear-gradient(135deg,#c9a84c,#e8c96b)' : 'transparent',
-                  color: difficulty===d ? '#3d2b00' : '#c9a84c',
-                  fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, fontSize:'0.85rem',
-                  cursor:'pointer', transition:'all 0.2s'
-                }}>
-                  {d}
-                  <div style={{ fontSize:'0.7rem', opacity:0.8, marginTop:2 }}>{cfg.pairs} pairs</div>
-                </button>
-              );
-            })}
+          <div style={{ fontSize:'0.9rem', color:'#8b4a6b', letterSpacing:'0.22em', textTransform:'uppercase', marginBottom:6 }}>
+            You're invited to celebrate
+          </div>
+          <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(2rem,6vw,3.2rem)', color:'#3d2b00', fontWeight:700, lineHeight:1.2 }}>
+            Vale & Iker
+          </h1>
+          <div style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'1.1rem', color:'#8b4a6b', fontStyle:'italic', marginTop:4 }}>
+            Wedding Memory Game
           </div>
         </div>
 
+        {/* Divider */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'18px auto', maxWidth:280 }}>
+          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,#c9a84c)' }}/>
+          <span style={{ color:'#c9a84c', fontSize:'1.3rem' }}>❧</span>
+          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,#c9a84c,transparent)' }}/>
+        </div>
+
+        {/* Photo */}
+        <div style={{ width:240, height:180, margin:'0 auto 24px', borderRadius:14, overflow:'hidden', border:'3px solid #c9a84c', boxShadow:'0 10px 35px rgba(201,168,76,0.35)' }}>
+          <img src={WEDDING_IMAGE} alt="Vale & Iker" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top' }}
+            onError={e => { e.target.parentNode.style.background='linear-gradient(135deg,#c9a84c,#8b4a6b)'; e.target.style.display='none'; }}
+          />
+        </div>
+
+        {/* Name */}
+        <div style={{ marginBottom:20 }}>
+          <label style={{ display:'block', color:'#8b4a6b', marginBottom:8, fontFamily:"'Playfair Display',Georgia,serif", fontSize:'0.95rem', fontStyle:'italic' }}>
+            Enter your name to play
+          </label>
+          <input type="text" value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handlePlay()}
+            placeholder="Your name..." maxLength={20}
+          />
+        </div>
+
+        {/* Difficulty */}
+        <div style={{ marginBottom:28 }}>
+          <div style={{ color:'#8b4a6b', marginBottom:10, fontSize:'0.88rem', letterSpacing:'0.05em' }}>Difficulty</div>
+          <div style={{ display:'flex', justifyContent:'center', gap:10 }}>
+            {Object.entries(DIFFICULTIES).map(([d, cfg]) => (
+              <button key={d} onClick={() => setDifficulty(d)} style={{
+                padding:'8px 18px', borderRadius:20, border:'2px solid #c9a84c', cursor:'pointer',
+                background: difficulty===d ? 'linear-gradient(135deg,#c9a84c,#e8c96b)' : 'transparent',
+                color: difficulty===d ? '#3d2b00' : '#c9a84c',
+                fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, fontSize:'0.85rem',
+                transition:'all 0.2s',
+              }}>
+                {d}
+                <div style={{ fontSize:'0.68rem', opacity:0.75, marginTop:2 }}>{cfg.pairs} pairs</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
-          <button className="btn-primary" onClick={handlePlay} style={{ width:200, opacity: name.trim() ? 1 : 0.5 }}>Play ✨</button>
+          <button className="btn-primary" onClick={handlePlay} style={{ width:200, opacity: name.trim() ? 1 : 0.45 }}>
+            Play ✨
+          </button>
           <button className="btn-secondary" onClick={onLeaderboard}>🏆 Leaderboard</button>
         </div>
       </div>
@@ -414,38 +398,46 @@ function EntryScreen({ onPlay, onLeaderboard }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// VICTORY MODAL
-// ══════════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
+   VICTORY MODAL
+══════════════════════════════════════════════════════════════════════════ */
 function VictoryModal({ playerName, difficulty, errors, seconds, rank, onPlayAgain, onChangeDifficulty, onLeaderboard }) {
   const score = calcScore(difficulty, errors, seconds);
   return (
     <div className="modal-overlay">
       <div className="modal-box fade-in">
-        <div style={{ fontSize:'2.5rem', marginBottom:8 }}>🎉</div>
-        <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'1.8rem', marginBottom:4 }}>Congratulations!</h2>
-        <p style={{ color:'#8b4a6b', fontStyle:'italic', marginBottom:20 }}>{playerName}, you matched them all!</p>
+        <div style={{ fontSize:'2.8rem', marginBottom:8 }}>🎉</div>
+        <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'1.8rem', marginBottom:4 }}>
+          Congratulations!
+        </h2>
+        <p style={{ color:'#8b4a6b', fontStyle:'italic', marginBottom:22 }}>
+          {playerName}, you matched them all!
+        </p>
 
-        <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid #c9a84c', borderRadius:12, padding:20, marginBottom:20 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid #c9a84c', borderRadius:14, padding:20, marginBottom:18 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
             <div style={{ textAlign:'center' }}>
-              <div style={{ color:'#999', fontSize:'0.8rem', marginBottom:2 }}>TIME</div>
-              <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'1.2rem' }}>⏱ {formatTime(seconds)}</div>
+              <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:3, letterSpacing:'0.06em' }}>TIME</div>
+              <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'1.1rem' }}>⏱ {formatTime(seconds)}</div>
             </div>
             <div style={{ textAlign:'center' }}>
-              <div style={{ color:'#999', fontSize:'0.8rem', marginBottom:2 }}>ERRORS</div>
-              <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'1.2rem' }}>❌ {errors}</div>
+              <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:3, letterSpacing:'0.06em' }}>ERRORS</div>
+              <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'1.1rem' }}>❌ {errors}</div>
+            </div>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:3, letterSpacing:'0.06em' }}>DIFFICULTY</div>
+              <div style={{ color:'#666', fontWeight:600, fontSize:'1rem' }}>{difficulty}</div>
             </div>
           </div>
-          <div style={{ textAlign:'center', marginTop:16, paddingTop:16, borderTop:'1px solid #e8d8a0' }}>
-            <div style={{ color:'#999', fontSize:'0.8rem', marginBottom:4 }}>FINAL SCORE</div>
-            <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'2rem' }}>{score.toLocaleString()}</div>
+          <div style={{ textAlign:'center', marginTop:16, paddingTop:14, borderTop:'1px solid #e8d8a0' }}>
+            <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:5, letterSpacing:'0.06em' }}>FINAL SCORE</div>
+            <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'2.2rem' }}>{score.toLocaleString()}</div>
           </div>
         </div>
 
         {rank && (
-          <div style={{ background:'linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.25))', borderRadius:10, padding:10, marginBottom:16, color:'#8b6a00', fontWeight:600 }}>
-            🏆 You entered the leaderboard at rank #{rank}!
+          <div style={{ background:'linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.28))', borderRadius:10, padding:'10px 16px', marginBottom:18, color:'#8b6a00', fontWeight:600, fontSize:'0.92rem' }}>
+            🏆 You made the leaderboard at rank #{rank}!
           </div>
         )}
 
@@ -461,217 +453,252 @@ function VictoryModal({ playerName, difficulty, errors, seconds, rank, onPlayAga
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GAME BOARD
-// ══════════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
+   GAME BOARD
+══════════════════════════════════════════════════════════════════════════ */
 function GameBoard({ playerName, difficulty, onVictory, onQuit }) {
   const cfg = DIFFICULTIES[difficulty];
-  const [tiles, setTiles] = useState([]);
-  const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]);
-  const [matched, setMatched] = useState(new Set());
-  const [errors, setErrors] = useState(0);
-  const [moves, setMoves] = useState(0);
-  const [seconds, setSeconds] = useState(0);
+
+  const [cards,       setCards]       = useState([]);
+  const [flipped,     setFlipped]     = useState([]);
+  const [matched,     setMatched]     = useState(new Set());
+  const [errors,      setErrors]      = useState(0);
+  const [moves,       setMoves]       = useState(0);
+  const [seconds,     setSeconds]     = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [glowing, setGlowing] = useState(new Set());
-  const timerRef = useRef(null);
+  const [locked,      setLocked]      = useState(false);
+  const [glowing,     setGlowing]     = useState(new Set());
+  // 'playing' | 'revealing' | 'done'
+  const [phase,       setPhase]       = useState('playing');
+
+  const timerRef        = useRef(null);
   const victoryFiredRef = useRef(false);
+  const errorsRef       = useRef(0);
+  const secondsRef      = useRef(0);
 
-  useEffect(function() {
-    sliceImage(WEDDING_IMAGE, cfg.cols, cfg.rows, function(t) {
-      setTiles(t);
-    });
-  }, [difficulty]);
-
-  useEffect(function() {
-    if (tiles.length === 0) return;
+  /* Build deck */
+  useEffect(() => {
+    const chars = ALL_CHARACTERS.slice(0, cfg.pairs);
     const pairs = [];
-    tiles.forEach(function(url, i) {
+    chars.forEach((url, i) => {
       pairs.push({ id: i*2,   pairId: i, url });
       pairs.push({ id: i*2+1, pairId: i, url });
     });
-    for (let i = pairs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i+1));
-      const tmp = pairs[i]; pairs[i] = pairs[j]; pairs[j] = tmp;
-    }
-    setCards(pairs);
+    setCards(shuffle(pairs));
     setFlipped([]);
     setMatched(new Set());
-    setErrors(0);
+    setErrors(0); errorsRef.current = 0;
     setMoves(0);
-    setSeconds(0);
+    setSeconds(0); secondsRef.current = 0;
     setTimerActive(false);
     setLocked(false);
+    setGlowing(new Set());
+    setPhase('playing');
     victoryFiredRef.current = false;
     clearInterval(timerRef.current);
-  }, [tiles]);
+  }, []);  // only on mount — gameKey changes force remount
 
-  useEffect(function() {
+  /* Timer */
+  useEffect(() => {
     if (timerActive) {
-      timerRef.current = setInterval(function() { setSeconds(function(s){ return s+1; }); }, 1000);
+      timerRef.current = setInterval(() => {
+        setSeconds(s => { const n = s+1; secondsRef.current = n; return n; });
+      }, 1000);
     } else {
       clearInterval(timerRef.current);
     }
-    return function() { clearInterval(timerRef.current); };
+    return () => clearInterval(timerRef.current);
   }, [timerActive]);
 
-  const handleCardClick = useCallback(function(cardId) {
-    if (locked) return;
-    const card = cards.find(function(c){ return c.id===cardId; });
-    if (!card) return;
-    if (matched.has(card.pairId)) return;
-    if (flipped.includes(cardId)) return;
+  /* Card click */
+  function handleCardClick(cardId) {
+    if (phase !== 'playing' || locked) return;
+    const card = cards.find(c => c.id === cardId);
+    if (!card || matched.has(card.pairId) || flipped.includes(cardId)) return;
     if (flipped.length >= 2) return;
 
     if (!timerActive) setTimerActive(true);
 
-    const newFlipped = flipped.concat([cardId]);
+    const newFlipped = [...flipped, cardId];
     setFlipped(newFlipped);
 
     if (newFlipped.length === 2) {
-      setMoves(function(m){ return m+1; });
+      setMoves(m => m+1);
       setLocked(true);
-      const cardA = cards.find(function(c){ return c.id===newFlipped[0]; });
-      const cardB = cards.find(function(c){ return c.id===newFlipped[1]; });
-      if (cardA.pairId === cardB.pairId) {
-        const newPairId = cardA.pairId;
-        setGlowing(new Set([newPairId]));
-        setTimeout(function() {
-          setMatched(function(prev) {
-            const next = new Set(prev);
-            next.add(newPairId);
-            return next;
-          });
+      const a = cards.find(c => c.id === newFlipped[0]);
+      const b = cards.find(c => c.id === newFlipped[1]);
+
+      if (a.pairId === b.pairId) {
+        const pid = a.pairId;
+        setGlowing(new Set([pid]));
+        setTimeout(() => {
+          setMatched(prev => { const n = new Set(prev); n.add(pid); return n; });
           setFlipped([]);
           setLocked(false);
           setGlowing(new Set());
-        }, 800);
+        }, 750);
       } else {
-        setErrors(function(e){ return e+1; });
-        setTimeout(function() {
-          setFlipped([]);
-          setLocked(false);
-        }, 1000);
+        setErrors(e => { const n = e+1; errorsRef.current = n; return n; });
+        setTimeout(() => { setFlipped([]); setLocked(false); }, 1000);
       }
     }
-  }, [locked, matched, flipped, cards, timerActive]);
+  }
 
-  useEffect(function() {
+  /* Victory check — triggers after ALL pairs found */
+  useEffect(() => {
     if (victoryFiredRef.current) return;
     if (matched.size > 0 && matched.size === cfg.pairs) {
       victoryFiredRef.current = true;
       setTimerActive(false);
-      // Capture errors and seconds via closure — need current values
-      // Use a ref snapshot to avoid stale closure issue
-      const finalErrors = errors;
-      const finalSeconds = seconds;
-      const entry = {
-        name: playerName,
-        difficulty: difficulty,
-        score: calcScore(difficulty, finalErrors, finalSeconds),
-        time: formatTime(finalSeconds),
-        errors: finalErrors,
-        date: new Date().toLocaleDateString(),
-        timestamp: Date.now(),
-      };
-      const rank = addEntry(difficulty, entry);
-      setTimeout(function() { onVictory(finalErrors, finalSeconds, rank, entry.timestamp); }, 600);
+      // Brief pause → start photo reveal
+      setTimeout(() => {
+        setPhase('revealing');
+        // After reveal animation, open Victory Modal
+        setTimeout(() => {
+          const fe = errorsRef.current;
+          const fs = secondsRef.current;
+          const entry = {
+            name: playerName, difficulty,
+            score: calcScore(difficulty, fe, fs),
+            time: formatTime(fs),
+            errors: fe,
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now(),
+          };
+          const rank = addEntry(difficulty, entry);
+          setPhase('done');
+          onVictory(fe, fs, rank, entry.timestamp);
+        }, 2200);
+      }, 600);
     }
   }, [matched]);
 
-  if (tiles.length === 0) {
-    return (
-      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#fdf8f0' }}>
-        <div style={{ textAlign:'center', color:'#c9a84c' }}>
-          <div style={{ fontSize:'2rem' }}>💒</div>
-          <div style={{ marginTop:8, fontFamily:"'Playfair Display',Georgia,serif", color:'#8b4a6b' }}>Preparing the cards...</div>
-        </div>
-      </div>
-    );
-  }
+  /* Card dimensions */
+  const cardW = difficulty === 'Hard' ? 'min(92px,10vw)'  : difficulty === 'Medium' ? 'min(126px,19vw)' : 'min(150px,21vw)';
+  const cardH = difficulty === 'Hard' ? 'min(112px,12vw)' : difficulty === 'Medium' ? 'min(152px,23vw)' : 'min(180px,25vw)';
 
-  const cardW = difficulty === 'Hard' ? 'min(95px,10vw)' : difficulty === 'Medium' ? 'min(130px,20vw)' : 'min(160px,22vw)';
-  const cardH = difficulty === 'Hard' ? 'min(75px,8vw)'  : difficulty === 'Medium' ? 'min(100px,16vw)' : 'min(120px,18vw)';
+  const isRevealing = phase === 'revealing' || phase === 'done';
 
   return (
-    <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#fdf8f0,#fff5e6)', display:'flex', flexDirection:'column', alignItems:'center', padding:'12px 8px' }}>
-      {/* HUD */}
-      <div style={{ width:'100%', maxWidth:950, background:'rgba(255,255,255,0.85)', border:'1px solid #e8d8a0', borderRadius:16, padding:'10px 20px', marginBottom:16, display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:8, boxShadow:'0 2px 12px rgba(201,168,76,0.15)' }}>
-        <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontWeight:600 }}>👰 {playerName}</div>
-        <div style={{ display:'flex', gap:16, flexWrap:'wrap', alignItems:'center' }}>
-          <span style={{ color:'#8b4a6b', fontSize:'0.9rem' }}>
-            <span style={{ opacity:0.7 }}>Mode: </span><strong>{difficulty}</strong>
-          </span>
-          <span style={{ color:'#3d2b00', fontWeight:700, fontFamily:'monospace', fontSize:'1.05rem', minWidth:50 }}>
-            ⏱ {formatTime(seconds)}
-          </span>
-          <span style={{ color:'#666', fontSize:'0.9rem' }}>🔄 {moves}</span>
-          <span style={{ color:'#8b4a6b', fontSize:'0.9rem' }}>❌ {errors}</span>
-          <span style={{ color:'#c9a84c', fontSize:'0.9rem' }}>✅ {matched.size}/{cfg.pairs}</span>
-        </div>
-        <button className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.8rem' }} onClick={onQuit}>Quit</button>
-      </div>
+    <div style={{ minHeight:'100vh', position:'relative', display:'flex', flexDirection:'column', alignItems:'center', padding:'12px 8px', overflow:'hidden' }}>
 
-      {/* Grid */}
-      <div style={{
-        display:'grid',
-        gridTemplateColumns:'repeat(' + cfg.cols + ', ' + cardW + ')',
-        gap: difficulty === 'Hard' ? 5 : 8,
-        justifyContent:'center',
-        padding:'0 8px'
-      }}>
-        {cards.map(function(card) {
-          const isFlipped = flipped.includes(card.id) || matched.has(card.pairId);
-          const isMatched = matched.has(card.pairId);
-          const isGlowing = glowing.has(card.pairId);
-          return (
-            <div
-              key={card.id}
-              onClick={function(){ handleCardClick(card.id); }}
-              className={isGlowing ? 'card-matched' : ''}
-              style={{
-                width: cardW, height: cardH,
-                cursor: (!isMatched && !locked) ? 'pointer' : 'default',
-                borderRadius: 10,
-                boxShadow: isMatched ? '0 0 0 2px #c9a84c, 0 2px 8px rgba(201,168,76,0.3)' : '0 3px 10px rgba(0,0,0,0.15)',
-              }}
-            >
-              <div className="card-scene">
-                <div className={'card-inner' + (isFlipped ? ' flipped' : '')}>
-                  <div className="card-face card-back">
-                    <CardBackSVG/>
-                  </div>
-                  <div className="card-face card-front" style={{ backgroundColor:'#fff' }}>
-                    <img src={card.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+      {/* Static cream background */}
+      <div style={{ position:'fixed', inset:0, zIndex:0, background:'linear-gradient(160deg,#fdf8f0,#fff5e6)', transition:'opacity 0.8s ease', opacity: isRevealing ? 0 : 1, pointerEvents:'none' }}/>
+
+      {/* Wedding photo reveal background */}
+      {isRevealing && (
+        <div style={{ position:'fixed', inset:0, zIndex:0, animation:'bgReveal 1.4s ease forwards' }}>
+          <img src={WEDDING_IMAGE} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center' }}/>
+          {/* Soft overlay so cards stay readable */}
+          <div style={{ position:'absolute', inset:0, background:'rgba(30,10,0,0.28)' }}/>
+        </div>
+      )}
+
+      {/* "All found!" banner during reveal (before modal) */}
+      {phase === 'revealing' && (
+        <div style={{
+          position:'fixed', inset:0, zIndex:90,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          pointerEvents:'none',
+        }}>
+          <div style={{
+            animation:'revealMsg 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards',
+            background:'linear-gradient(135deg,rgba(253,248,240,0.96),rgba(255,249,240,0.96))',
+            border:'2px solid #c9a84c', borderRadius:20,
+            padding:'18px 48px',
+            boxShadow:'0 12px 50px rgba(201,168,76,0.5)',
+          }}>
+            <div style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(1.4rem,3vw,2rem)', color:'#3d2b00', fontWeight:700 }}>
+              ✨ You found them all! ✨
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HUD + Grid — always on top */}
+      <div style={{ position:'relative', zIndex:10, width:'100%', display:'flex', flexDirection:'column', alignItems:'center', animation: isRevealing ? 'cardFloatUp 0.8s ease 0.5s forwards' : 'none' }}>
+
+        {/* HUD */}
+        <div style={{ width:'100%', maxWidth:960, background: isRevealing ? 'rgba(253,248,240,0.88)' : 'rgba(255,255,255,0.88)', border:'1px solid #e8d8a0', borderRadius:16, padding:'10px 20px', marginBottom:14, display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:8, boxShadow:'0 2px 14px rgba(201,168,76,0.15)', backdropFilter:'blur(6px)' }}>
+          <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontWeight:600 }}>👰 {playerName}</div>
+          <div style={{ display:'flex', gap:14, flexWrap:'wrap', alignItems:'center' }}>
+            <span style={{ color:'#8b4a6b', fontSize:'0.88rem' }}><span style={{ opacity:0.65 }}>Mode: </span><strong>{difficulty}</strong></span>
+            <span style={{ color:'#3d2b00', fontWeight:700, fontFamily:'monospace', fontSize:'1rem', minWidth:52 }}>⏱ {formatTime(seconds)}</span>
+            <span style={{ color:'#666', fontSize:'0.88rem' }}>🔄 {moves}</span>
+            <span style={{ color:'#8b4a6b', fontSize:'0.88rem' }}>❌ {errors}</span>
+            <span style={{ color:'#c9a84c', fontSize:'0.88rem', fontWeight:600 }}>✅ {matched.size}/{cfg.pairs}</span>
+          </div>
+          <button className="btn-secondary" style={{ padding:'6px 14px', fontSize:'0.78rem' }} onClick={onQuit}>Quit</button>
+        </div>
+
+        {/* Card grid */}
+        <div style={{
+          display:'grid',
+          gridTemplateColumns:'repeat('+cfg.gridCols+', '+cardW+')',
+          gap: difficulty === 'Hard' ? 5 : 8,
+          justifyContent:'center',
+          padding:'0 6px',
+        }}>
+          {cards.map(card => {
+            const isFlipped  = flipped.includes(card.id) || matched.has(card.pairId);
+            const isMatched  = matched.has(card.pairId);
+            const isGlowing  = glowing.has(card.pairId);
+            return (
+              <div
+                key={card.id}
+                onClick={() => handleCardClick(card.id)}
+                className={isGlowing ? 'card-matched' : ''}
+                style={{
+                  width: cardW, height: cardH,
+                  cursor: phase === 'playing' && !isMatched && !locked ? 'pointer' : 'default',
+                  borderRadius: 10,
+                  boxShadow: isMatched
+                    ? '0 0 0 2.5px #c9a84c, 0 4px 14px rgba(201,168,76,0.35)'
+                    : '0 3px 10px rgba(0,0,0,0.18)',
+                  transition: 'box-shadow 0.3s',
+                }}
+              >
+                <div className="card-scene">
+                  <div className={'card-inner' + (isFlipped ? ' flipped' : '')}>
+                    <div className="card-face card-back"><CardBackSVG/></div>
+                    <div className="card-face card-front" style={{ background:'linear-gradient(160deg,#fff8f0,#ffeedd)' }}>
+                      <img
+                        src={card.url} alt=""
+                        style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', padding: difficulty === 'Hard' ? 3 : 5 }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      <div style={{ marginTop:16, color:'#bbb', fontSize:'0.78rem', fontStyle:'italic' }}>
-        Find all {cfg.pairs} matching pairs to complete the puzzle
+        {/* Progress hint */}
+        {phase === 'playing' && (
+          <div style={{ marginTop:14, color: isRevealing ? '#eee' : '#ccc', fontSize:'0.76rem', fontStyle:'italic' }}>
+            {matched.size === cfg.pairs - 1
+              ? '🔥 One more pair to go!'
+              : 'Find all ' + cfg.pairs + ' matching pairs to reveal the photo'}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// APP ROOT
-// ══════════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
+   APP ROOT
+══════════════════════════════════════════════════════════════════════════ */
 function App() {
-  const [screen, setScreen] = useState('entry');
-  const [playerName, setPlayerName] = useState('');
-  const [difficulty, setDifficulty] = useState('Medium');
+  const [screen,      setScreen]      = useState('entry');
+  const [playerName,  setPlayerName]  = useState('');
+  const [difficulty,  setDifficulty]  = useState('Medium');
   const [victoryData, setVictoryData] = useState(null);
   const [lbHighlight, setLbHighlight] = useState(null);
-  const [gameKey, setGameKey] = useState(0);
+  const [gameKey,     setGameKey]     = useState(0);
 
-  useEffect(function() {
+  useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap';
@@ -682,7 +709,7 @@ function App() {
     setPlayerName(name);
     setDifficulty(diff);
     setVictoryData(null);
-    setGameKey(function(k){ return k+1; });
+    setGameKey(k => k+1);
     setScreen('game');
   }
 
@@ -692,7 +719,7 @@ function App() {
 
   function handlePlayAgain() {
     setVictoryData(null);
-    setGameKey(function(k){ return k+1; });
+    setGameKey(k => k+1);
   }
 
   function handleChangeDifficulty() {
@@ -701,9 +728,7 @@ function App() {
   }
 
   function handleShowLeaderboard() {
-    if (victoryData) {
-      setLbHighlight({ difficulty: difficulty, timestamp: victoryData.timestamp });
-    }
+    if (victoryData) setLbHighlight({ difficulty, timestamp: victoryData.timestamp });
     setVictoryData(null);
     setScreen('leaderboard');
   }
@@ -713,9 +738,10 @@ function App() {
       {screen === 'entry' && (
         <EntryScreen
           onPlay={handlePlay}
-          onLeaderboard={function(){ setLbHighlight(null); setScreen('leaderboard'); }}
+          onLeaderboard={() => { setLbHighlight(null); setScreen('leaderboard'); }}
         />
       )}
+
       {screen === 'game' && (
         <div>
           <GameBoard
@@ -723,7 +749,7 @@ function App() {
             playerName={playerName}
             difficulty={difficulty}
             onVictory={handleVictory}
-            onQuit={function(){ setVictoryData(null); setScreen('entry'); }}
+            onQuit={() => { setVictoryData(null); setScreen('entry'); }}
           />
           {victoryData && (
             <VictoryModal
@@ -739,9 +765,10 @@ function App() {
           )}
         </div>
       )}
+
       {screen === 'leaderboard' && (
         <LeaderboardScreen
-          onBack={function(){ setScreen('entry'); }}
+          onBack={() => setScreen('entry')}
           highlightEntry={lbHighlight}
         />
       )}
