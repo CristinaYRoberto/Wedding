@@ -10,161 +10,226 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      min-height: 100vh;
+    /* ── Lock viewport — no scroll anywhere ─────────────── */
+    html, body {
+      height: 100%; overflow: hidden;
       font-family: Georgia, serif;
-      overflow-x: hidden;
+      background: #1a0d00;
     }
 
-    /* ── Card 3-D flip ───────────────────────────────────── */
+    /* ── Decorative frame ───────────────────────────────── */
+    .game-frame {
+      position: fixed;
+      inset: clamp(6px, 1.2vmin, 18px);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: clamp(10px, 1.4vmin, 20px);
+      /* double-ring gold border */
+      border: 2px solid rgba(201,168,76,0.85);
+      box-shadow:
+        0 0 0 5px rgba(201,168,76,0.12),
+        0 0 0 6px rgba(201,168,76,0.55),
+        inset 0 0 0 4px rgba(201,168,76,0.10),
+        0 12px 60px rgba(0,0,0,0.65);
+    }
+    /* inner hairline ring */
+    .game-frame::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: clamp(7px, 1vmin, 16px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Card flip ──────────────────────────────────────── */
     .card-scene { width:100%; height:100%; perspective:900px; }
     .card-inner {
       width:100%; height:100%; position:relative;
       transform-style:preserve-3d;
-      transition: transform 0.52s cubic-bezier(0.4,0,0.2,1);
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
     }
     .card-inner.flipped { transform: rotateY(180deg); }
     .card-face {
       position:absolute; width:100%; height:100%;
-      backface-visibility:hidden; border-radius:10px; overflow:hidden;
+      backface-visibility:hidden; overflow:hidden;
+      border-radius: clamp(4px,0.7vmin,10px);
     }
     .card-back  { background:#fdf8f0; }
     .card-front { transform:rotateY(180deg); background:linear-gradient(160deg,#fff9f2,#fff3e6); }
-    .card-front img { width:100%; height:100%; object-fit:contain; display:block; padding:6px; }
+    .card-front img {
+      width:100%; height:100%;
+      object-fit:contain; display:block;
+      padding: clamp(2px,0.4vmin,6px);
+    }
 
-    /* ── Animations ─────────────────────────────────────── */
+    /* ── Match glow ─────────────────────────────────────── */
     @keyframes matchGlow {
       0%   { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
-      35%  { box-shadow: 0 0 26px 10px rgba(201,168,76,0.9); }
+      35%  { box-shadow: 0 0 20px 8px rgba(201,168,76,0.9); }
       100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
     }
-    .card-matched { animation: matchGlow 0.9s ease forwards; }
+    .card-matched { animation: matchGlow 0.85s ease forwards; }
 
+    /* ── Entrance ───────────────────────────────────────── */
     @keyframes fadeInUp {
-      from { opacity:0; transform:translateY(20px); }
+      from { opacity:0; transform:translateY(16px); }
       to   { opacity:1; transform:translateY(0); }
     }
-    .fade-in { animation: fadeInUp 0.5s ease forwards; }
+    .fade-in { animation: fadeInUp 0.45s ease forwards; }
 
-    @keyframes revealMsg {
-      0%   { opacity:0; transform:translate(-50%,-50%) scale(0.75); }
-      55%  { opacity:1; transform:translate(-50%,-50%) scale(1.06); }
+    @keyframes popIn {
+      0%   { opacity:0; transform:translate(-50%,-50%) scale(0.7); }
+      60%  { opacity:1; transform:translate(-50%,-50%) scale(1.05); }
       100% { opacity:1; transform:translate(-50%,-50%) scale(1); }
     }
 
-    /* ── Card grid responsive ───────────────────────────── */
+    /* ── Card grid — responsive via media query ─────────── */
     .card-grid {
+      flex: 1;
+      min-height: 0;          /* allow flex shrink */
       display: grid;
-      grid-template-columns: repeat(6, min(130px, calc((100vw - 64px) / 6)));
-      gap: 8px;
-      justify-content: center;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows:    repeat(4, 1fr);
+      gap: clamp(3px, 0.5vmin, 8px);
+      padding: clamp(4px, 0.6vmin, 12px);
     }
-    @media (max-width: 560px) {
+    /* portrait phones — 4×6 */
+    @media (max-width: 640px), (max-height: 560px) and (orientation: portrait) {
       .card-grid {
-        grid-template-columns: repeat(4, min(120px, calc((100vw - 48px) / 4)));
-        gap: 6px;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows:    repeat(6, 1fr);
       }
     }
-    .card-item {
-      aspect-ratio: 3 / 4;
-      border-radius: 10px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.22);
-      cursor: pointer;
-      transition: box-shadow 0.3s, transform 0.15s;
+    /* landscape phones — 8×3 */
+    @media (max-height: 420px) and (orientation: landscape) {
+      .card-grid {
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows:    repeat(3, 1fr);
+      }
     }
-    .card-item:hover { transform: translateY(-2px); }
+
+    .card-item {
+      min-width: 0; min-height: 0;   /* critical for grid fill */
+      border-radius: clamp(4px,0.7vmin,10px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: box-shadow 0.25s, transform 0.15s;
+    }
+    .card-item:hover:not(.matched) { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.35); }
     .card-item.matched {
-      box-shadow: 0 0 0 2.5px #c9a84c, 0 4px 14px rgba(201,168,76,0.4);
+      box-shadow: 0 0 0 2px #c9a84c, 0 3px 12px rgba(201,168,76,0.45);
       cursor: default;
     }
-    .card-item.matched:hover { transform: none; }
 
-    /* ── Buttons ─────────────────────────────────────────── */
+    /* ── HUD ────────────────────────────────────────────── */
+    .hud {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 6px;
+      padding: clamp(6px,0.8vmin,12px) clamp(10px,1.2vmin,20px);
+      background: rgba(10,3,0,0.55);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+    .hud-stat { color: rgba(253,248,240,0.82); font-size: clamp(0.72rem,1.1vmin,0.9rem); }
+    .hud-stat strong { color: #fdf8f0; }
+    .hud-timer { font-family: monospace; color: #fdf8f0; font-weight:700; font-size: clamp(0.85rem,1.3vmin,1rem); }
+
+    /* ── Buttons ────────────────────────────────────────── */
     .btn-primary {
       background: linear-gradient(135deg,#c9a84c,#e8c96b);
-      color: #3d2b00; border: none; padding: 13px 36px;
-      font-size: 1rem; font-family:'Playfair Display',Georgia,serif;
-      font-weight:700; border-radius:30px; cursor:pointer;
-      letter-spacing:0.06em; box-shadow:0 4px 18px rgba(201,168,76,0.45);
-      transition: transform 0.2s, box-shadow 0.2s;
+      color:#3d2b00; border:none;
+      padding: clamp(10px,1.2vmin,14px) clamp(24px,3vw,40px);
+      font-size: clamp(0.9rem,1.3vmin,1.05rem);
+      font-family:'Playfair Display',Georgia,serif; font-weight:700;
+      border-radius:30px; cursor:pointer; letter-spacing:0.05em;
+      box-shadow:0 4px 16px rgba(201,168,76,0.45);
+      transition:transform 0.2s, box-shadow 0.2s;
     }
-    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 7px 24px rgba(201,168,76,0.65); }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 7px 22px rgba(201,168,76,0.65); }
 
     .btn-ghost {
-      background: rgba(253,248,240,0.2);
-      color: #fff; border: 2px solid rgba(255,255,255,0.7);
-      padding:10px 26px; font-size:0.9rem;
+      background:rgba(253,248,240,0.15); color:#fdf8f0;
+      border:1.5px solid rgba(255,255,255,0.55);
+      padding: clamp(8px,1vmin,12px) clamp(20px,2.5vw,32px);
+      font-size: clamp(0.82rem,1.1vmin,0.95rem);
       font-family:'Playfair Display',Georgia,serif;
       border-radius:30px; cursor:pointer; backdrop-filter:blur(4px);
-      transition: all 0.2s;
+      transition:all 0.2s;
     }
-    .btn-ghost:hover { background:rgba(255,255,255,0.35); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.3); }
 
     .btn-outline {
-      background: transparent; color:#8b4a6b;
-      border:2px solid #8b4a6b; padding:9px 22px;
-      font-size:0.88rem; font-family:'Playfair Display',Georgia,serif;
+      background:transparent; color:#8b4a6b;
+      border:2px solid #8b4a6b;
+      padding: clamp(8px,1vmin,11px) clamp(18px,2vw,26px);
+      font-size: clamp(0.82rem,1.1vmin,0.92rem);
+      font-family:'Playfair Display',Georgia,serif;
       border-radius:30px; cursor:pointer; transition:all 0.2s;
     }
     .btn-outline:hover { background:#8b4a6b; color:#fff; }
 
     .btn-sm {
-      background: rgba(253,248,240,0.18);
-      color: #fdf8f0; border: 1.5px solid rgba(253,248,240,0.5);
-      padding:5px 14px; font-size:0.78rem;
+      background:rgba(253,248,240,0.15); color:#fdf8f0;
+      border:1px solid rgba(253,248,240,0.4);
+      padding:4px 12px; font-size:0.76rem;
       font-family:'Playfair Display',Georgia,serif;
-      border-radius:20px; cursor:pointer; backdrop-filter:blur(4px);
+      border-radius:18px; cursor:pointer; backdrop-filter:blur(4px);
       transition:all 0.2s;
     }
-    .btn-sm:hover { background:rgba(253,248,240,0.35); }
+    .btn-sm:hover { background:rgba(253,248,240,0.3); }
 
-    /* ── Input ───────────────────────────────────────────── */
+    /* ── Name input ─────────────────────────────────────── */
     .name-input {
-      background:rgba(255,255,255,0.88); border:2px solid #c9a84c;
-      border-radius:28px; padding:11px 24px; font-size:1rem;
+      background:rgba(255,255,255,0.9); border:2px solid #c9a84c;
+      border-radius:28px; padding:11px 22px; font-size:1rem;
       font-family:'Playfair Display',Georgia,serif; color:#3d2b00;
-      outline:none; width:100%; max-width:300px; text-align:center;
+      outline:none; width:100%; max-width:280px; text-align:center;
       transition:border-color 0.2s, box-shadow 0.2s;
     }
-    .name-input:focus { border-color:#8b4a6b; box-shadow:0 0 0 3px rgba(139,74,107,0.18); }
+    .name-input:focus { border-color:#8b4a6b; box-shadow:0 0 0 3px rgba(139,74,107,0.2); }
 
-    /* ── Modal ───────────────────────────────────────────── */
+    /* ── Victory modal ──────────────────────────────────── */
     .modal-overlay {
-      position:fixed; inset:0; z-index:200;
+      position:absolute; inset:0; z-index:50;
       display:flex; align-items:center; justify-content:center;
-      animation: fadeInUp 0.35s ease;
+      animation: fadeInUp 0.3s ease;
     }
     .modal-box {
       background:linear-gradient(145deg,rgba(253,248,240,0.97),rgba(255,249,240,0.97));
-      border:2px solid #c9a84c; border-radius:22px;
-      padding:36px 40px; max-width:460px; width:92%;
-      box-shadow:0 24px 70px rgba(61,43,0,0.45);
-      text-align:center; backdrop-filter:blur(10px);
+      border:2px solid #c9a84c; border-radius:20px;
+      padding: clamp(24px,3vmin,40px) clamp(24px,4vmin,44px);
+      max-width: min(440px, 90%); width:100%;
+      box-shadow:0 20px 70px rgba(61,43,0,0.5);
+      text-align:center; backdrop-filter:blur(12px);
     }
 
-    /* ── Scrollbar ───────────────────────────────────────── */
-    ::-webkit-scrollbar { width:5px; }
-    ::-webkit-scrollbar-thumb { background:#c9a84c; border-radius:3px; }
+    /* ── Scrollbar ──────────────────────────────────────── */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-thumb { background:#c9a84c; border-radius:2px; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef } = React;
 
 /* ── Storage ─────────────────────────────────────────────────────────── */
 const storage = window.storage || {
-  getItem:  k    => { try { return localStorage.getItem(k);    } catch { return null; } },
-  setItem: (k,v) => { try { localStorage.setItem(k, v);       } catch {} },
+  getItem:  k    => { try { return localStorage.getItem(k);  } catch { return null; } },
+  setItem: (k,v) => { try { localStorage.setItem(k, v);     } catch {} },
 };
 
 /* ── Constants ───────────────────────────────────────────────────────── */
 const WEDDING_IMAGE = 'assets/UI/GamePortada.png';
 const TOTAL_PAIRS   = 12;
-const GRID_COLS     = 6;
 const BASE_SCORE    = 3500;
 
-/* ── Character pools ─────────────────────────────────────────────────── */
+/* ── Asset pools (exact files on disk) ───────────────────────────────── */
 const POOL_IKER = [
   'assets/characters/iker_idle01.png',
   'assets/characters/iker_sleeping01.png',
@@ -235,16 +300,16 @@ function calcScore(errors, secs) {
   return Math.max(BASE_SCORE - errors * 50 - secs, 0);
 }
 
-/* Build exactly 12 pairs per game with random sprite selection */
+/* 12 pairs, fixed composition, random sprites per game */
 function buildDeck() {
   const sprites = [
-    ...pick(POOL_IKER,   1),   // 1  pair  — Iker
-    ...pick(POOL_PILLY,  1),   // 1  pair  — Pilly
-    ...pick(POOL_FINCH,  1),   // 1  pair  — Finch
-    ...pick(POOL_VALE,   2),   // 2  pairs — Valentina
-    ...pick(POOL_NOVIOS, 3),   // 3  pairs — Couple
-    ...pick(POOL_PROPS,  4),   // 4  pairs — Props
-  ]; // 12 unique sprites → 24 cards
+    ...pick(POOL_IKER,   1),
+    ...pick(POOL_PILLY,  1),
+    ...pick(POOL_FINCH,  1),
+    ...pick(POOL_VALE,   2),
+    ...pick(POOL_NOVIOS, 3),
+    ...pick(POOL_PROPS,  4),
+  ];
   const pairs = [];
   sprites.forEach((url, i) => {
     pairs.push({ id: i*2,   pairId: i, url });
@@ -253,79 +318,72 @@ function buildDeck() {
   return shuffle(pairs);
 }
 
-/* ── Leaderboard (single, no difficulty) ────────────────────────────── */
+/* ── Leaderboard ─────────────────────────────────────────────────────── */
 function getLB() {
   try { const r = storage.getItem('wedding_lb_v2'); return r ? JSON.parse(r) : []; }
   catch { return []; }
-}
-function saveLB(entries) {
-  try { storage.setItem('wedding_lb_v2', JSON.stringify(entries)); } catch {}
 }
 function addEntry(entry) {
   const lb = getLB();
   lb.push(entry);
   lb.sort((a, b) => b.score - a.score);
   const top = lb.slice(0, 10);
-  saveLB(top);
+  try { storage.setItem('wedding_lb_v2', JSON.stringify(top)); } catch {}
   return top.findIndex(e => e.timestamp === entry.timestamp) + 1;
 }
 
-/* ── Floral corner ───────────────────────────────────────────────────── */
-function FloralCorner({ style }) {
-  return (
-    <svg style={style} width="80" height="80" viewBox="0 0 80 80" fill="none">
-      <g opacity="0.55">
-        <circle cx="10" cy="10" r="4.5" fill="#c9a84c"/>
-        <circle cx="23" cy="8"  r="3"   fill="#8b4a6b"/>
-        <circle cx="8"  cy="23" r="3"   fill="#8b4a6b"/>
-        <circle cx="33" cy="15" r="2.5" fill="#c9a84c"/>
-        <circle cx="15" cy="33" r="2.5" fill="#c9a84c"/>
-        <path d="M10 10 Q21 2 33 15" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
-        <path d="M10 10 Q2 21 15 33" stroke="#c9a84c" strokeWidth="1.5" fill="none"/>
-        <path d="M23 8 Q38 5 40 20"  stroke="#8b4a6b" strokeWidth="1"   fill="none"/>
-        <path d="M8 23 Q5 38 20 40"  stroke="#8b4a6b" strokeWidth="1"   fill="none"/>
-        <text x="3"  y="56" fontSize="20" fill="#c9a84c" opacity="0.55">✿</text>
-        <text x="34" y="78" fontSize="14" fill="#8b4a6b" opacity="0.45">❀</text>
-        <text x="62" y="28" fontSize="14" fill="#c9a84c" opacity="0.35">❀</text>
-      </g>
-    </svg>
-  );
-}
-
-/* ── Card back ───────────────────────────────────────────────────────── */
+/* ── SVG card back ───────────────────────────────────────────────────── */
 function CardBackSVG() {
   return (
-    <svg width="100%" height="100%" viewBox="0 0 75 100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="100%" height="100%" viewBox="0 0 75 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
       <rect width="75" height="100" fill="#fdf8f0"/>
       <rect x="3" y="3" width="69" height="94" rx="6" fill="none" stroke="#c9a84c" strokeWidth="1.6"/>
-      <rect x="6" y="6" width="63" height="88" rx="4" fill="none" stroke="#c9a84c" strokeWidth="0.5" strokeDasharray="3,2"/>
-      {/* Rings */}
-      <circle cx="30" cy="48" r="9" fill="none" stroke="#c9a84c" strokeWidth="2"/>
-      <circle cx="44" cy="48" r="9" fill="none" stroke="#c9a84c" strokeWidth="2"/>
-      {/* Heart */}
-      <path d="M37 28C37 25 33 22 30 25C27 28 31 33 37 37C43 33 47 28 44 25C41 22 37 25 37 28Z" fill="#8b4a6b" opacity="0.65"/>
+      <rect x="7" y="7" width="61" height="86" rx="4" fill="none" stroke="#c9a84c" strokeWidth="0.5" strokeDasharray="3,2"/>
+      <circle cx="30" cy="48" r="9"  fill="none" stroke="#c9a84c" strokeWidth="2"/>
+      <circle cx="44" cy="48" r="9"  fill="none" stroke="#c9a84c" strokeWidth="2"/>
+      <path d="M37 28C37 25 33 22 30 25C27 28 31 33 37 37C43 33 47 28 44 25C41 22 37 25 37 28Z" fill="#8b4a6b" opacity="0.6"/>
       <path d="M37 68C37 66.5 35 65 33 66.5C31 68 33 70 37 72C41 70 43 68 41 66.5C39 65 37 66.5 37 68Z" fill="#c9a84c" opacity="0.65"/>
-      <text x="6"  y="20"  fontSize="10" fill="#c9a84c" opacity="0.4">✿</text>
-      <text x="56" y="20"  fontSize="10" fill="#c9a84c" opacity="0.4">✿</text>
-      <text x="6"  y="98"  fontSize="10" fill="#c9a84c" opacity="0.4">✿</text>
-      <text x="56" y="98"  fontSize="10" fill="#c9a84c" opacity="0.4">✿</text>
+      <text x="6"  y="20"  fontSize="10" fill="#c9a84c" opacity="0.38">✿</text>
+      <text x="56" y="20"  fontSize="10" fill="#c9a84c" opacity="0.38">✿</text>
+      <text x="6"  y="98"  fontSize="10" fill="#c9a84c" opacity="0.38">✿</text>
+      <text x="56" y="98"  fontSize="10" fill="#c9a84c" opacity="0.38">✿</text>
     </svg>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   BACKGROUND LAYER (always present)
-══════════════════════════════════════════════════════════════ */
-function BgLayer({ overlayAlpha }) {
+/* ── Frame corner ornament ───────────────────────────────────────────── */
+function FrameCorner({ top, left }) {
+  const style = {
+    position: 'absolute', zIndex: 2, pointerEvents: 'none',
+    top:    top  ? '-1px' : 'auto',
+    bottom: !top ? '-1px' : 'auto',
+    left:   left ? '-1px' : 'auto',
+    right:  !left? '-1px' : 'auto',
+    transform: (!top && left) ? 'scaleY(-1)' : (!left && top) ? 'scaleX(-1)' : (!top && !left) ? 'scale(-1,-1)' : 'none',
+  };
+  return (
+    <div style={style}>
+      <svg width="clamp(36px,4vmin,52px)" height="clamp(36px,4vmin,52px)" viewBox="0 0 52 52" fill="none">
+        <path d="M3 3 L22 3" stroke="rgba(201,168,76,0.95)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M3 3 L3 22"  stroke="rgba(201,168,76,0.95)" strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx="3" cy="3" r="3" fill="#c9a84c"/>
+        <circle cx="22" cy="3" r="1.5" fill="rgba(201,168,76,0.6)"/>
+        <circle cx="3" cy="22" r="1.5" fill="rgba(201,168,76,0.6)"/>
+        <text x="8" y="26" fontSize="17" fill="rgba(201,168,76,0.65)">✿</text>
+      </svg>
+    </div>
+  );
+}
+
+/* ── Shared background ───────────────────────────────────────────────── */
+function BgLayer({ alpha }) {
   return (
     <div style={{ position:'fixed', inset:0, zIndex:0, overflow:'hidden' }}>
-      <img
-        src={WEDDING_IMAGE} alt=""
-        style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', display:'block' }}
-      />
+      <img src={WEDDING_IMAGE} alt=""
+        style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', display:'block' }}/>
       <div style={{
         position:'absolute', inset:0,
-        background:`rgba(20,5,0,${overlayAlpha})`,
+        background:`rgba(12,4,0,${alpha})`,
         transition:'background 1.4s ease',
       }}/>
     </div>
@@ -337,38 +395,27 @@ function BgLayer({ overlayAlpha }) {
 ══════════════════════════════════════════════════════════════ */
 function EntryScreen({ onPlay, onLeaderboard }) {
   const [name, setName] = useState('');
-
   function go() { if (name.trim()) onPlay(name.trim()); }
 
   return (
-    <div style={{ position:'relative', zIndex:10, minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'20px' }}>
-      {/* Floral corners */}
-      <FloralCorner style={{ position:'fixed', top:0, left:0, zIndex:11 }}/>
-      <FloralCorner style={{ position:'fixed', top:0, right:0, transform:'scaleX(-1)', zIndex:11 }}/>
-      <FloralCorner style={{ position:'fixed', bottom:0, left:0, transform:'scaleY(-1)', zIndex:11 }}/>
-      <FloralCorner style={{ position:'fixed', bottom:0, right:0, transform:'scale(-1,-1)', zIndex:11 }}/>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(12px,2vmin,28px)', position:'relative', overflow:'hidden' }}>
+      <div className="fade-in" style={{ textAlign:'center', width:'100%', maxWidth:'min(420px,90%)' }}>
 
-      <div className="fade-in" style={{ textAlign:'center', maxWidth:460, width:'100%' }}>
-        {/* Header */}
-        <div style={{ marginBottom:24 }}>
-          <div style={{ fontSize:'0.82rem', color:'rgba(253,248,240,0.85)', letterSpacing:'0.28em', textTransform:'uppercase', marginBottom:10, textShadow:'0 1px 4px rgba(0,0,0,0.5)' }}>
-            You're invited to celebrate
-          </div>
-          <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(2.4rem,7vw,3.8rem)', color:'#fdf8f0', fontWeight:700, lineHeight:1.15, textShadow:'0 2px 12px rgba(0,0,0,0.6)', letterSpacing:'0.01em' }}>
-            Vale & Iker
-          </h1>
+        {/* Invite text */}
+        <div style={{ fontSize:'clamp(0.7rem,1.1vmin,0.85rem)', color:'rgba(253,248,240,0.75)', letterSpacing:'0.28em', textTransform:'uppercase', marginBottom:'clamp(8px,1.5vmin,16px)', textShadow:'0 1px 4px rgba(0,0,0,0.6)' }}>
+          You're invited to celebrate
         </div>
 
-        {/* Gold divider */}
-        <div style={{ display:'flex', alignItems:'center', gap:14, margin:'0 auto 28px', maxWidth:260 }}>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,rgba(201,168,76,0.8))' }}/>
-          <span style={{ color:'#c9a84c', fontSize:'1.3rem', textShadow:'0 0 8px rgba(201,168,76,0.6)' }}>❧</span>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,rgba(201,168,76,0.8),transparent)' }}/>
+        {/* Divider */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'0 auto clamp(16px,2.5vmin,28px)', maxWidth:240 }}>
+          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,rgba(201,168,76,0.7))' }}/>
+          <span style={{ color:'#c9a84c', fontSize:'clamp(1rem,1.5vmin,1.3rem)' }}>❧</span>
+          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,rgba(201,168,76,0.7),transparent)' }}/>
         </div>
 
-        {/* Panel */}
-        <div style={{ background:'rgba(253,248,240,0.14)', backdropFilter:'blur(12px)', border:'1px solid rgba(201,168,76,0.4)', borderRadius:20, padding:'28px 32px', boxShadow:'0 8px 40px rgba(0,0,0,0.3)' }}>
-          <label style={{ display:'block', color:'rgba(253,248,240,0.9)', marginBottom:10, fontFamily:"'Playfair Display',Georgia,serif", fontSize:'0.95rem', fontStyle:'italic' }}>
+        {/* Input panel */}
+        <div style={{ background:'rgba(253,248,240,0.12)', backdropFilter:'blur(14px)', border:'1px solid rgba(201,168,76,0.35)', borderRadius:'clamp(12px,1.5vmin,20px)', padding:'clamp(18px,2.5vmin,30px) clamp(20px,3vmin,36px)' }}>
+          <label style={{ display:'block', color:'rgba(253,248,240,0.88)', marginBottom:'clamp(8px,1.2vmin,12px)', fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(0.82rem,1.2vmin,0.95rem)', fontStyle:'italic' }}>
             Enter your name to play
           </label>
           <input
@@ -378,20 +425,15 @@ function EntryScreen({ onPlay, onLeaderboard }) {
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key==='Enter' && go()}
           />
-
-          <div style={{ marginTop:22, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
-            <button
-              className="btn-primary"
-              onClick={go}
-              style={{ width:200, opacity: name.trim() ? 1 : 0.45 }}
-            >
+          <div style={{ marginTop:'clamp(14px,2vmin,22px)', display:'flex', flexDirection:'column', alignItems:'center', gap:'clamp(8px,1vmin,12px)' }}>
+            <button className="btn-primary" onClick={go} style={{ opacity: name.trim() ? 1 : 0.45, minWidth:180 }}>
               Play ✨
             </button>
             <button className="btn-ghost" onClick={onLeaderboard}>🏆 Leaderboard</button>
           </div>
         </div>
 
-        <div style={{ marginTop:18, color:'rgba(253,248,240,0.5)', fontSize:'0.75rem', fontStyle:'italic' }}>
+        <div style={{ marginTop:'clamp(8px,1.2vmin,14px)', color:'rgba(253,248,240,0.4)', fontSize:'clamp(0.66rem,0.9vmin,0.76rem)', fontStyle:'italic' }}>
           12 pairs · random each game
         </div>
       </div>
@@ -404,33 +446,32 @@ function EntryScreen({ onPlay, onLeaderboard }) {
 ══════════════════════════════════════════════════════════════ */
 function LeaderboardScreen({ onBack, highlightTs }) {
   const entries = getLB();
-  const medals = ['🥇','🥈','🥉'];
+  const medals  = ['🥇','🥈','🥉'];
 
   return (
-    <div style={{ position:'relative', zIndex:10, minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', padding:'24px 16px' }}>
-      <FloralCorner style={{ position:'fixed', top:0, left:0, zIndex:11 }}/>
-      <FloralCorner style={{ position:'fixed', top:0, right:0, transform:'scaleX(-1)', zIndex:11 }}/>
-
-      <div className="fade-in" style={{ width:'100%', maxWidth:620, marginTop:20 }}>
-        <div style={{ textAlign:'center', marginBottom:24 }}>
-          <div style={{ fontSize:'2.2rem', marginBottom:4 }}>🏆</div>
-          <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#fdf8f0', fontSize:'2rem', fontWeight:700, textShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', padding:'clamp(10px,1.5vmin,20px)' }}>
+      <div className="fade-in" style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', maxWidth:600, width:'100%', margin:'0 auto' }}>
+        {/* Header */}
+        <div style={{ textAlign:'center', marginBottom:'clamp(8px,1.2vmin,16px)', flexShrink:0 }}>
+          <div style={{ fontSize:'clamp(1.4rem,2.5vmin,2rem)', marginBottom:4 }}>🏆</div>
+          <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#fdf8f0', fontSize:'clamp(1.3rem,2.2vmin,1.8rem)', fontWeight:700, textShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>
             Leaderboard
-          </h1>
-          <div style={{ width:60, height:2, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'10px auto' }}/>
+          </h2>
+          <div style={{ width:50, height:2, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'8px auto 0' }}/>
         </div>
 
-        <div style={{ background:'rgba(253,248,240,0.12)', backdropFilter:'blur(12px)', border:'1px solid rgba(201,168,76,0.35)', borderRadius:16, overflow:'hidden', marginBottom:20 }}>
+        {/* Table */}
+        <div style={{ flex:1, overflow:'auto', background:'rgba(253,248,240,0.1)', backdropFilter:'blur(12px)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:14, marginBottom:'clamp(8px,1.2vmin,14px)' }}>
           {entries.length === 0 ? (
-            <div style={{ padding:40, textAlign:'center', color:'rgba(253,248,240,0.6)', fontStyle:'italic' }}>
+            <div style={{ padding:40, textAlign:'center', color:'rgba(253,248,240,0.55)', fontStyle:'italic' }}>
               No scores yet — be the first!
             </div>
           ) : (
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
-                <tr style={{ background:'rgba(201,168,76,0.18)' }}>
+                <tr style={{ background:'rgba(201,168,76,0.18)', position:'sticky', top:0 }}>
                   {['Rank','Name','Score','Time','Errors','Date'].map(h => (
-                    <th key={h} style={{ padding:'10px 10px', color:'#e8c96b', fontSize:'0.75rem', fontWeight:700, letterSpacing:'0.06em', textAlign:'center', borderBottom:'1px solid rgba(201,168,76,0.25)' }}>{h}</th>
+                    <th key={h} style={{ padding:'8px 10px', color:'#e8c96b', fontSize:'clamp(0.65rem,0.9vmin,0.78rem)', fontWeight:700, letterSpacing:'0.06em', textAlign:'center', borderBottom:'1px solid rgba(201,168,76,0.22)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -439,15 +480,15 @@ function LeaderboardScreen({ onBack, highlightTs }) {
                   const hi = e.timestamp === highlightTs;
                   return (
                     <tr key={i} style={{
-                      background: hi ? 'rgba(201,168,76,0.22)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.06)',
+                      background: hi ? 'rgba(201,168,76,0.2)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.05)',
                       borderLeft: hi ? '4px solid #c9a84c' : '4px solid transparent',
                     }}>
-                      <td style={{ padding:'9px 10px', textAlign:'center', fontSize:'1.1rem' }}>{medals[i] || '#'+(i+1)}</td>
-                      <td style={{ padding:'9px 10px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#fdf8f0' }}>{e.name}</td>
-                      <td style={{ padding:'9px 10px', textAlign:'center', color:'#e8c96b', fontWeight:700 }}>{e.score.toLocaleString()}</td>
-                      <td style={{ padding:'9px 10px', textAlign:'center', color:'rgba(253,248,240,0.75)' }}>{e.time}</td>
-                      <td style={{ padding:'9px 10px', textAlign:'center', color:'#e8a0c0' }}>{e.errors}</td>
-                      <td style={{ padding:'9px 10px', textAlign:'center', color:'rgba(253,248,240,0.45)', fontSize:'0.75rem' }}>{e.date}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', fontSize:'clamp(0.9rem,1.3vmin,1.1rem)' }}>{medals[i] || '#'+(i+1)}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#fdf8f0', fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.name}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8c96b', fontWeight:700, fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.score.toLocaleString()}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.72)', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.time}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8a0c0', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.errors}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.4)', fontSize:'clamp(0.65rem,0.9vmin,0.76rem)' }}>{e.date}</td>
                     </tr>
                   );
                 })}
@@ -456,7 +497,7 @@ function LeaderboardScreen({ onBack, highlightTs }) {
           )}
         </div>
 
-        <div style={{ textAlign:'center' }}>
+        <div style={{ textAlign:'center', flexShrink:0 }}>
           <button className="btn-ghost" onClick={onBack}>← Back</button>
         </div>
       </div>
@@ -472,36 +513,38 @@ function VictoryModal({ playerName, errors, seconds, rank, onPlayAgain, onLeader
   return (
     <div className="modal-overlay">
       <div className="modal-box fade-in">
-        <div style={{ fontSize:'2.8rem', marginBottom:8 }}>🎉</div>
-        <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'1.8rem', marginBottom:4 }}>Congratulations!</h2>
-        <p style={{ color:'#8b4a6b', fontStyle:'italic', marginBottom:22 }}>
+        <div style={{ fontSize:'clamp(2rem,3.5vmin,2.8rem)', marginBottom:6 }}>🎉</div>
+        <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'clamp(1.3rem,2.2vmin,1.8rem)', marginBottom:4 }}>
+          Congratulations!
+        </h2>
+        <p style={{ color:'#8b4a6b', fontStyle:'italic', marginBottom:'clamp(14px,2vmin,22px)', fontSize:'clamp(0.82rem,1.2vmin,0.95rem)' }}>
           {playerName}, you found all the pairs!
         </p>
 
-        <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid #c9a84c', borderRadius:14, padding:'18px 20px', marginBottom:18 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 }}>
+        <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid #c9a84c', borderRadius:12, padding:'clamp(12px,1.8vmin,20px)', marginBottom:'clamp(12px,1.8vmin,18px)' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
             <div style={{ textAlign:'center' }}>
-              <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:3, letterSpacing:'0.06em' }}>TIME</div>
-              <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'1.15rem' }}>⏱ {formatTime(seconds)}</div>
+              <div style={{ color:'#aaa', fontSize:'0.68rem', marginBottom:2, letterSpacing:'0.06em' }}>TIME</div>
+              <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'clamp(0.95rem,1.5vmin,1.15rem)' }}>⏱ {formatTime(seconds)}</div>
             </div>
             <div style={{ textAlign:'center' }}>
-              <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:3, letterSpacing:'0.06em' }}>ERRORS</div>
-              <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'1.15rem' }}>❌ {errors}</div>
+              <div style={{ color:'#aaa', fontSize:'0.68rem', marginBottom:2, letterSpacing:'0.06em' }}>ERRORS</div>
+              <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'clamp(0.95rem,1.5vmin,1.15rem)' }}>❌ {errors}</div>
             </div>
           </div>
-          <div style={{ textAlign:'center', paddingTop:14, borderTop:'1px solid #e8d8a0' }}>
-            <div style={{ color:'#aaa', fontSize:'0.72rem', marginBottom:5, letterSpacing:'0.06em' }}>FINAL SCORE</div>
-            <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'2.4rem' }}>{score.toLocaleString()}</div>
+          <div style={{ textAlign:'center', paddingTop:12, borderTop:'1px solid #e8d8a0' }}>
+            <div style={{ color:'#aaa', fontSize:'0.68rem', marginBottom:4, letterSpacing:'0.06em' }}>FINAL SCORE</div>
+            <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'clamp(1.8rem,3vmin,2.4rem)' }}>{score.toLocaleString()}</div>
           </div>
         </div>
 
         {rank && (
-          <div style={{ background:'linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.28))', borderRadius:10, padding:'10px 16px', marginBottom:18, color:'#8b6a00', fontWeight:600, fontSize:'0.9rem' }}>
+          <div style={{ background:'linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.28))', borderRadius:10, padding:'8px 14px', marginBottom:'clamp(12px,1.8vmin,18px)', color:'#8b6a00', fontWeight:600, fontSize:'clamp(0.8rem,1.1vmin,0.9rem)' }}>
             🏆 Leaderboard rank #{rank}!
           </div>
         )}
 
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           <button className="btn-primary" onClick={onPlayAgain}>Play Again</button>
           <button className="btn-outline" onClick={onLeaderboard}>🏆 Leaderboard</button>
         </div>
@@ -523,20 +566,15 @@ function GameBoard({ playerName, onVictory, onQuit }) {
   const [timerActive, setTimerActive] = useState(false);
   const [locked,      setLocked]      = useState(false);
   const [glowing,     setGlowing]     = useState(new Set());
-  // 'playing' | 'revealing' | 'done'
-  const [phase, setPhase] = useState('playing');
+  const [phase,       setPhase]       = useState('playing');
 
   const timerRef        = useRef(null);
   const victoryFiredRef = useRef(false);
   const errorsRef       = useRef(0);
   const secondsRef      = useRef(0);
 
-  /* Build deck on mount */
-  useEffect(() => {
-    setCards(buildDeck());
-  }, []);
+  useEffect(() => { setCards(buildDeck()); }, []);
 
-  /* Timer */
   useEffect(() => {
     if (timerActive) {
       timerRef.current = setInterval(() => {
@@ -548,7 +586,6 @@ function GameBoard({ playerName, onVictory, onQuit }) {
     return () => clearInterval(timerRef.current);
   }, [timerActive]);
 
-  /* Card click */
   function handleCardClick(cardId) {
     if (phase !== 'playing' || locked) return;
     const card = cards.find(c => c.id === cardId);
@@ -556,7 +593,6 @@ function GameBoard({ playerName, onVictory, onQuit }) {
     if (flipped.length >= 2) return;
 
     if (!timerActive) setTimerActive(true);
-
     const next = [...flipped, cardId];
     setFlipped(next);
 
@@ -565,24 +601,20 @@ function GameBoard({ playerName, onVictory, onQuit }) {
       setLocked(true);
       const a = cards.find(c => c.id === next[0]);
       const b = cards.find(c => c.id === next[1]);
-
       if (a.pairId === b.pairId) {
         const pid = a.pairId;
         setGlowing(new Set([pid]));
         setTimeout(() => {
           setMatched(prev => { const n=new Set(prev); n.add(pid); return n; });
-          setFlipped([]);
-          setLocked(false);
-          setGlowing(new Set());
-        }, 720);
+          setFlipped([]); setLocked(false); setGlowing(new Set());
+        }, 700);
       } else {
         setErrors(e => { const n=e+1; errorsRef.current=n; return n; });
-        setTimeout(() => { setFlipped([]); setLocked(false); }, 950);
+        setTimeout(() => { setFlipped([]); setLocked(false); }, 900);
       }
     }
   }
 
-  /* Victory — all TOTAL_PAIRS pairs must be found */
   useEffect(() => {
     if (victoryFiredRef.current) return;
     if (matched.size > 0 && matched.size === TOTAL_PAIRS) {
@@ -591,34 +623,28 @@ function GameBoard({ playerName, onVictory, onQuit }) {
       setTimeout(() => {
         setPhase('revealing');
         setTimeout(() => {
-          const fe = errorsRef.current;
-          const fs = secondsRef.current;
+          const fe = errorsRef.current, fs = secondsRef.current;
           const entry = {
-            name: playerName,
-            score: calcScore(fe, fs),
-            time: formatTime(fs),
-            errors: fe,
-            date: new Date().toLocaleDateString(),
-            timestamp: Date.now(),
+            name: playerName, score: calcScore(fe, fs),
+            time: formatTime(fs), errors: fe,
+            date: new Date().toLocaleDateString(), timestamp: Date.now(),
           };
           const rank = addEntry(entry);
           setPhase('done');
           onVictory(fe, fs, rank, entry.timestamp);
         }, 2000);
-      }, 500);
+      }, 400);
     }
   }, [matched]);
 
-  const isRevealing = phase !== 'playing';
-
   return (
-    <div style={{ position:'relative', zIndex:10, minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', padding:'12px 8px 24px' }}>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
 
       {/* "All found!" banner */}
       {phase === 'revealing' && (
-        <div style={{ position:'fixed', top:'50%', left:'50%', zIndex:90, pointerEvents:'none', animation:'revealMsg 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
-          <div style={{ background:'linear-gradient(135deg,rgba(253,248,240,0.97),rgba(255,249,240,0.97))', border:'2px solid #c9a84c', borderRadius:20, padding:'16px 44px', boxShadow:'0 12px 50px rgba(201,168,76,0.55)', whiteSpace:'nowrap' }}>
-            <span style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(1.3rem,2.5vw,1.9rem)', color:'#3d2b00', fontWeight:700 }}>
+        <div style={{ position:'absolute', top:'50%', left:'50%', zIndex:40, pointerEvents:'none', animation:'popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
+          <div style={{ background:'linear-gradient(135deg,rgba(253,248,240,0.97),rgba(255,249,240,0.97))', border:'2px solid #c9a84c', borderRadius:18, padding:'clamp(12px,2vmin,18px) clamp(28px,4vw,48px)', boxShadow:'0 12px 50px rgba(201,168,76,0.6)', whiteSpace:'nowrap' }}>
+            <span style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(1.1rem,2.2vmin,1.7rem)', color:'#3d2b00', fontWeight:700 }}>
               ✨ All found! ✨
             </span>
           </div>
@@ -626,19 +652,15 @@ function GameBoard({ playerName, onVictory, onQuit }) {
       )}
 
       {/* HUD */}
-      <div style={{ width:'100%', maxWidth:960, background:'rgba(20,5,0,0.45)', backdropFilter:'blur(10px)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:14, padding:'9px 18px', marginBottom:14, display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-        <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#fdf8f0', fontWeight:600 }}>
+      <div className="hud">
+        <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#fdf8f0', fontWeight:600, fontSize:'clamp(0.78rem,1.2vmin,0.95rem)' }}>
           👰 {playerName}
         </div>
-        <div style={{ display:'flex', gap:14, flexWrap:'wrap', alignItems:'center' }}>
-          <span style={{ color:'#fdf8f0', fontWeight:700, fontFamily:'monospace', fontSize:'1rem', minWidth:52 }}>
-            ⏱ {formatTime(seconds)}
-          </span>
-          <span style={{ color:'rgba(253,248,240,0.7)', fontSize:'0.88rem' }}>🔄 {moves}</span>
-          <span style={{ color:'#e8a0c0', fontSize:'0.88rem' }}>❌ {errors}</span>
-          <span style={{ color:'#e8c96b', fontSize:'0.88rem', fontWeight:600 }}>
-            ✅ {matched.size}/{TOTAL_PAIRS}
-          </span>
+        <div style={{ display:'flex', gap:'clamp(8px,1.2vmin,18px)', alignItems:'center', flexWrap:'wrap' }}>
+          <span className="hud-timer">⏱ {formatTime(seconds)}</span>
+          <span className="hud-stat">🔄 <strong>{moves}</strong></span>
+          <span className="hud-stat" style={{ color:'#e8a0c0' }}>❌ <strong>{errors}</strong></span>
+          <span className="hud-stat" style={{ color:'#e8c96b' }}>✅ <strong>{matched.size}/{TOTAL_PAIRS}</strong></span>
         </div>
         <button className="btn-sm" onClick={onQuit}>Quit</button>
       </div>
@@ -668,15 +690,6 @@ function GameBoard({ playerName, onVictory, onQuit }) {
           );
         })}
       </div>
-
-      {/* Progress hint */}
-      {phase === 'playing' && matched.size > 0 && (
-        <div style={{ marginTop:14, color:'rgba(253,248,240,0.55)', fontSize:'0.76rem', fontStyle:'italic', textAlign:'center' }}>
-          {matched.size === TOTAL_PAIRS - 1
-            ? '🔥 One more pair to go!'
-            : matched.size + ' of ' + TOTAL_PAIRS + ' pairs found'}
-        </div>
-      )}
     </div>
   );
 }
@@ -690,7 +703,7 @@ function App() {
   const [victoryData, setVictoryData] = useState(null);
   const [lbHighlight, setLbHighlight] = useState(null);
   const [gameKey,     setGameKey]     = useState(0);
-  const [bgAlpha,     setBgAlpha]     = useState(0.38);
+  const [bgAlpha,     setBgAlpha]     = useState(0.35);
 
   useEffect(() => {
     const link = document.createElement('link');
@@ -700,75 +713,67 @@ function App() {
   }, []);
 
   function handlePlay(name) {
-    setPlayerName(name);
-    setVictoryData(null);
-    setGameKey(k => k+1);
-    setBgAlpha(0.52);
-    setScreen('game');
+    setPlayerName(name); setVictoryData(null);
+    setGameKey(k => k+1); setBgAlpha(0.50); setScreen('game');
   }
-
   function handleVictory(errors, seconds, rank, timestamp) {
-    setBgAlpha(0.1);  // reveal the photo on win
+    setBgAlpha(0.08);
     setVictoryData({ errors, seconds, rank, timestamp });
   }
-
   function handlePlayAgain() {
-    setVictoryData(null);
-    setGameKey(k => k+1);
-    setBgAlpha(0.52);
+    setVictoryData(null); setGameKey(k => k+1); setBgAlpha(0.50);
   }
-
-  function handleShowLeaderboard(fromVictory) {
+  function handleLeaderboard(fromVictory) {
     if (fromVictory && victoryData) setLbHighlight(victoryData.timestamp);
     else setLbHighlight(null);
-    setVictoryData(null);
-    setBgAlpha(0.38);
-    setScreen('leaderboard');
+    setVictoryData(null); setBgAlpha(0.35); setScreen('leaderboard');
   }
-
-  function handleBack() {
-    setBgAlpha(0.38);
-    setScreen('entry');
-  }
+  function handleBack() { setBgAlpha(0.35); setScreen('entry'); }
 
   return (
-    <div style={{ position:'relative', minHeight:'100vh' }}>
-      <BgLayer overlayAlpha={bgAlpha}/>
+    <div>
+      {/* Full-page background */}
+      <BgLayer alpha={bgAlpha}/>
 
-      {screen === 'entry' && (
-        <EntryScreen
-          onPlay={handlePlay}
-          onLeaderboard={() => handleShowLeaderboard(false)}
-        />
-      )}
+      {/* Decorative frame — wraps all screens */}
+      <div className="game-frame">
+        <FrameCorner top={true}  left={true}/>
+        <FrameCorner top={true}  left={false}/>
+        <FrameCorner top={false} left={true}/>
+        <FrameCorner top={false} left={false}/>
 
-      {screen === 'game' && (
-        <>
-          <GameBoard
-            key={gameKey}
-            playerName={playerName}
-            onVictory={handleVictory}
-            onQuit={() => { setVictoryData(null); setBgAlpha(0.38); setScreen('entry'); }}
+        {screen === 'entry' && (
+          <EntryScreen
+            onPlay={handlePlay}
+            onLeaderboard={() => handleLeaderboard(false)}
           />
-          {victoryData && (
-            <VictoryModal
-              playerName={playerName}
-              errors={victoryData.errors}
-              seconds={victoryData.seconds}
-              rank={victoryData.rank}
-              onPlayAgain={handlePlayAgain}
-              onLeaderboard={() => handleShowLeaderboard(true)}
-            />
-          )}
-        </>
-      )}
+        )}
 
-      {screen === 'leaderboard' && (
-        <LeaderboardScreen
-          onBack={handleBack}
-          highlightTs={lbHighlight}
-        />
-      )}
+        {screen === 'game' && (
+          <>
+            <GameBoard
+              key={gameKey}
+              playerName={playerName}
+              onVictory={handleVictory}
+              onQuit={() => { setVictoryData(null); setBgAlpha(0.35); setScreen('entry'); }}
+            />
+            {victoryData && (
+              <VictoryModal
+                playerName={playerName}
+                errors={victoryData.errors}
+                seconds={victoryData.seconds}
+                rank={victoryData.rank}
+                onPlayAgain={handlePlayAgain}
+                onLeaderboard={() => handleLeaderboard(true)}
+              />
+            )}
+          </>
+        )}
+
+        {screen === 'leaderboard' && (
+          <LeaderboardScreen onBack={handleBack} highlightTs={lbHighlight}/>
+        )}
+      </div>
     </div>
   );
 }
