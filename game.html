@@ -380,7 +380,7 @@ function BgLayer({ alpha }) {
   return (
     <div style={{ position:'fixed', inset:0, zIndex:0, overflow:'hidden' }}>
       <img src={WEDDING_IMAGE} alt=""
-        style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', display:'block' }}/>
+        style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center', display:'block' }}/>
       <div style={{
         position:'absolute', inset:0,
         background:`rgba(12,4,0,${alpha})`,
@@ -400,18 +400,6 @@ function EntryScreen({ onPlay, onLeaderboard }) {
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(12px,2vmin,28px)', position:'relative', overflow:'hidden' }}>
       <div className="fade-in" style={{ textAlign:'center', width:'100%', maxWidth:'min(420px,90%)' }}>
-
-        {/* Invite text */}
-        <div style={{ fontSize:'clamp(0.7rem,1.1vmin,0.85rem)', color:'rgba(253,248,240,0.75)', letterSpacing:'0.28em', textTransform:'uppercase', marginBottom:'clamp(8px,1.5vmin,16px)', textShadow:'0 1px 4px rgba(0,0,0,0.6)' }}>
-          You're invited to celebrate
-        </div>
-
-        {/* Divider */}
-        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'0 auto clamp(16px,2.5vmin,28px)', maxWidth:240 }}>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,rgba(201,168,76,0.7))' }}/>
-          <span style={{ color:'#c9a84c', fontSize:'clamp(1rem,1.5vmin,1.3rem)' }}>❧</span>
-          <div style={{ flex:1, height:1, background:'linear-gradient(90deg,rgba(201,168,76,0.7),transparent)' }}/>
-        </div>
 
         {/* Input panel */}
         <div style={{ background:'rgba(253,248,240,0.12)', backdropFilter:'blur(14px)', border:'1px solid rgba(201,168,76,0.35)', borderRadius:'clamp(12px,1.5vmin,20px)', padding:'clamp(18px,2.5vmin,30px) clamp(20px,3vmin,36px)' }}>
