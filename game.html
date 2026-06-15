@@ -212,9 +212,10 @@ const storage = window.storage || {
 };
 
 /* ── Constants ───────────────────────────────────────────────────────── */
-const WEDDING_IMAGE = 'assets/UI/GamePortada.png';
-const TOTAL_PAIRS   = 12;
-const BASE_SCORE    = 3500;
+const WEDDING_IMAGE   = 'assets/UI/GamePortada.png';
+const TOTAL_PAIRS     = 12;
+const BASE_SCORE      = 3500;
+const MAIN_SITE_URL   = 'index.html'; // ← change to your wedding site URL
 
 /* ── Asset pools (exact files on disk) ───────────────────────────────── */
 const POOL_IKER = [
@@ -409,6 +410,28 @@ function EntryScreen({ onPlay, onLeaderboard }) {
 
   return (
     <div style={{ flex:1, position:'relative' }}>
+      {/* Back to main wedding site — top right */}
+      <a
+        href={MAIN_SITE_URL}
+        style={{
+          position:'absolute', top:'clamp(12px,1.8vmin,22px)', right:'clamp(12px,1.8vw,28px)',
+          display:'flex', alignItems:'center', gap:6,
+          background:'rgba(8,3,0,0.55)', backdropFilter:'blur(16px)',
+          border:'1px solid rgba(201,168,76,0.45)', borderRadius:28,
+          padding:'7px 16px',
+          color:'#e8c96b', textDecoration:'none',
+          fontFamily:"'Playfair Display',Georgia,serif",
+          fontSize:'clamp(0.7rem,1vmin,0.84rem)', fontWeight:600, letterSpacing:'0.03em',
+          boxShadow:'0 4px 18px rgba(0,0,0,0.35)',
+          transition:'background 0.2s, border-color 0.2s',
+          zIndex:10,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
+      >
+        ← Wedding Site
+      </a>
+
       <div className="entry-panel fade-in">
         <div style={{
           background:'rgba(8,3,0,0.6)',
