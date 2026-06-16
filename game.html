@@ -202,8 +202,43 @@
 </head>
 <body>
 <div id="root"></div>
+
+<!-- Audio manager — plain JS, no Babel needed -->
+<script>
+window.AudioMgr = (function() {
+  var P = {
+    bg:      'assets/audio/music_bg.mp3',
+    flip:    'assets/audio/sfx_flip.mp3',
+    match:   'assets/audio/sfx_match.mp3',
+    wrong:   'assets/audio/sfx_wrong.mp3',
+    victory: 'assets/audio/sfx_victory.mp3',
+    button:  'assets/audio/sfx_button.mp3',
+  };
+  var bg = null, _muted = false;
+  function initBg() {
+    if (bg) return;
+    bg = new Audio(P.bg);
+    bg.loop = true;
+    bg.volume = 0.35;
+  }
+  return {
+    playBg: function() { initBg(); if (!_muted) bg.play().catch(function(){}); },
+    play:   function(key) {
+      if (_muted || !P[key]) return;
+      var a = new Audio(P[key]); a.volume = 0.65; a.play().catch(function(){});
+    },
+    toggle: function() {
+      _muted = !_muted;
+      if (bg) { if (_muted) bg.pause(); else bg.play().catch(function(){}); }
+      return _muted;
+    },
+  };
+})();
+</script>
+
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
+const AudioMgr = window.AudioMgr;
 
 /* ── Storage ─────────────────────────────────────────────────────────── */
 const storage = window.storage || {
@@ -216,44 +251,6 @@ const WEDDING_IMAGE   = 'assets/UI/GamePortada.png';
 const TOTAL_PAIRS     = 12;
 const BASE_SCORE      = 3500;
 const MAIN_SITE_URL   = 'index.html'; // ← change to your wedding site URL
-
-/* ── Audio manager ───────────────────────────────────────────────────── */
-const AudioMgr = (() => {
-  const P = {
-    bg:      'assets/audio/music_bg.mp3',
-    flip:    'assets/audio/sfx_flip.mp3',
-    match:   'assets/audio/sfx_match.mp3',
-    wrong:   'assets/audio/sfx_wrong.mp3',
-    victory: 'assets/audio/sfx_victory.mp3',
-    button:  'assets/audio/sfx_button.mp3',
-  };
-  let bg = null, _muted = false;
-
-  function initBg() {
-    if (bg) return;
-    bg = new Audio(P.bg);
-    bg.loop = true;
-    bg.volume = 0.35;
-  }
-
-  return {
-    playBg() {
-      initBg();
-      if (!_muted) bg.play().catch(function() {});
-    },
-    play(key) {
-      if (_muted || !P[key]) return;
-      const a = new Audio(P[key]);
-      a.volume = 0.65;
-      a.play().catch(function() {});
-    },
-    toggle() {
-      _muted = !_muted;
-      if (bg) { _muted ? bg.pause() : bg.play().catch(function() {}); }
-      return _muted;
-    },
-  };
-})();
 
 /* ── Asset pools (exact files on disk) ───────────────────────────────── */
 const POOL_IKER = [
@@ -820,13 +817,13 @@ function App() {
         {/* Top-right controls — always visible */}
         <div style={{ position:'absolute', zIndex:20, top:'clamp(10px,1.5vmin,18px)', right:'clamp(10px,1.5vw,20px)', display:'flex', gap:8, alignItems:'center' }}>
           {screen === 'entry' && (
-            <a href={MAIN_SITE_URL} style={{ ...topBtnBase, padding:'7px 16px' }}
+            <a href={MAIN_SITE_URL} style={Object.assign({}, topBtnBase, {padding:'7px 16px'})}
               onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
               onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
             >← Wedding Site</a>
           )}
           <button onClick={toggleMute}
-            style={{ ...topBtnBase, padding:'7px 11px', fontSize:'clamp(0.9rem,1.4vmin,1.15rem)', border:'1px solid rgba(201,168,76,0.45)' }}
+            style={Object.assign({}, topBtnBase, {padding:'7px 11px', fontSize:'clamp(0.9rem,1.4vmin,1.15rem)', border:'1px solid rgba(201,168,76,0.45)'})}
             onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
             onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
             title={muted ? 'Unmute' : 'Mute'}
