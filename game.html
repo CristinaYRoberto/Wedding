@@ -227,7 +227,7 @@ const AudioMgr = (() => {
     victory: 'assets/audio/sfx_victory.mp3',
     button:  'assets/audio/sfx_button.mp3',
   };
-  let bg = null, muted = false;
+  let bg = null, _muted = false;
 
   function initBg() {
     if (bg) return;
@@ -237,21 +237,20 @@ const AudioMgr = (() => {
   }
 
   return {
-    get muted() { return muted; },
     playBg() {
       initBg();
-      if (!muted) bg.play().catch(() => {});
+      if (!_muted) bg.play().catch(function() {});
     },
     play(key) {
-      if (muted || !P[key]) return;
+      if (_muted || !P[key]) return;
       const a = new Audio(P[key]);
       a.volume = 0.65;
-      a.play().catch(() => {});
+      a.play().catch(function() {});
     },
     toggle() {
-      muted = !muted;
-      if (bg) { muted ? bg.pause() : bg.play().catch(() => {}); }
-      return muted;
+      _muted = !_muted;
+      if (bg) { _muted ? bg.pause() : bg.play().catch(function() {}); }
+      return _muted;
     },
   };
 })();
