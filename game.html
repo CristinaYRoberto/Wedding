@@ -217,6 +217,45 @@ const TOTAL_PAIRS     = 12;
 const BASE_SCORE      = 3500;
 const MAIN_SITE_URL   = 'index.html'; // ← change to your wedding site URL
 
+/* ── Audio manager ───────────────────────────────────────────────────── */
+const AudioMgr = (() => {
+  const P = {
+    bg:      'assets/audio/music_bg.mp3',
+    flip:    'assets/audio/sfx_flip.mp3',
+    match:   'assets/audio/sfx_match.mp3',
+    wrong:   'assets/audio/sfx_wrong.mp3',
+    victory: 'assets/audio/sfx_victory.mp3',
+    button:  'assets/audio/sfx_button.mp3',
+  };
+  let bg = null, muted = false;
+
+  function initBg() {
+    if (bg) return;
+    bg = new Audio(P.bg);
+    bg.loop = true;
+    bg.volume = 0.35;
+  }
+
+  return {
+    get muted() { return muted; },
+    playBg() {
+      initBg();
+      if (!muted) bg.play().catch(() => {});
+    },
+    play(key) {
+      if (muted || !P[key]) return;
+      const a = new Audio(P[key]);
+      a.volume = 0.65;
+      a.play().catch(() => {});
+    },
+    toggle() {
+      muted = !muted;
+      if (bg) { muted ? bg.pause() : bg.play().catch(() => {}); }
+      return muted;
+    },
+  };
+})();
+
 /* ── Asset pools (exact files on disk) ───────────────────────────────── */
 const POOL_IKER = [
   'assets/characters/iker_idle01.png',
@@ -410,28 +449,6 @@ function EntryScreen({ onPlay, onLeaderboard }) {
 
   return (
     <div style={{ flex:1, position:'relative' }}>
-      {/* Back to main wedding site — top right */}
-      <a
-        href={MAIN_SITE_URL}
-        style={{
-          position:'absolute', top:'clamp(12px,1.8vmin,22px)', right:'clamp(12px,1.8vw,28px)',
-          display:'flex', alignItems:'center', gap:6,
-          background:'rgba(8,3,0,0.55)', backdropFilter:'blur(16px)',
-          border:'1px solid rgba(201,168,76,0.45)', borderRadius:28,
-          padding:'7px 16px',
-          color:'#e8c96b', textDecoration:'none',
-          fontFamily:"'Playfair Display',Georgia,serif",
-          fontSize:'clamp(0.7rem,1vmin,0.84rem)', fontWeight:600, letterSpacing:'0.03em',
-          boxShadow:'0 4px 18px rgba(0,0,0,0.35)',
-          transition:'background 0.2s, border-color 0.2s',
-          zIndex:10,
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
-      >
-        ← Wedding Site
-      </a>
-
       <div className="entry-panel fade-in">
         <div style={{
           background:'rgba(8,3,0,0.6)',
@@ -634,6 +651,7 @@ function GameBoard({ playerName, onVictory, onQuit }) {
     if (!card || matched.has(card.pairId) || flipped.includes(cardId)) return;
     if (flipped.length >= 2) return;
 
+    AudioMgr.play('flip');
     if (!timerActive) setTimerActive(true);
     const next = [...flipped, cardId];
     setFlipped(next);
@@ -647,12 +665,13 @@ function GameBoard({ playerName, onVictory, onQuit }) {
         const pid = a.pairId;
         setGlowing(new Set([pid]));
         setTimeout(() => {
+          AudioMgr.play('match');
           setMatched(prev => { const n=new Set(prev); n.add(pid); return n; });
           setFlipped([]); setLocked(false); setGlowing(new Set());
         }, 700);
       } else {
         setErrors(e => { const n=e+1; errorsRef.current=n; return n; });
-        setTimeout(() => { setFlipped([]); setLocked(false); }, 900);
+        setTimeout(() => { AudioMgr.play('wrong'); setFlipped([]); setLocked(false); }, 900);
       }
     }
   }
@@ -663,6 +682,7 @@ function GameBoard({ playerName, onVictory, onQuit }) {
       victoryFiredRef.current = true;
       setTimerActive(false);
       setTimeout(() => {
+        AudioMgr.play('victory');
         setPhase('revealing');
         setTimeout(() => {
           const fe = errorsRef.current, fs = secondsRef.current;
@@ -746,15 +766,25 @@ function App() {
   const [lbHighlight, setLbHighlight] = useState(null);
   const [gameKey,     setGameKey]     = useState(0);
   const [bgAlpha,     setBgAlpha]     = useState(0.35);
+  const [muted,       setMuted]       = useState(false);
 
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap';
     document.head.appendChild(link);
+    // Play button-click SFX on any button or link
+    function onGlobalClick(e) {
+      if (e.target.closest('button, a')) AudioMgr.play('button');
+    }
+    document.addEventListener('click', onGlobalClick);
+    return () => document.removeEventListener('click', onGlobalClick);
   }, []);
 
+  function toggleMute() { setMuted(AudioMgr.toggle()); }
+
   function handlePlay(name) {
+    AudioMgr.playBg();
     setPlayerName(name); setVictoryData(null);
     setGameKey(k => k+1); setBgAlpha(0.50); setScreen('game');
   }
@@ -772,11 +802,37 @@ function App() {
   }
   function handleBack() { setBgAlpha(0.35); setScreen('entry'); }
 
+  const topBtnBase = {
+    display:'flex', alignItems:'center', gap:6,
+    background:'rgba(8,3,0,0.55)', backdropFilter:'blur(16px)',
+    border:'1px solid rgba(201,168,76,0.45)', borderRadius:28,
+    color:'#e8c96b', cursor:'pointer', textDecoration:'none',
+    fontFamily:"'Playfair Display',Georgia,serif",
+    fontSize:'clamp(0.7rem,1vmin,0.84rem)', fontWeight:600,
+    boxShadow:'0 4px 18px rgba(0,0,0,0.35)',
+    transition:'background 0.2s, border-color 0.2s',
+  };
+
   return (
     <div>
-      {/* Decorative frame — background lives inside so it fills the frame exactly */}
       <div className="game-frame">
         <BgLayer alpha={bgAlpha}/>
+
+        {/* Top-right controls — always visible */}
+        <div style={{ position:'absolute', zIndex:20, top:'clamp(10px,1.5vmin,18px)', right:'clamp(10px,1.5vw,20px)', display:'flex', gap:8, alignItems:'center' }}>
+          {screen === 'entry' && (
+            <a href={MAIN_SITE_URL} style={{ ...topBtnBase, padding:'7px 16px' }}
+              onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
+            >← Wedding Site</a>
+          )}
+          <button onClick={toggleMute}
+            style={{ ...topBtnBase, padding:'7px 11px', fontSize:'clamp(0.9rem,1.4vmin,1.15rem)', border:'1px solid rgba(201,168,76,0.45)' }}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
+            title={muted ? 'Unmute' : 'Mute'}
+          >{muted ? '🔇' : '🔊'}</button>
+        </div>
 
         {/* All screen content above the background */}
         <div style={{ position:'relative', zIndex:1, flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
