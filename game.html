@@ -6,7 +6,7 @@
   <title>Cris y José — Wedding Memory</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -236,14 +236,14 @@ window.AudioMgr = (function() {
 })();
 </script>
 
-<script type="text/babel">
+<script type="text/babel" data-presets="react" data-type="script">
 const { useState, useEffect, useRef } = React;
 const AudioMgr = window.AudioMgr;
 
 /* ── Storage ─────────────────────────────────────────────────────────── */
 const storage = window.storage || {
-  getItem:  k    => { try { return localStorage.getItem(k);  } catch { return null; } },
-  setItem: (k,v) => { try { localStorage.setItem(k, v);     } catch {} },
+  getItem:  function(k)   { try { return localStorage.getItem(k);  } catch(_e) { return null; } },
+  setItem:  function(k,v) { try { localStorage.setItem(k, v);     } catch(_e) {} },
 };
 
 /* ── Constants ───────────────────────────────────────────────────────── */
