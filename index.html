@@ -33,12 +33,12 @@
   ════════════════════════════════════════════════════════════════
   */
   const firebaseConfig = {
-    apiKey:            "TU_API_KEY",
-    authDomain:        "TU_PROJECT.firebaseapp.com",
-    projectId:         "TU_PROJECT_ID",
-    storageBucket:     "TU_PROJECT.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId:             "TU_APP_ID"
+    apiKey:            "AIzaSyCIsFwTkdcpztJ1OPwwbEtr5fJalLiAuQ0",
+    authDomain:        "boda-cristina-roberto.firebaseapp.com",
+    projectId:         "boda-cristina-roberto",
+    storageBucket:     "boda-cristina-roberto.firebasestorage.app",
+    messagingSenderId: "841192030529",
+    appId:             "1:841192030529:web:81860da322ddb1c14621c0"
   };
   try {
     const app = initializeApp(firebaseConfig);
@@ -70,6 +70,11 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @media print {
+    nav, #lang-toggle, .hero-cta, .invite-actions, #admin-panel,
+    .rsvp-form button { display: none !important; }
+  }
 
   html { scroll-behavior: smooth; }
 
@@ -215,6 +220,46 @@
     justify-content: center;
     animation: fadeUp .8s .6s ease both;
   }
+  .invite-badge {
+    margin-top: 2.2rem;
+    padding: 1.6rem 2.2rem;
+    background: var(--light-sage);
+    border: 1px solid rgba(184,154,106,.4);
+    animation: fadeUp .8s .5s ease both;
+  }
+  .invite-label {
+    font-family: 'Cinzel', serif;
+    font-size: .58rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+    margin-bottom: .4rem;
+  }
+  .invite-familia {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--charcoal);
+    margin-bottom: .6rem;
+  }
+  .invite-pases {
+    font-family: 'Cinzel', serif;
+    font-size: .65rem;
+    letter-spacing: .12em;
+    color: var(--dark-gold);
+  }
+  .invite-pases span#invite-pases-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0;
+  }
+  .invite-actions {
+    margin-top: 1.2rem;
+    display: flex;
+    gap: .8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .invite-actions .btn { padding: .65rem 1.4rem; font-size: .6rem; }
   .btn {
     font-family: 'Cinzel', serif;
     font-size: .65rem;
@@ -1170,7 +1215,7 @@
 
 <!-- HERO -->
 <section id="hero">
-  <p class="hero-eyebrow" data-es="OS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">OS INVITAMOS A CELEBRAR CON NOSOTROS</p>
+  <p class="hero-eyebrow" data-es="LOS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">LOS INVITAMOS A CELEBRAR CON NOSOTROS</p>
   <div class="hero-ornament"></div>
   <h1 class="hero-names">
     Cristina
@@ -1179,6 +1224,18 @@
   </h1>
   <div class="hero-ornament"></div>
   <p class="hero-date" data-es="03 · OCTUBRE · 2026" data-en="OCTOBER 3 · 2026">03 · OCTUBRE · 2026</p>
+
+  <!-- Personalized invite badge — shown only when opened via ?familia=&pases= -->
+  <div class="invite-badge" id="invite-badge" style="display:none">
+    <p class="invite-label" data-es="PARA" data-en="FOR">PARA</p>
+    <p class="invite-familia" id="invite-familia"></p>
+    <p class="invite-pases"><span id="invite-pases-num"></span> <span data-es="PASES ASIGNADOS" data-en="ASSIGNED PASSES">PASES ASIGNADOS</span></p>
+    <div class="invite-actions">
+      <button class="btn btn-outline" onclick="window.print()" data-es="DESCARGAR / IMPRIMIR" data-en="DOWNLOAD / PRINT">DESCARGAR / IMPRIMIR</button>
+      <a id="invite-wa-cristina" class="btn btn-outline" target="_blank" rel="noopener" data-es="WHATSAPP · CRISTINA" data-en="WHATSAPP · CRISTINA">WHATSAPP · CRISTINA</a>
+    </div>
+  </div>
+
   <div class="hero-cta">
     <a href="#rsvp" class="btn btn-primary" data-es="CONFIRMAR ASISTENCIA" data-en="RSVP NOW">CONFIRMAR ASISTENCIA</a>
     <!-- WhatsApp confirm button -->
@@ -1186,7 +1243,7 @@
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
-    <a href="game.html" class="btn btn-game"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
+    <a href="game.html" class="btn btn-game" id="btn-jugar"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
   </div>
 </section>
 
@@ -1648,7 +1705,11 @@ const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';  // ← Email Templates → Templa
 /* PASO 3 — TU NÚMERO DE WHATSAPP
    Formato: código país + número sin espacios ni +
    México ejemplo: 526621234567  (52 = México, 662 = Hermosillo) */
-const WA_NUMBER = '526621461622';
+const WA_NUMBER = '526621461622';        // Roberto
+const WA_NUMBER_CRISTINA = '526623419038'; // Cristina
+
+/* URL pública del sitio (GitHub Pages) — usada por el generador de invitaciones */
+const SITE_URL = 'https://cristinayroberto.github.io/Wedding/';
 
 /* CLAVE SECRETA DEL ADMIN PANEL
    Accede con: tudominio.com/?admin=CR2026
@@ -1686,6 +1747,27 @@ function openWAHero(e) {
 
 /* ── LANGUAGE ── */
 let currentLang = 'es';
+
+/* ── MODO INVITACIÓN (?familia=&pases=) ── */
+(function initInviteMode() {
+  const params  = new URLSearchParams(location.search);
+  const familia = params.get('familia');
+  const pases   = parseInt(params.get('pases'), 10);
+  if (!familia && !(Number.isFinite(pases) && pases > 0)) return;
+
+  const nombreFamilia = familia ? familia.replace(/\+/g, ' ') : (currentLang === 'es' ? 'Estimado invitado' : 'Dear guest');
+  document.getElementById('invite-familia').textContent = nombreFamilia;
+  document.getElementById('invite-pases-num').textContent = Number.isFinite(pases) && pases > 0 ? pases : '—';
+  document.getElementById('invite-badge').style.display = 'block';
+  document.getElementById('btn-jugar').style.display = 'none';
+
+  const waMsg = encodeURIComponent(
+    familia
+      ? `Hola! Somos ${nombreFamilia}. Queremos confirmar nuestra asistencia a la boda de Cristina y Roberto.`
+      : `Hola! Queremos confirmar nuestra asistencia a la boda de Cristina y Roberto.`
+  );
+  document.getElementById('invite-wa-cristina').href = `https://wa.me/${WA_NUMBER_CRISTINA}?text=${waMsg}`;
+})();
 
 function setLang(lang) {
   currentLang = lang;
@@ -1929,7 +2011,7 @@ function buildInvitationLink() {
   const params  = new URLSearchParams();
   if (familia) params.set('familia', familia.replace(/\s+/g, '+'));
   if (pases)   params.set('pases', pases);
-  return `${location.origin}${location.pathname.replace(/index\.html$/, '')}invitacion.html?${params.toString()}`;
+  return `${SITE_URL}index.html?${params.toString()}`;
 }
 function abrirInvitacionGenerada() {
   window.open(buildInvitationLink(), '_blank', 'noopener');
