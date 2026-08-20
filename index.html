@@ -13,7 +13,7 @@
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
   /*
   ════════════════════════════════════════════════════════════════
-  🔧 PASO 1 — CONFIGURAR FIREBASE (5 minutos)
+  PASO 1 — CONFIGURAR FIREBASE (5 minutos)
   ────────────────────────────────────────────────────────────────
   1. Ve a https://console.firebase.google.com
   2. "Agregar proyecto" → nombre: boda-cristina-roberto → continuar
@@ -706,9 +706,9 @@
   }
   .gifts-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
-    max-width: 860px;
+    max-width: 580px;
     margin: 0 auto;
   }
   @media(max-width: 700px) { .gifts-grid { grid-template-columns: 1fr; max-width: 420px; } }
@@ -1175,7 +1175,7 @@
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
-    <a href="game.html" class="btn btn-game">🎮 <span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
+    <a href="game.html" class="btn btn-game"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
     <a href="invitation.pdf" class="btn btn-outline" download data-es="DESCARGAR INVITACIÓN" data-en="DOWNLOAD INVITATION">DESCARGAR INVITACIÓN</a>
   </div>
 </section>
@@ -1226,7 +1226,6 @@
     <div class="divider reveal"></div>
     <div class="events-grid reveal">
       <div class="event-card">
-        <div class="event-icon">⛪</div>
         <p class="event-type" data-es="CEREMONIA RELIGIOSA" data-en="RELIGIOUS CEREMONY">CEREMONIA RELIGIOSA</p>
         <h3 class="event-name" data-es="Misa de Matrimonio" data-en="Wedding Mass">Misa de Matrimonio</h3>
         <p class="event-time">12:00 PM</p>
@@ -1234,7 +1233,6 @@
         <a href="https://maps.app.goo.gl/SFEHyiZqfgwzFr6AA" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
       <div class="event-card">
-        <div class="event-icon">🥂</div>
         <p class="event-type" data-es="RECEPCIÓN" data-en="RECEPTION">RECEPCIÓN</p>
         <h3 class="event-name" data-es="Cena y Baile" data-en="Dinner & Dance">Cena y Baile</h3>
         <p class="event-time">7:00 PM</p>
@@ -1336,48 +1334,38 @@
 <section id="gifts">
   <div class="section-inner">
     <p class="section-eyebrow reveal" data-es="REGALOS" data-en="GIFTS">REGALOS</p>
-    <h2 class="section-title reveal" data-es="Mesa de Regalos" data-en="Gift Registry">Mesa de Regalos</h2>
+    <h2 class="section-title reveal" data-es="Regalos" data-en="Gifts">Regalos</h2>
     <div class="divider reveal"></div>
-    <p class="gifts-intro reveal" data-es="Su presencia es el regalo más valioso para nosotros. Si desean hacernos llegar un obsequio adicional, con todo cariño les compartimos algunas opciones a su elección." data-en="Your presence is the greatest gift we could receive. If you wish to offer an additional gesture, we share the following options with love and gratitude.">
-      Su presencia es el regalo más valioso para nosotros. Si desean hacernos llegar un obsequio adicional, con todo cariño les compartimos algunas opciones a su elección.
+    <p class="gifts-intro reveal" data-es="Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño en efectivo o por transferencia, así podremos decidir juntos en qué invertirlo para comenzar nuestra nueva etapa." data-en="Your presence is the greatest gift we could receive. If you wish to give us a gesture, we warmly welcome it in cash or by bank transfer — that way we can decide together how best to invest it as we begin our new life.">
+      Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño en efectivo o por transferencia, así podremos decidir juntos en qué invertirlo para comenzar nuestra nueva etapa.
     </p>
     <div class="gifts-grid reveal">
 
-      <!-- CARD 1: Registry -->
+      <!-- CARD 1: Cash / Transfer -->
       <div class="gift-card">
-        <div class="gift-card-icon">🎁</div>
-        <p class="gift-card-title" data-es="MESA DE REGALOS" data-en="GIFT REGISTRY">MESA DE REGALOS</p>
-        <p class="gift-card-desc" data-es="Hemos seleccionado artículos para comenzar nuestro hogar. Puedes consultar nuestra lista en línea." data-en="We've curated a selection of items for our new home. Browse our online registry at your convenience.">
-          Hemos seleccionado artículos para comenzar nuestro hogar. Puedes consultar nuestra lista en línea.
-        </p>
-        <!-- Replace href with your actual registry URL (Liverpool, Amazon, etc.) -->
-        <a href="#" class="gift-card-detail" target="_blank" style="display:block; text-decoration:none; transition: opacity .3s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'" data-es="VER LISTA DE REGALOS →" data-en="VIEW REGISTRY →">VER LISTA DE REGALOS →</a>
-      </div>
-
-      <!-- CARD 2: Cash / Transfer -->
-      <div class="gift-card">
-        <div class="gift-card-icon">💳</div>
         <p class="gift-card-title" data-es="TRANSFERENCIA" data-en="BANK TRANSFER">TRANSFERENCIA</p>
         <p class="gift-card-desc" data-es="Si prefieres hacernos llegar un obsequio en efectivo o por transferencia, con mucho gusto lo recibimos." data-en="If you prefer to send a monetary gift via bank transfer, we gratefully welcome it.">
           Si prefieres hacernos llegar un obsequio en efectivo o por transferencia, con mucho gusto lo recibimos.
         </p>
-        <div class="gift-card-detail">
-          <!-- Replace with your actual bank details -->
+        <div class="gift-card-detail" style="margin-bottom:.5rem">
           <span data-es="BANCO · BBVA" data-en="BANK · BBVA">BANCO · BBVA</span><br>
-          <span data-es="A NOMBRE DE:" data-en="ACCOUNT NAME:">A NOMBRE DE:</span><br>
-          Cristina Borquez<br>
-          <span data-es="CLABE: 012 XXX XXXX XXXX XX X" data-en="CLABE: 012 XXX XXXX XXXX XX X">CLABE: 012 XXX XXXX XXXX XX X</span>
+          CRISTINA BORQUEZ BERNAL<br>
+          <span data-es="CLABE: 4152314000799307" data-en="CLABE: 4152314000799307">CLABE: 4152314000799307</span>
+        </div>
+        <div class="gift-card-detail">
+          <span data-es="BANCO · SANTANDER" data-en="BANK · SANTANDER">BANCO · SANTANDER</span><br>
+          JOSE ROBERTO MORENO RUIZ<br>
+          <span data-es="CLABE: 014760200064187105" data-en="CLABE: 014760200064187105">CLABE: 014760200064187105</span>
         </div>
       </div>
 
-      <!-- CARD 3: Cash at event -->
+      <!-- CARD 2: Cash at event -->
       <div class="gift-card">
-        <div class="gift-card-icon">✉️</div>
         <p class="gift-card-title" data-es="EFECTIVO" data-en="CASH">EFECTIVO</p>
-        <p class="gift-card-desc" data-es="También contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración." data-en="A discreet gift box will be available at the reception for those who prefer to present their gift in person on the day.">
-          También contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.
+        <p class="gift-card-desc" data-es="Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración." data-en="A discreet gift box will be available at the reception for those who prefer to present their gift in person on the day.">
+          Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.
         </p>
-        <div class="gift-card-detail" data-es="DISPONIBLE EN LA RECEPCIÓN · 7 PM" data-en="AVAILABLE AT RECEPTION · 7 PM">DISPONIBLE EN LA RECEPCIÓN · 7 PM</div>
+        <div class="gift-card-detail" data-es="DISPONIBLE DURANTE LA RECEPCIÓN" data-en="AVAILABLE DURING THE RECEPTION">DISPONIBLE DURANTE LA RECEPCIÓN</div>
       </div>
 
     </div>
@@ -1398,7 +1386,6 @@
     <div class="menu-lock-box reveal" id="menu-lock">
       <div class="menu-lock-icon">
         <div class="menu-lock-ring"></div>
-        🔒
       </div>
       <p class="menu-lock-desc" data-es="El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo." data-en="The menu will be revealed on the day of the celebration. Enter the code you will receive upon arrival at the reception to unlock it.">
         El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo.
@@ -1522,7 +1509,7 @@
           <label class="form-label" data-es="ASISTENCIA" data-en="ATTENDING">ASISTENCIA</label>
           <select class="form-select" name="asistencia" required>
             <option value="" data-es="Selecciona..." data-en="Select...">Selecciona...</option>
-            <option value="si" data-es="Sí, asistiré" data-en="Yes, I'll be there">Sí, asistiré 🎉</option>
+            <option value="si" data-es="Sí, asistiré" data-en="Yes, I'll be there">Sí, asistiré</option>
             <option value="no" data-es="No podré asistir" data-en="I can't make it">No podré asistir</option>
           </select>
         </div>
@@ -1582,7 +1569,7 @@
   <div class="admin-inner">
     <div class="admin-header">
       <p class="admin-title">PANEL DE ADMINISTRACIÓN · C&R 2026</p>
-      <button class="admin-close" onclick="closeAdmin()">CERRAR ✕</button>
+      <button class="admin-close" onclick="closeAdmin()">CERRAR</button>
     </div>
     <div class="admin-stats" id="admin-stats">
       <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-label">CONFIRMACIONES</div></div>
@@ -1605,7 +1592,7 @@
     <div class="admin-actions">
       <button class="admin-btn" onclick="exportCSV()">↓ EXPORTAR CSV</button>
       <button class="admin-btn" onclick="loadAdminData()">↺ ACTUALIZAR</button>
-      <button class="admin-btn" onclick="closeAdmin()">✕ CERRAR</button>
+      <button class="admin-btn" onclick="closeAdmin()">CERRAR</button>
     </div>
   </div>
 </div>
@@ -1620,14 +1607,14 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════════
-   🔧 PASO 2 — CONFIGURAR EMAILJS (10 min)
+   PASO 2 — CONFIGURAR EMAILJS (10 min)
    ────────────────────────────────────────────────────────────────
    1. Ve a https://emailjs.com → crear cuenta gratuita (200 emails/mes)
    2. Email Services → Add Service → Gmail → conecta tu cuenta
    3. Email Templates → Create Template → usa estas variables:
          {{from_name}}  {{email}}  {{asistencia}}  {{personas}}
          {{dieta}}      {{mensaje}} {{timestamp}}
-      Subject: 🎊 Nueva confirmación - {{from_name}} ({{asistencia}})
+      Subject: Nueva confirmación - {{from_name}} ({{asistencia}})
    4. Account → copia tu Public Key
    5. Reemplaza los 3 valores de abajo
    ════════════════════════════════════════════════════════════════ */
@@ -1635,12 +1622,12 @@ const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';   // ← Account → Public Key
 const EMAILJS_SERVICE_ID  = 'TU_SERVICE_ID';   // ← Email Services → Service ID
 const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';  // ← Email Templates → Template ID
 
-/* 🔧 PASO 3 — TU NÚMERO DE WHATSAPP
+/* PASO 3 — TU NÚMERO DE WHATSAPP
    Formato: código país + número sin espacios ni +
    México ejemplo: 526621234567  (52 = México, 662 = Hermosillo) */
-const WA_NUMBER = '52XXXXXXXXXX'; // ← reemplaza con tu número real
+const WA_NUMBER = '526621461622';
 
-/* 🔧 CLAVE SECRETA DEL ADMIN PANEL
+/* CLAVE SECRETA DEL ADMIN PANEL
    Accede con: tudominio.com/?admin=CR2026
    O con 5 taps rápidos en el monograma C & R del footer */
 const ADMIN_KEY = 'CR2026'; // ← cambia esto
@@ -1654,15 +1641,15 @@ if (typeof emailjs !== 'undefined') {
 function buildWALink(nombre, apellido, personas, asistencia) {
   const texto = encodeURIComponent(
     `Hola! Soy ${nombre} ${apellido}.\n` +
-    `✅ Confirmo ${asistencia === 'si' ? '*SÍ* asistiré' : '*NO* podré asistir'} a la boda de Cristina y Roberto.\n` +
-    `👥 Personas: ${personas}`
+    `Confirmo ${asistencia === 'si' ? '*SÍ* asistiré' : '*NO* podré asistir'} a la boda de Cristina y Roberto.\n` +
+    `Personas: ${personas}`
   );
   return `https://wa.me/${WA_NUMBER}?text=${texto}`;
 }
 
 /* Hero WA button — mensaje genérico */
 document.getElementById('wa-hero-btn').href =
-  `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, quiero confirmar mi asistencia a la boda de Cristina y Roberto 💒')}`;
+  `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, quiero confirmar mi asistencia a la boda de Cristina y Roberto.')}`;
 
 /* ── LANGUAGE ── */
 let currentLang = 'es';
@@ -1711,7 +1698,7 @@ const faqData = {
     { q: '¿Cuál es el código de vestimenta?', a: 'Vestimenta formal. Para caballeros: traje o smoking. Para damas: vestido largo o de cóctel. Les pedimos considerar la paleta de colores de la boda como inspiración.' },
     { q: '¿Puedo llevar acompañante?', a: 'El número de invitados por mesa está cuidadosamente planificado. Por favor confirma únicamente el número de personas indicado en tu invitación. Si tienes alguna duda, escríbenos con gusto.' },
     { q: '¿Hasta cuándo puedo confirmar mi asistencia?', a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.' },
-    { q: '¿Cómo puedo hacer llegar un regalo?', a: 'Contamos con mesa de regalos en línea, opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Mesa de Regalos" en esta misma página para ver todos los detalles.' },
+    { q: '¿Cómo puedo hacer llegar un regalo?', a: 'Contamos con opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Regalos" en esta misma página para ver todos los detalles.' },
     { q: '¿Habrá opciones vegetarianas en el menú?', a: 'Sí, el menú incluirá opciones vegetarianas. Si tienes alguna restricción alimentaria adicional, por favor indícalo al momento de confirmar tu asistencia y lo tomaremos en cuenta.' },
   ],
   en: [
@@ -1768,7 +1755,7 @@ async function submitRSVP(e) {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         from_name:  `${data.nombre} ${data.apellido}`,
         email:      data.email,
-        asistencia: data.asistencia === 'si' ? '✅ Sí asistirá' : '❌ No asistirá',
+        asistencia: data.asistencia === 'si' ? 'Sí asistirá' : 'No asistirá',
         personas:   data.personas,
         dieta:      data.dieta || 'Ninguna',
         mensaje:    data.mensaje || '—',
@@ -1817,7 +1804,7 @@ async function submitMessage() {
       document.getElementById('msg-relation').value = '';
       document.getElementById('msg-text').value     = '';
       document.getElementById('msg-chars').textContent = '300 caracteres restantes';
-      status.textContent = currentLang === 'es' ? '¡Mensaje enviado con amor! 💛' : 'Message sent with love! 💛';
+      status.textContent = currentLang === 'es' ? '¡Mensaje enviado con amor!' : 'Message sent with love!';
       setTimeout(() => { status.textContent = ''; }, 3000);
     } catch(err) {
       status.textContent = currentLang === 'es' ? 'Error al enviar. Intenta de nuevo.' : 'Error sending. Please try again.';
@@ -1934,7 +1921,7 @@ async function loadAdminData() {
   table.style.display   = 'none';
 
   if (!window._firebaseReady || !window._db) {
-    loading.textContent = '⚠️ Firebase no configurado aún. Revisa los comentarios en el código.';
+    loading.textContent = 'Firebase no configurado aún. Revisa los comentarios en el código.';
     return;
   }
 
@@ -1959,7 +1946,7 @@ async function loadAdminData() {
         <td>${r.nombre||'—'}</td>
         <td>${r.apellido||'—'}</td>
         <td style="font-size:.75rem">${r.email||'—'}</td>
-        <td class="${r.asistencia==='si'?'badge-si':'badge-no'}">${r.asistencia==='si'?'✅ Sí':'❌ No'}</td>
+        <td class="${r.asistencia==='si'?'badge-si':'badge-no'}">${r.asistencia==='si'?'Sí':'No'}</td>
         <td style="text-align:center">${r.personas||1}</td>
         <td style="font-size:.75rem">${r.dieta||'—'}</td>
         <td style="font-size:.72rem">${ts}</td>
@@ -2025,7 +2012,7 @@ reveals.forEach(el => observer.observe(el));
 
   TEMPLATE EMAILJS SUGERIDO:
   ──────────────────────────
-  Asunto: 🎊 {{from_name}} confirmó — {{asistencia}}
+  Asunto: {{from_name}} confirmó — {{asistencia}}
   Cuerpo:
     Nombre:     {{from_name}}
     Email:      {{email}}
