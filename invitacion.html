@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invitación · Cristina & Roberto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --warm-white: #faf7f2;
+    --gold: #b89a6a;
+    --dark-gold: #8a6f45;
+    --charcoal: #2c2c2c;
+    --muted: #7a6f63;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--charcoal);
+    color: var(--charcoal);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    background: var(--warm-white);
+    max-width: 480px;
+    width: 100%;
+    padding: 3.5rem 2.5rem;
+    text-align: center;
+    border: 1px solid var(--gold);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  .eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: .65rem;
+    letter-spacing: .25em;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+  }
+  .names {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 3rem;
+    color: var(--charcoal);
+  }
+  .amp { color: var(--gold); font-style: italic; margin: 0 .3rem; }
+  .ornament {
+    width: 60px; height: 1px;
+    background: var(--gold);
+    margin: 1.4rem auto;
+  }
+  .date {
+    font-family: 'Cinzel', serif;
+    font-size: .8rem;
+    letter-spacing: .2em;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .familia-label {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+    margin-bottom: .4rem;
+  }
+  .familia {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--charcoal);
+    margin-bottom: 1.8rem;
+  }
+  .pases-box {
+    background: var(--cream);
+    border: 1px solid rgba(184,154,106,.4);
+    padding: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  .pases-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    color: var(--dark-gold);
+    line-height: 1;
+  }
+  .pases-label {
+    font-family: 'Cinzel', serif;
+    font-size: .58rem;
+    letter-spacing: .15em;
+    color: var(--muted);
+    margin-top: .3rem;
+  }
+  .info { font-size: .9rem; color: var(--muted); line-height: 1.7; margin-bottom: .3rem; }
+  .info strong { color: var(--charcoal); }
+  .actions { margin-top: 2rem; display: flex; flex-direction: column; gap: .8rem; }
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: .68rem;
+    letter-spacing: .15em;
+    padding: .9rem 1.5rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: opacity .3s;
+  }
+  .btn-primary { background: var(--gold); color: #fff; }
+  .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--dark-gold); }
+  .btn:hover { opacity: .8; }
+  .missing { font-size: .85rem; color: var(--muted); margin-top: 1rem; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .card { box-shadow: none; border: none; max-width: 100%; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <p class="eyebrow">OS INVITAMOS A CELEBRAR CON NOSOTROS</p>
+    <h1 class="names">Cristina<span class="amp">&amp;</span>Roberto</h1>
+    <div class="ornament"></div>
+    <p class="date">03 · OCTUBRE · 2026</p>
+
+    <div id="familia-block">
+      <p class="familia-label">PARA</p>
+      <p class="familia" id="familia-nombre">Familia</p>
+    </div>
+
+    <div class="pases-box">
+      <div class="pases-num" id="pases-num">—</div>
+      <div class="pases-label">PASES ASIGNADOS</div>
+    </div>
+
+    <p class="info"><strong>Ceremonia</strong> · Catedral de Hermosillo · 12:00 PM</p>
+    <p class="info"><strong>Recepción</strong> · Salón Las Cascadas · 7:00 PM</p>
+
+    <div class="actions no-print">
+      <button class="btn btn-primary" onclick="window.print()">DESCARGAR / IMPRIMIR INVITACIÓN</button>
+      <a class="btn btn-outline" href="index.html#rsvp">CONFIRMAR ASISTENCIA</a>
+    </div>
+  </div>
+
+<script>
+  const params  = new URLSearchParams(location.search);
+  const familia = params.get('familia');
+  const pases   = parseInt(params.get('pases'), 10);
+
+  document.getElementById('familia-nombre').textContent = familia ? familia.replace(/\+/g, ' ') : 'Estimado invitado';
+  document.getElementById('pases-num').textContent = Number.isFinite(pases) && pases > 0 ? pases : '—';
+
+  if (!Number.isFinite(pases) || pases <= 0) {
+    document.querySelector('.pases-label').textContent = 'AGREGA ?pases=N A LA URL';
+  }
+</script>
+</body>
+</html>
