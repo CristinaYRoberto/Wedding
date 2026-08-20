@@ -1125,6 +1125,17 @@
     color: var(--gold);
   }
   .admin-btn:hover { background: var(--gold); color: #fff; }
+  .admin-invite-gen { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(184,154,106,.25); }
+  .admin-invite-row { display: flex; gap: .8rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .admin-invite-input {
+    flex: 1; min-width: 180px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(184,154,106,.4);
+    color: #fff;
+    padding: .65rem .8rem;
+    font-family: 'Lato', sans-serif;
+    font-size: .85rem;
+  }
   .admin-loading {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -1176,7 +1187,6 @@
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
     <a href="game.html" class="btn btn-game"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
-    <a href="invitacion.html" class="btn btn-outline" data-es="DESCARGAR INVITACIÓN" data-en="DOWNLOAD INVITATION">DESCARGAR INVITACIÓN</a>
   </div>
 </section>
 
@@ -1594,6 +1604,19 @@
       <button class="admin-btn" onclick="loadAdminData()">↺ ACTUALIZAR</button>
       <button class="admin-btn" onclick="closeAdmin()">CERRAR</button>
     </div>
+
+    <div class="admin-invite-gen">
+      <p class="admin-title" style="font-size:.85rem; margin-bottom:1rem">GENERADOR DE INVITACIONES</p>
+      <div class="admin-invite-row">
+        <input type="text" id="gen-familia" class="admin-invite-input" placeholder="Nombre de familia / invitado">
+        <input type="number" id="gen-pases" class="admin-invite-input" placeholder="N° de pases" min="1" style="max-width:140px">
+      </div>
+      <div class="admin-actions">
+        <button class="admin-btn" onclick="abrirInvitacionGenerada()">↗ ABRIR INVITACIÓN</button>
+        <button class="admin-btn" onclick="copiarEnlaceInvitacion()">⧉ COPIAR ENLACE</button>
+      </div>
+      <p class="admin-loading" id="gen-status" style="margin-top:.6rem"></p>
+    </div>
   </div>
 </div>
 
@@ -1897,6 +1920,29 @@ function lockMenu() {
   document.getElementById('menu-content').classList.remove('unlocked');
   [0,1,2,3].forEach(i => { document.getElementById('pin'+i).value = ''; });
   document.getElementById('pin-error').textContent = '';
+}
+
+/* ── GENERADOR DE INVITACIONES (solo admin) ── */
+function buildInvitationLink() {
+  const familia = document.getElementById('gen-familia').value.trim();
+  const pases   = document.getElementById('gen-pases').value.trim();
+  const params  = new URLSearchParams();
+  if (familia) params.set('familia', familia.replace(/\s+/g, '+'));
+  if (pases)   params.set('pases', pases);
+  return `${location.origin}${location.pathname.replace(/index\.html$/, '')}invitacion.html?${params.toString()}`;
+}
+function abrirInvitacionGenerada() {
+  window.open(buildInvitationLink(), '_blank', 'noopener');
+}
+async function copiarEnlaceInvitacion() {
+  const url    = buildInvitationLink();
+  const status = document.getElementById('gen-status');
+  try {
+    await navigator.clipboard.writeText(url);
+    status.textContent = 'Enlace copiado: ' + url;
+  } catch {
+    status.textContent = url;
+  }
 }
 
 /* ── ADMIN PANEL ── */

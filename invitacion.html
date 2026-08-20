@@ -96,6 +96,19 @@
   }
   .info { font-size: .9rem; color: var(--muted); line-height: 1.7; margin-bottom: .3rem; }
   .info strong { color: var(--charcoal); }
+  .confirm-block {
+    margin-top: 1.8rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid rgba(184,154,106,.4);
+  }
+  .confirm-title {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+    margin-bottom: .6rem;
+  }
+  .confirm-line { font-size: .82rem; color: var(--muted); line-height: 1.6; word-break: break-word; }
   .actions { margin-top: 2rem; display: flex; flex-direction: column; gap: .8rem; }
   .btn {
     font-family: 'Cinzel', serif;
@@ -139,9 +152,18 @@
     <p class="info"><strong>Ceremonia</strong> · Catedral de Hermosillo · 12:00 PM</p>
     <p class="info"><strong>Recepción</strong> · Salón Las Cascadas · 7:00 PM</p>
 
+    <div class="confirm-block">
+      <p class="confirm-title">CONFIRMA TU ASISTENCIA</p>
+      <p class="confirm-line">Sitio web · <span id="site-link-text"></span></p>
+      <p class="confirm-line">Roberto · +52 662 146 1622</p>
+      <p class="confirm-line">Cristina · +52 662 341 9038</p>
+    </div>
+
     <div class="actions no-print">
       <button class="btn btn-primary" onclick="window.print()">DESCARGAR / IMPRIMIR INVITACIÓN</button>
-      <a class="btn btn-outline" href="index.html#rsvp">CONFIRMAR ASISTENCIA</a>
+      <a class="btn btn-outline" href="index.html#rsvp">IR AL SITIO WEB</a>
+      <a class="btn btn-outline" id="wa-roberto" target="_blank" rel="noopener">WHATSAPP · ROBERTO</a>
+      <a class="btn btn-outline" id="wa-cristina" target="_blank" rel="noopener">WHATSAPP · CRISTINA</a>
     </div>
   </div>
 
@@ -152,6 +174,17 @@
 
   document.getElementById('familia-nombre').textContent = familia ? familia.replace(/\+/g, ' ') : 'Estimado invitado';
   document.getElementById('pases-num').textContent = Number.isFinite(pases) && pases > 0 ? pases : '—';
+
+  const siteLink = `${location.origin}${location.pathname.replace(/invitacion\.html$/, 'index.html')}#rsvp`;
+  document.getElementById('site-link-text').textContent = siteLink;
+
+  const nombreInvitado = familia ? familia.replace(/\+/g, ' ') : '';
+  const waMsg = nombreInvitado
+    ? `Hola! Somos ${nombreInvitado}. Queremos confirmar nuestra asistencia a la boda de Cristina y Roberto.`
+    : `Hola! Queremos confirmar nuestra asistencia a la boda de Cristina y Roberto.`;
+  const waTexto = encodeURIComponent(waMsg);
+  document.getElementById('wa-roberto').href  = `https://wa.me/526621461622?text=${waTexto}`;
+  document.getElementById('wa-cristina').href = `https://wa.me/526623419038?text=${waTexto}`;
 
   if (!Number.isFinite(pases) || pases <= 0) {
     document.querySelector('.pases-label').textContent = 'AGREGA ?pases=N A LA URL';
