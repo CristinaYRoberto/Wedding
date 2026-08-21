@@ -101,7 +101,8 @@
   #lang-toggle button {
     padding: .35rem .85rem;
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 600;
+    font-size: .72rem;
     letter-spacing: .1em;
     border: none;
     cursor: pointer;
@@ -138,14 +139,15 @@
   }
   nav a {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .75rem;
     letter-spacing: .15em;
     text-decoration: none;
     color: var(--charcoal);
-    opacity: .7;
-    transition: opacity .3s;
+    opacity: .85;
+    transition: opacity .3s, color .3s;
   }
-  nav a:hover { opacity: 1; }
+  nav a:hover { opacity: 1; color: var(--dark-gold); }
 
   /* ── HERO ── */
   #hero {
@@ -176,7 +178,8 @@
   }
   .hero-eyebrow {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .78rem;
     letter-spacing: .3em;
     color: var(--gold);
     margin-bottom: 1.5rem;
@@ -218,12 +221,31 @@
     flex-wrap: wrap;
     justify-content: center;
     font-family: 'Lato', sans-serif;
-    font-size: .82rem;
+    font-weight: 500;
+    font-size: .9rem;
     letter-spacing: .03em;
     color: var(--muted);
     animation: fadeUp .8s .45s ease both;
   }
   .hero-events-preview strong { color: var(--charcoal); font-weight: 500; }
+  .calendar-links {
+    display: flex;
+    gap: 1.3rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: .7rem;
+  }
+  .calendar-links a {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: .68rem;
+    letter-spacing: .1em;
+    color: var(--gold);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color .3s;
+  }
+  .calendar-links a:hover { color: var(--dark-gold); }
   .hero-cta {
     margin-top: 3rem;
     display: flex;
@@ -253,7 +275,8 @@
   }
   .invite-label {
     font-family: 'Cinzel', serif;
-    font-size: .58rem;
+    font-weight: 500;
+    font-size: .68rem;
     letter-spacing: .2em;
     color: var(--gold);
     margin-bottom: .4rem;
@@ -267,7 +290,8 @@
   }
   .invite-pases {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .74rem;
     letter-spacing: .12em;
     color: var(--dark-gold);
   }
@@ -283,10 +307,11 @@
     flex-wrap: wrap;
     justify-content: center;
   }
-  .invite-actions .btn { padding: .65rem 1.4rem; font-size: .6rem; }
+  .invite-actions .btn { padding: .65rem 1.4rem; font-size: .68rem; }
   .btn {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .72rem;
     letter-spacing: .2em;
     padding: .85rem 2.5rem;
     border-radius: 0;
@@ -309,7 +334,8 @@
     color: #fff;
     border: 1px solid #f5d87a;
     font-family: 'Cinzel', serif;
-    font-size: .7rem;
+    font-weight: 600;
+    font-size: .8rem;
     letter-spacing: .15em;
     padding: .85rem 2rem;
     text-decoration: none;
@@ -346,7 +372,8 @@
   }
   .countdown-label {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .74rem;
     letter-spacing: .3em;
     color: var(--gold);
     margin-bottom: 2rem;
@@ -373,7 +400,8 @@
   }
   .countdown-unit span {
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 500;
+    font-size: .7rem;
     letter-spacing: .2em;
     color: var(--gold);
     margin-top: .5rem;
@@ -396,7 +424,8 @@
   }
   .section-eyebrow {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .78rem;
     letter-spacing: .3em;
     color: var(--gold);
     margin-bottom: 1rem;
@@ -464,7 +493,8 @@
   }
   .event-type {
     font-family: 'Cinzel', serif;
-    font-size: .65rem;
+    font-weight: 500;
+    font-size: .74rem;
     letter-spacing: .25em;
     color: var(--gold);
     margin-bottom: .8rem;
@@ -490,15 +520,16 @@
   }
   .event-link {
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 600;
+    font-size: .7rem;
     letter-spacing: .15em;
     color: var(--gold);
     text-decoration: none;
     border-bottom: 1px solid var(--gold);
     padding-bottom: 2px;
-    transition: color .3s;
+    transition: color .3s, border-color .3s;
   }
-  .event-link:hover { color: var(--dark-gold); }
+  .event-link:hover { color: var(--dark-gold); border-color: var(--dark-gold); }
 
   /* ── CÓMO LLEGAR ── */
   .directions-box {
@@ -508,7 +539,8 @@
   }
   .directions-title {
     font-family: 'Cinzel', serif;
-    font-size: .68rem;
+    font-weight: 500;
+    font-size: .78rem;
     letter-spacing: .2em;
     color: var(--gold);
     margin-bottom: 1.6rem;
@@ -526,7 +558,8 @@
   }
   .direction-from {
     font-family: 'Cinzel', serif;
-    font-size: .62rem;
+    font-weight: 500;
+    font-size: .72rem;
     letter-spacing: .1em;
     color: var(--dark-gold);
     margin-bottom: .4rem;
@@ -583,7 +616,8 @@
   .gallery-slot:hover img { transform: scale(1.04); }
   .gallery-slot-label {
     font-family: 'Cinzel', serif;
-    font-size: .55rem;
+    font-weight: 500;
+    font-size: .65rem;
     letter-spacing: .2em;
     color: rgba(184,154,106,.5);
   }
@@ -674,7 +708,8 @@
   }
   .faq-q {
     font-family: 'Cinzel', serif;
-    font-size: .75rem;
+    font-weight: 500;
+    font-size: .85rem;
     letter-spacing: .1em;
     display: flex;
     justify-content: space-between;
@@ -713,7 +748,8 @@
   .form-group { display: flex; flex-direction: column; gap: .4rem; }
   .form-label {
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 600;
+    font-size: .72rem;
     letter-spacing: .15em;
     color: var(--gold);
   }
@@ -754,9 +790,10 @@
   .rsvp-wa-caption {
     text-align: center;
     font-family: 'Cinzel', serif;
-    font-size: .62rem;
+    font-weight: 500;
+    font-size: .72rem;
     letter-spacing: .15em;
-    color: rgba(255,255,255,.4);
+    color: rgba(255,255,255,.55);
     margin: .5rem 0 -.4rem;
   }
   .rsvp-wa-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
@@ -801,7 +838,8 @@
   }
   footer p {
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 500;
+    font-size: .7rem;
     letter-spacing: .2em;
     color: rgba(255,255,255,.3);
   }
@@ -863,7 +901,8 @@
   }
   .gift-card-title {
     font-family: 'Cinzel', serif;
-    font-size: .7rem;
+    font-weight: 600;
+    font-size: .8rem;
     letter-spacing: .18em;
     color: var(--charcoal);
     margin-bottom: .8rem;
@@ -878,7 +917,8 @@
     background: var(--light-sage);
     padding: .9rem 1rem;
     font-family: 'Cinzel', serif;
-    font-size: .62rem;
+    font-weight: 500;
+    font-size: .72rem;
     letter-spacing: .1em;
     color: var(--sage);
     line-height: 1.7;
@@ -944,7 +984,8 @@
   }
   .menu-course-label {
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 600;
+    font-size: .7rem;
     letter-spacing: .3em;
     color: var(--gold);
     border-bottom: 1px solid rgba(184,154,106,.2);
@@ -978,7 +1019,8 @@
   .menu-item-tag {
     display: inline-block;
     font-family: 'Cinzel', serif;
-    font-size: .5rem;
+    font-weight: 500;
+    font-size: .62rem;
     letter-spacing: .12em;
     padding: .2rem .6rem;
     border: 1px solid rgba(122,140,110,.4);
@@ -996,7 +1038,8 @@
     color: #fff;
     border: none;
     font-family: 'Cinzel', serif;
-    font-size: .6rem;
+    font-weight: 600;
+    font-size: .7rem;
     letter-spacing: .15em;
     padding: .85rem 1.8rem;
     cursor: pointer;
@@ -1030,7 +1073,8 @@
   }
   .wa-modal-title {
     font-family: 'Cinzel', serif;
-    font-size: .78rem;
+    font-weight: 500;
+    font-size: .85rem;
     letter-spacing: .12em;
     color: var(--gold);
     text-align: center;
@@ -1039,7 +1083,7 @@
   }
   .wa-modal-box .form-group { margin-bottom: 1.2rem; }
   .wa-modal-actions { display: flex; gap: .8rem; justify-content: center; margin-top: .5rem; }
-  .wa-modal-actions .btn { padding: .75rem 1.6rem; font-size: .6rem; }
+  .wa-modal-actions .btn { padding: .75rem 1.6rem; font-size: .7rem; }
   .wa-modal-actions .btn-outline { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.3); }
   .wa-modal-actions .btn-outline:hover { background: rgba(255,255,255,.1); color: #fff; }
   .wa-modal-actions .btn-primary { background: var(--gold); border-color: var(--gold); color: #fff; }
@@ -1218,6 +1262,10 @@
   <div class="hero-events-preview">
     <span data-es="Misa: Catedral · 12:00 PM" data-en="Mass: Cathedral · 12:00 PM">Misa: Catedral · 12:00 PM</span>
     <span data-es="Recepción: Salón Las Cascadas · 7:00 PM" data-en="Reception: Salón Las Cascadas · 7:00 PM">Recepción: Salón Las Cascadas · 7:00 PM</span>
+  </div>
+  <div class="calendar-links">
+    <a href="#" onclick="return addToGoogleCalendar()" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
+    <a href="#" onclick="return downloadICS()" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
   </div>
 
   <!-- Personalized invite badge — shown only when opened via ?familia=&pases= -->
@@ -1517,6 +1565,10 @@
     <div id="rsvp-success" class="rsvp-success">
       <h3 data-es="¡Gracias!" data-en="Thank you!">¡Gracias!</h3>
       <p style="color:rgba(255,255,255,.6); font-size:.9rem" data-es="Tu confirmación ha sido registrada. ¡Nos vemos en la boda!" data-en="Your RSVP has been recorded. See you at the wedding!">Tu confirmación ha sido registrada. ¡Nos vemos en la boda!</p>
+      <div class="calendar-links" style="margin-top:1.4rem">
+        <a href="#" onclick="return addToGoogleCalendar()" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
+        <a href="#" onclick="return downloadICS()" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
+      </div>
     </div>
     <form class="rsvp-form reveal" id="rsvp-form" onsubmit="submitRSVP(event)">
       <input type="hidden" name="personas" id="rsvp-personas" value="1">
@@ -1682,6 +1734,51 @@ const ADMIN_KEY = 'CR2026'; // ← cambia esto
 /* ── Init EmailJS ── */
 if (typeof emailjs !== 'undefined') {
   emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+/* ── CALENDAR LINKS ── */
+function addToGoogleCalendar() {
+  const dates = '20261003T120000/20261003T230000';
+  const text  = encodeURIComponent('Boda de Cristina y Roberto');
+  const details = encodeURIComponent(
+    currentLang === 'es'
+      ? 'Misa: Catedral de Hermosillo, 12:00 PM.\nRecepción: Salón Las Cascadas, 7:00 PM.'
+      : 'Mass: Catedral de Hermosillo, 12:00 PM.\nReception: Salón Las Cascadas, 7:00 PM.'
+  );
+  const location = encodeURIComponent('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Son.');
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}&ctz=America/Hermosillo`;
+  window.open(url, '_blank', 'noopener');
+  return false;
+}
+function downloadICS() {
+  const desc = currentLang === 'es'
+    ? 'Misa: Catedral de Hermosillo\\, 12:00 PM.\\nRecepción: Salón Las Cascadas\\, 7:00 PM.'
+    : 'Mass: Catedral de Hermosillo\\, 12:00 PM.\\nReception: Salón Las Cascadas\\, 7:00 PM.';
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Cristina y Roberto//Boda 2026//ES',
+    'BEGIN:VEVENT',
+    'UID:boda-cristina-roberto-2026@cristinayroberto.github.io',
+    'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z',
+    'DTSTART:20261003T190000Z',
+    'DTEND:20261004T060000Z',
+    'SUMMARY:Boda de Cristina y Roberto',
+    'DESCRIPTION:' + desc,
+    'LOCATION:Catedral de Hermosillo\\, Blvr. Miguel Hidalgo S/N\\, Centro Norte\\, 83000 Hermosillo\\, Son.',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'boda-cristina-roberto.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return false;
 }
 
 /* ── WHATSAPP LINKS ── */
