@@ -1009,6 +1009,50 @@
   .btn-whatsapp:hover { background: #128C7E; }
   .btn-whatsapp svg { width:16px;height:16px;fill:#fff;flex-shrink:0; }
 
+  /* WhatsApp name/email modal */
+  #wa-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  #wa-modal.open { display: flex; }
+  .wa-modal-box {
+    background: var(--charcoal);
+    border: 1px solid rgba(184,154,106,.3);
+    padding: 2.2rem 2rem;
+    max-width: 380px;
+    width: 100%;
+  }
+  .wa-modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: .78rem;
+    letter-spacing: .12em;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  .wa-modal-box .form-group { margin-bottom: 1.2rem; }
+  .wa-modal-actions { display: flex; gap: .8rem; justify-content: center; margin-top: .5rem; }
+  .wa-modal-actions .btn { padding: .75rem 1.6rem; font-size: .6rem; }
+  .wa-modal-actions .btn-outline { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.3); }
+  .wa-modal-actions .btn-outline:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .wa-modal-actions .btn-primary { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .wa-modal-actions .btn-primary:hover { background: var(--dark-gold); border-color: var(--dark-gold); }
+  .wa-modal-error {
+    font-size: .75rem;
+    color: #e08a8a;
+    text-align: center;
+    min-height: 1.1em;
+    margin-top: -.4rem;
+    margin-bottom: .8rem;
+  }
+
   /* ── ADMIN PANEL ── */
   #admin-panel {
     display: none;
@@ -1190,7 +1234,7 @@
   <div class="hero-cta">
     <a href="#rsvp" class="btn btn-primary" data-es="CONFIRMAR ASISTENCIA" data-en="RSVP NOW">CONFIRMAR ASISTENCIA</a>
     <!-- WhatsApp confirm button -->
-    <a id="wa-hero-btn" href="#" class="btn-whatsapp" onclick="return openWAHero(event)" data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">
+    <a id="wa-hero-btn" href="#" class="btn-whatsapp" onclick="return openWAModal(WA_NUMBER, event)" data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
@@ -1512,11 +1556,11 @@
 
       <p class="rsvp-wa-caption" data-es="— o confirma por WhatsApp —" data-en="— or confirm via WhatsApp —">— o confirma por WhatsApp —</p>
       <div class="rsvp-wa-links">
-        <a href="https://wa.me/526621461622" target="_blank" rel="noopener" class="btn-whatsapp">
+        <a href="#" onclick="return openWAModal(WA_NUMBER, event)" class="btn-whatsapp">
           <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
           <span data-es="ROBERTO · 662 146 1622" data-en="ROBERTO · 662 146 1622">ROBERTO · 662 146 1622</span>
         </a>
-        <a href="https://wa.me/526623419038" target="_blank" rel="noopener" class="btn-whatsapp">
+        <a href="#" onclick="return openWAModal(WA_NUMBER_CRISTINA, event)" class="btn-whatsapp">
           <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
           <span data-es="CRISTINA · 662 341 9038" data-en="CRISTINA · 662 341 9038">CRISTINA · 662 341 9038</span>
         </a>
@@ -1529,6 +1573,26 @@
     </div>
   </div>
 </section>
+
+<!-- WHATSAPP NAME/EMAIL MODAL -->
+<div id="wa-modal">
+  <div class="wa-modal-box">
+    <p class="wa-modal-title" data-es="Escribe tu nombre para confirmar" data-en="Enter your name to confirm">Escribe tu nombre para confirmar</p>
+    <div class="form-group">
+      <label class="form-label" data-es="NOMBRE COMPLETO (CON APELLIDOS)" data-en="FULL NAME (WITH LAST NAMES)">NOMBRE COMPLETO (CON APELLIDOS)</label>
+      <input class="form-input" type="text" id="wa-modal-name" placeholder="Nombre Apellido Apellido">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-es="CORREO" data-en="EMAIL">CORREO</label>
+      <input class="form-input" type="email" id="wa-modal-email" placeholder="tu@correo.com">
+    </div>
+    <p class="wa-modal-error" id="wa-modal-error"></p>
+    <div class="wa-modal-actions">
+      <button type="button" class="btn btn-outline" onclick="closeWAModal()" data-es="CANCELAR" data-en="CANCEL">CANCELAR</button>
+      <button type="button" class="btn btn-primary" onclick="confirmWAModal()" data-es="ACEPTAR" data-en="CONFIRM">ACEPTAR</button>
+    </div>
+  </div>
+</div>
 
 <!-- ADMIN PANEL (hidden — URL ?admin=CR2026 o 5 taps en el monograma) -->
 <div id="admin-panel">
@@ -1630,18 +1694,36 @@ function buildWALink(nombre, apellido, personas, asistencia) {
   return `https://wa.me/${WA_NUMBER}?text=${texto}`;
 }
 
-/* Hero WA button — pide nombre y apellido antes de abrir el chat */
-function openWAHero(e) {
-  e.preventDefault();
-  const nombre = prompt(currentLang === 'es' ? 'Tu nombre:' : 'Your first name:');
-  if (nombre === null) return false;
-  const apellido = prompt(currentLang === 'es' ? 'Tu apellido:' : 'Your last name:');
-  if (apellido === null) return false;
-  const saludo = currentLang === 'es'
-    ? `Hola! Soy ${nombre} ${apellido}. Quiero confirmar mi asistencia a la boda de Cristina y Roberto.`
-    : `Hi! I'm ${nombre} ${apellido}. I'd like to RSVP for Cristina and Roberto's wedding.`;
-  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(saludo)}`, '_blank', 'noopener');
+/* WhatsApp name/email modal — used by every "confirmar por WhatsApp" button */
+let waModalTargetNumber = WA_NUMBER;
+function openWAModal(number, e) {
+  if (e) e.preventDefault();
+  waModalTargetNumber = number;
+  document.getElementById('wa-modal-name').value = '';
+  document.getElementById('wa-modal-email').value = '';
+  document.getElementById('wa-modal-error').textContent = '';
+  document.getElementById('wa-modal').classList.add('open');
   return false;
+}
+function closeWAModal() {
+  document.getElementById('wa-modal').classList.remove('open');
+}
+function confirmWAModal() {
+  const nombre = document.getElementById('wa-modal-name').value.trim();
+  const correo = document.getElementById('wa-modal-email').value.trim();
+  const error  = document.getElementById('wa-modal-error');
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  if (!nombre || !emailOk) {
+    error.textContent = currentLang === 'es'
+      ? 'Ingresa tu nombre completo y un correo válido.'
+      : 'Enter your full name and a valid email.';
+    return;
+  }
+  const saludo = currentLang === 'es'
+    ? `Hola! Soy ${nombre} (${correo}). Quiero confirmar mi asistencia a la boda de Cristina y Roberto.`
+    : `Hi! I'm ${nombre} (${correo}). I'd like to RSVP for Cristina and Roberto's wedding.`;
+  window.open(`https://wa.me/${waModalTargetNumber}?text=${encodeURIComponent(saludo)}`, '_blank', 'noopener');
+  closeWAModal();
 }
 
 /* ── LANGUAGE ── */
