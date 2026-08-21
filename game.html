@@ -7,6 +7,31 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
+  <!-- Firebase SDK (ESM) — global leaderboard, mismo proyecto que index.html -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }
+      from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCIsFwTkdcpztJ1OPwwbEtr5fJalLiAuQ0",
+      authDomain:        "boda-cristina-roberto.firebaseapp.com",
+      projectId:         "boda-cristina-roberto",
+      storageBucket:     "boda-cristina-roberto.firebasestorage.app",
+      messagingSenderId: "841192030529",
+      appId:             "1:841192030529:web:81860da322ddb1c14621c0"
+    };
+    try {
+      const app = initializeApp(firebaseConfig);
+      window._db          = getFirestore(app);
+      window._fbCollection = collection;
+      window._fbAddDoc     = addDoc;
+      window._fbQuery      = query;
+      window._fbOrderBy    = orderBy;
+      window._fbLimit      = limit;
+      window._fbGetDocs    = getDocs;
+      window._firebaseReady = true;
+    } catch(e) { console.warn('Firebase no configurado:', e.message); }
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -370,7 +395,29 @@ function addEntry(entry) {
   lb.sort((a, b) => b.score - a.score);
   const top = lb.slice(0, 10);
   try { storage.setItem('wedding_lb_v2', JSON.stringify(top)); } catch {}
+
+  if (window._firebaseReady) {
+    window._fbAddDoc(window._fbCollection(window._db, 'game_scores'), entry)
+      .catch(e => console.warn('No se pudo subir score a Firestore:', e.message));
+  }
+
   return top.findIndex(e => e.timestamp === entry.timestamp) + 1;
+}
+
+async function getGlobalLB() {
+  if (!window._firebaseReady) return null;
+  try {
+    const q = window._fbQuery(
+      window._fbCollection(window._db, 'game_scores'),
+      window._fbOrderBy('score', 'desc'),
+      window._fbLimit(10)
+    );
+    const snap = await window._fbGetDocs(q);
+    return snap.docs.map(d => d.data());
+  } catch (e) {
+    console.warn('No se pudo leer leaderboard global:', e.message);
+    return null;
+  }
 }
 
 /* ── SVG card back ───────────────────────────────────────────────────── */
@@ -490,8 +537,18 @@ function EntryScreen({ onPlay, onLeaderboard }) {
    LEADERBOARD
 ══════════════════════════════════════════════════════════════ */
 function LeaderboardScreen({ onBack, highlightTs }) {
-  const entries = getLB();
-  const medals  = ['🥇','🥈','🥉'];
+  const [entries, setEntries] = useState(getLB());
+  const [loading, setLoading] = useState(true);
+  const medals = ['🥇','🥈','🥉'];
+
+  useEffect(() => {
+    let cancelled = false;
+    getGlobalLB().then(global => {
+      if (!cancelled && global) setEntries(global);
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', padding:'clamp(10px,1.5vmin,20px)' }}>

@@ -476,6 +476,43 @@
   }
   .event-link:hover { color: var(--dark-gold); }
 
+  /* ── CÓMO LLEGAR ── */
+  .directions-box {
+    max-width: 780px;
+    margin: 3rem auto 0;
+    text-align: center;
+  }
+  .directions-title {
+    font-family: 'Cinzel', serif;
+    font-size: .68rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+    margin-bottom: 1.6rem;
+  }
+  .directions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    text-align: left;
+  }
+  @media(max-width: 700px) { .directions-grid { grid-template-columns: 1fr; } }
+  .direction-item {
+    border-left: 2px solid var(--gold);
+    padding: .2rem 0 .2rem 1.1rem;
+  }
+  .direction-from {
+    font-family: 'Cinzel', serif;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    color: var(--dark-gold);
+    margin-bottom: .4rem;
+  }
+  .direction-desc {
+    font-size: .82rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
   /* ── MAP ── */
   #map-section {
     background: var(--warm-white);
@@ -507,14 +544,8 @@
   .gallery-slot {
     aspect-ratio: 3/4;
     background: rgba(255,255,255,.05);
-    border: 1px dashed rgba(184,154,106,.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: .5rem;
+    border: 1px solid rgba(184,154,106,.2);
     cursor: pointer;
-    transition: background .3s;
     position: relative;
     overflow: hidden;
   }
@@ -523,10 +554,9 @@
     inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    opacity: .7;
-    transition: opacity .4s, transform .4s;
+    transition: transform .4s;
   }
-  .gallery-slot:hover img { opacity: .9; transform: scale(1.04); }
+  .gallery-slot:hover img { transform: scale(1.04); }
   .gallery-slot-label {
     font-family: 'Cinzel', serif;
     font-size: .55rem;
@@ -840,33 +870,6 @@
     line-height: 1.8;
     margin-bottom: 2.5rem;
   }
-  .menu-pin-row {
-    display: flex;
-    gap: .6rem;
-    justify-content: center;
-    margin-bottom: 1.2rem;
-  }
-  .menu-pin-input {
-    width: 52px; height: 60px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(184,154,106,.25);
-    color: #fff;
-    font-family: 'Cinzel', serif;
-    font-size: 1.4rem;
-    text-align: center;
-    outline: none;
-    transition: border-color .3s;
-    caret-color: var(--gold);
-  }
-  .menu-pin-input:focus { border-color: var(--gold); }
-  .menu-pin-error {
-    font-family: 'Cinzel', serif;
-    font-size: .62rem;
-    letter-spacing: .1em;
-    color: #c47b7b;
-    min-height: 1.2em;
-    margin-bottom: 1rem;
-  }
   /* Menu content (hidden until unlocked) */
   #menu-content {
     display: none;
@@ -928,24 +931,6 @@
     color: var(--sage);
     margin-top: .6rem;
   }
-  .menu-relock {
-    text-align: center;
-    margin-top: 2.5rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(184,154,106,.15);
-  }
-  .menu-relock button {
-    font-family: 'Cinzel', serif;
-    font-size: .6rem;
-    letter-spacing: .15em;
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,.25);
-    cursor: pointer;
-    transition: color .3s;
-  }
-  .menu-relock button:hover { color: rgba(255,255,255,.5); }
-
   /* ── MOBILE NAV ── */
   @media(max-width: 768px) {
     nav ul { display: none; }
@@ -1307,6 +1292,37 @@
         <a href="https://maps.app.goo.gl/YP5qQpQrmvKPxaF79" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
     </div>
+
+    <div class="directions-box reveal">
+      <p class="directions-title" data-es="CÓMO LLEGAR AL SALÓN LAS CASCADAS" data-en="HOW TO GET TO SALÓN LAS CASCADAS">CÓMO LLEGAR AL SALÓN LAS CASCADAS</p>
+      <div class="directions-grid">
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE BLVD. QUIROGA" data-en="🚗 FROM BLVD. QUIROGA">🚗 DESDE BLVD. QUIROGA</p>
+          <p class="direction-desc" data-es="Toma Blvd. Quiroga hacia el sur hasta Carretera 26. Continúa; Carretera 26 se convierte en Av. Lázaro Cárdenas. Sigue hasta Los Molinos y gira ahí. El salón está en el #97." data-en="Take Blvd. Quiroga south to Highway 26. Continue; Highway 26 becomes Av. Lázaro Cárdenas. Follow it to Los Molinos and turn there. The venue is at #97.">Toma Blvd. Quiroga hacia el sur hasta Carretera 26. Continúa; Carretera 26 se convierte en Av. Lázaro Cárdenas. Sigue hasta Los Molinos y gira ahí. El salón está en el #97.</p>
+        </div>
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE CARRETERA 26" data-en="🚗 FROM HIGHWAY 26">🚗 DESDE CARRETERA 26</p>
+          <p class="direction-desc" data-es="Sigue Carretera 26 hacia Hermosillo. Al entrar a la ciudad se convierte en Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Follow Highway 26 toward Hermosillo. As you enter the city it becomes Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Sigue Carretera 26 hacia Hermosillo. Al entrar a la ciudad se convierte en Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
+        </div>
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE BLVD. SOLIDARIDAD" data-en="🚗 FROM BLVD. SOLIDARIDAD">🚗 DESDE BLVD. SOLIDARIDAD</p>
+          <p class="direction-desc" data-es="Toma Blvd. Solidaridad hacia el sur hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Take Blvd. Solidaridad south to Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Toma Blvd. Solidaridad hacia el sur hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
+        </div>
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE CAMINO DEL SERI" data-en="🚗 FROM CAMINO DEL SERI">🚗 DESDE CAMINO DEL SERI</p>
+          <p class="direction-desc" data-es="Toma Camino del Seri hacia el sur. Dirígete hacia Los Molinos y continúa hasta el #97, donde está el salón." data-en="Take Camino del Seri south. Head toward Los Molinos and continue to #97, where the venue is located.">Toma Camino del Seri hacia el sur. Dirígete hacia Los Molinos y continúa hasta el #97, donde está el salón.</p>
+        </div>
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE BLVD. FRANCISCO VILLA" data-en="🚗 FROM BLVD. FRANCISCO VILLA">🚗 DESDE BLVD. FRANCISCO VILLA</p>
+          <p class="direction-desc" data-es="Toma Blvd. Francisco Villa hacia el poniente hasta Av. Lázaro Cárdenas. Sigue hasta Los Molinos, gira y continúa hasta el #97." data-en="Take Blvd. Francisco Villa west to Av. Lázaro Cárdenas. Follow it to Los Molinos, turn, and continue to #97.">Toma Blvd. Francisco Villa hacia el poniente hasta Av. Lázaro Cárdenas. Sigue hasta Los Molinos, gira y continúa hasta el #97.</p>
+        </div>
+        <div class="direction-item">
+          <p class="direction-from" data-es="🚗 DESDE BLVD. LAS QUINTAS" data-en="🚗 FROM BLVD. LAS QUINTAS">🚗 DESDE BLVD. LAS QUINTAS</p>
+          <p class="direction-desc" data-es="Toma Blvd. Las Quintas hacia el oriente hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Take Blvd. Las Quintas east to Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Toma Blvd. Las Quintas hacia el oriente hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
+        </div>
+      </div>
+      <p style="font-family:'Cinzel',serif; font-size:.68rem; letter-spacing:.15em; color:var(--dark-gold); margin-top:2rem" data-es="📍 SALÓN LAS CASCADAS · Los Molinos #97, Col. Las Minitas" data-en="📍 SALÓN LAS CASCADAS · Los Molinos #97, Col. Las Minitas">📍 SALÓN LAS CASCADAS · Los Molinos #97, Col. Las Minitas</p>
+    </div>
   </div>
 </section>
 
@@ -1327,25 +1343,21 @@
     <h2 class="section-title reveal" data-es="Nuestros Momentos" data-en="Our Moments">Nuestros Momentos</h2>
     <div class="divider reveal" style="background:var(--gold)"></div>
     <div class="gallery-placeholder reveal">
-      <!-- Replace src attributes with your actual photos -->
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 1" data-en="PHOTO 1">FOTO 1</span>
-      </div>
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 2" data-en="PHOTO 2">FOTO 2</span>
-      </div>
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 3" data-en="PHOTO 3">FOTO 3</span>
-      </div>
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 4" data-en="PHOTO 4">FOTO 4</span>
-      </div>
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 5" data-en="PHOTO 5">FOTO 5</span>
-      </div>
-      <div class="gallery-slot">
-        <span class="gallery-slot-label" data-es="FOTO 6" data-en="PHOTO 6">FOTO 6</span>
-      </div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-01.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-02.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-03.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-04.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-05.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-06.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-07.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-08.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-09.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-10.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-11.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-12.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-13.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-14.jpg" alt="Cristina y Roberto" loading="lazy"></div>
+      <div class="gallery-slot"><img src="assets/gallery/gallery-15.jpg" alt="Cristina y Roberto" loading="lazy"></div>
     </div>
   </div>
 </section>
@@ -1449,22 +1461,14 @@
     <h2 class="section-title reveal" data-es="Menú de la Cena" data-en="Dinner Menu">Menú de la Cena</h2>
     <div class="divider reveal" style="background:var(--gold)"></div>
 
-    <!-- Lock screen -->
+    <!-- Lock screen (auto-unlocks event day at 12 PM) -->
     <div class="menu-lock-box reveal" id="menu-lock">
       <div class="menu-lock-icon">
         <div class="menu-lock-ring"></div>
       </div>
-      <p class="menu-lock-desc" data-es="El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo." data-en="The menu will be revealed on the day of the celebration. Enter the code you will receive upon arrival at the reception to unlock it.">
-        El menú estará disponible el día del evento. Ingresa el código que recibirás al llegar a la recepción para descubrirlo.
+      <p class="menu-lock-desc" data-es="El menú se revelará el día de la boda." data-en="The menu will be revealed on the wedding day.">
+        El menú se revelará el día de la boda.
       </p>
-      <div class="menu-pin-row">
-        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin0" oninput="pinInput(0)" onkeydown="pinKey(event,0)">
-        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin1" oninput="pinInput(1)" onkeydown="pinKey(event,1)">
-        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin2" oninput="pinInput(2)" onkeydown="pinKey(event,2)">
-        <input class="menu-pin-input" maxlength="1" type="text" inputmode="numeric" id="pin3" oninput="pinInput(3)" onkeydown="pinKey(event,3)">
-      </div>
-      <p class="menu-pin-error" id="pin-error"></p>
-      <p style="font-family:'Cinzel',serif; font-size:.58rem; letter-spacing:.18em; color:rgba(255,255,255,.2)" data-es="CÓDIGO DE 4 DÍGITOS" data-en="4-DIGIT CODE">CÓDIGO DE 4 DÍGITOS</p>
     </div>
 
     <!-- Menu content (revealed after correct PIN) -->
@@ -1472,66 +1476,29 @@
       <p class="menu-header-note" data-es="Bienvenidos a la mesa · 03 de Octubre de 2026" data-en="Welcome to the table · October 3, 2026">Bienvenidos a la mesa · 03 de Octubre de 2026</p>
 
       <div class="menu-course">
-        <p class="menu-course-label" data-es="BIENVENIDA" data-en="WELCOME">BIENVENIDA</p>
+        <p class="menu-course-label" data-es="CENA" data-en="DINNER">CENA</p>
         <div class="menu-items">
           <div class="menu-item">
-            <p class="menu-item-name" data-es="Cóctel de Bienvenida" data-en="Welcome Cocktail">Cóctel de Bienvenida</p>
-            <p class="menu-item-desc" data-es="Selección de bebidas de autor, vinos y aguas frescas" data-en="Selection of signature cocktails, wines and fresh waters">Selección de bebidas de autor, vinos y aguas frescas</p>
-          </div>
-          <div class="menu-item">
-            <p class="menu-item-name" data-es="Estación de Quesos" data-en="Cheese Station">Estación de Quesos</p>
-            <p class="menu-item-desc" data-es="Quesos artesanales, mermeladas y frutos secos" data-en="Artisan cheeses, jams and dried fruits">Quesos artesanales, mermeladas y frutos secos</p>
-            <span class="menu-item-tag" data-es="VEGETARIANO" data-en="VEGETARIAN">VEGETARIANO</span>
+            <p class="menu-item-name" data-es="Barbacoa Tradicional" data-en="Traditional Barbacoa">Barbacoa Tradicional</p>
+            <p class="menu-item-desc" data-es="Servida con frijolitos, sopa fría y una pieza de pan" data-en="Served with beans, cold soup and a piece of bread">Servida con frijolitos, sopa fría y una pieza de pan</p>
           </div>
         </div>
       </div>
 
       <div class="menu-course">
-        <p class="menu-course-label" data-es="ENTRADA" data-en="STARTER">ENTRADA</p>
+        <p class="menu-course-label" data-es="BEBIDAS" data-en="DRINKS">BEBIDAS</p>
         <div class="menu-items">
           <div class="menu-item">
-            <p class="menu-item-name" data-es="Ensalada de Temporada" data-en="Seasonal Salad">Ensalada de Temporada</p>
-            <p class="menu-item-desc" data-es="Mixta con vinagreta de miel mostaza y queso de cabra" data-en="Mixed greens with honey mustard vinaigrette and goat cheese">Mixta con vinagreta de miel mostaza y queso de cabra</p>
-            <span class="menu-item-tag" data-es="VEGETARIANO" data-en="VEGETARIAN">VEGETARIANO</span>
+            <p class="menu-item-name" data-es="Barra de Mixología (cierra a las 9 PM o antes si se agotan los insumos)" data-en="Mixology Bar (closes at 9 PM or earlier if supplies run out)">Barra de Mixología (cierra a las 9 PM o antes si se agotan los insumos)</p>
+            <p class="menu-item-desc" data-es="Gin de frutos rojos, carajillo, Aperol Spritz y gin de pepino" data-en="Red berry gin, carajillo, Aperol Spritz and cucumber gin">Gin de frutos rojos, carajillo, Aperol Spritz y gin de pepino</p>
           </div>
           <div class="menu-item">
-            <p class="menu-item-name" data-es="Crema del Día" data-en="Soup of the Day">Crema del Día</p>
-            <p class="menu-item-desc" data-es="Servida con pan artesanal y mantequilla de hierbas" data-en="Served with artisan bread and herb butter">Servida con pan artesanal y mantequilla de hierbas</p>
+            <p class="menu-item-name" data-es="Barra Libre" data-en="Open Bar">Barra Libre</p>
+            <p class="menu-item-desc" data-es="Cerveza, whisky, tequila, ron, vino tinto y vino blanco" data-en="Beer, whisky, tequila, rum, red wine and white wine">Cerveza, whisky, tequila, ron, vino tinto y vino blanco</p>
           </div>
         </div>
       </div>
 
-      <div class="menu-course">
-        <p class="menu-course-label" data-es="PLATO FUERTE" data-en="MAIN COURSE">PLATO FUERTE</p>
-        <div class="menu-items">
-          <div class="menu-item">
-            <p class="menu-item-name" data-es="Filete de Res" data-en="Beef Tenderloin">Filete de Res</p>
-            <p class="menu-item-desc" data-es="Al punto con reducción de vino tinto, papas gratinadas y vegetales salteados" data-en="Cooked to order with red wine reduction, gratin potatoes and sautéed vegetables">Al punto con reducción de vino tinto, papas gratinadas y vegetales salteados</p>
-          </div>
-          <div class="menu-item">
-            <p class="menu-item-name" data-es="Pechuga Rellena" data-en="Stuffed Chicken Breast">Pechuga Rellena</p>
-            <p class="menu-item-desc" data-es="Con espinacas y queso manchego, salsa de champiñones y arroz pilaf" data-en="Stuffed with spinach and manchego cheese, mushroom sauce and pilaf rice">Con espinacas y queso manchego, salsa de champiñones y arroz pilaf</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="menu-course">
-        <p class="menu-course-label" data-es="POSTRE" data-en="DESSERT">POSTRE</p>
-        <div class="menu-items">
-          <div class="menu-item">
-            <p class="menu-item-name" data-es="Pastel de Bodas" data-en="Wedding Cake">Pastel de Bodas</p>
-            <p class="menu-item-desc" data-es="Diseñado especialmente para esta celebración" data-en="Specially designed for this celebration">Diseñado especialmente para esta celebración</p>
-          </div>
-          <div class="menu-item">
-            <p class="menu-item-name" data-es="Mesa de Dulces" data-en="Dessert Table">Mesa de Dulces</p>
-            <p class="menu-item-desc" data-es="Postres de temporada, chocolates y delicias artesanales" data-en="Seasonal pastries, chocolates and artisan sweets">Postres de temporada, chocolates y delicias artesanales</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="menu-relock">
-        <button onclick="lockMenu()" data-es="↑ Cerrar menú" data-en="↑ Close menu">↑ Cerrar menú</button>
-      </div>
     </div>
   </div>
 </section>
@@ -1791,10 +1758,10 @@ window.addEventListener('scroll', () => {
 });
 
 /* ── COUNTDOWN ── */
+const EVENT_START = new Date('2026-10-03T12:00:00-07:00');
 function updateCountdown() {
-  const target = new Date('2026-10-03T12:00:00-07:00');
-  const diff = target - new Date();
-  if (diff <= 0) { ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent='0'); return; }
+  const diff = EVENT_START - new Date();
+  if (diff <= 0) { ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent='0'); checkMenuUnlock(); return; }
   document.getElementById('cd-days').textContent  = String(Math.floor(diff/86400000)).padStart(2,'0');
   document.getElementById('cd-hours').textContent = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
   document.getElementById('cd-mins').textContent  = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
@@ -1814,7 +1781,7 @@ const faqData = {
     { q: '¿Puedo llevar acompañante?', a: 'El número de invitados por mesa está cuidadosamente planificado. Por favor confirma únicamente el número de personas indicado en tu invitación. Si tienes alguna duda, escríbenos con gusto.' },
     { q: '¿Hasta cuándo puedo confirmar mi asistencia?', a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.' },
     { q: '¿Cómo puedo hacer llegar un regalo?', a: 'Contamos con opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Regalos" en esta misma página para ver todos los detalles.' },
-    { q: '¿Habrá opciones vegetarianas en el menú?', a: 'Sí, el menú incluirá opciones vegetarianas. Si tienes alguna restricción alimentaria adicional, por favor indícalo al momento de confirmar tu asistencia y lo tomaremos en cuenta.' },
+    { q: '¿Qué pasa si tengo una restricción alimentaria?', a: 'El menú principal es barbacoa tradicional. Si tienes alguna restricción o alergia alimentaria, por favor indícalo al momento de confirmar tu asistencia y con gusto lo tomaremos en cuenta.' },
   ],
   en: [
     { q: 'Where is the religious ceremony?', a: 'The wedding mass will be held at the Catedral de Hermosillo, located at Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. It begins at 12:00 PM. We recommend arriving 15 minutes early.' },
@@ -1825,7 +1792,7 @@ const faqData = {
     { q: 'Can I bring a plus-one?', a: 'Seating has been carefully arranged. Please confirm only the number of guests specified on your invitation. If you have any questions, feel free to reach out and we will be happy to help.' },
     { q: 'What is the RSVP deadline?', a: 'Please confirm your attendance by September 1, 2026. After that date we cannot guarantee a spot, as the guest list will be finalized.' },
     { q: 'How can I send a gift?', a: 'We have an online gift registry, a bank transfer option, and a cash box at the reception. Please visit the "Gift Registry" section on this page for full details.' },
-    { q: 'Will there be vegetarian options?', a: 'Yes, the menu includes vegetarian options. If you have any additional dietary restrictions, please let us know when you RSVP and we will do our best to accommodate you.' },
+    { q: 'What if I have a dietary restriction?', a: 'The main course is traditional barbacoa. If you have any dietary restriction or allergy, please let us know when you RSVP and we will gladly take it into account.' },
   ]
 };
 function buildFAQ() {
@@ -1969,40 +1936,15 @@ function initMessagesListener() {
 document.addEventListener('firebaseReady', initMessagesListener);
 if (window._firebaseReady) initMessagesListener();
 
-/* ── MENU PIN ── */
-const MENU_PIN = '1003';
-function pinInput(index) {
-  const val = document.getElementById('pin' + index).value;
-  if (val.length === 1 && index < 3) document.getElementById('pin'+(index+1)).focus();
-  checkPin();
-}
-function pinKey(e, index) {
-  if (e.key === 'Backspace' && !document.getElementById('pin'+index).value && index > 0)
-    document.getElementById('pin'+(index-1)).focus();
-}
-function checkPin() {
-  const entered = [0,1,2,3].map(i => document.getElementById('pin'+i).value).join('');
-  if (entered.length < 4) return;
-  if (entered === MENU_PIN) {
-    unlockMenu();
-  } else {
-    document.getElementById('pin-error').textContent =
-      currentLang === 'es' ? 'Código incorrecto. Inténtalo de nuevo.' : 'Incorrect code. Please try again.';
-    [0,1,2,3].forEach(i => { document.getElementById('pin'+i).value = ''; });
-    document.getElementById('pin0').focus();
-  }
+/* ── MENU AUTO-UNLOCK (día del evento, 12 PM) ── */
+function checkMenuUnlock() {
+  if (new Date() >= EVENT_START) unlockMenu();
 }
 function unlockMenu() {
   document.getElementById('menu-lock').style.display = 'none';
   document.getElementById('menu-content').classList.add('unlocked');
-  setLang(currentLang);
 }
-function lockMenu() {
-  document.getElementById('menu-lock').style.display = 'block';
-  document.getElementById('menu-content').classList.remove('unlocked');
-  [0,1,2,3].forEach(i => { document.getElementById('pin'+i).value = ''; });
-  document.getElementById('pin-error').textContent = '';
-}
+checkMenuUnlock();
 
 /* ── GENERADOR DE INVITACIONES (solo admin) ── */
 function buildInvitationLink() {
