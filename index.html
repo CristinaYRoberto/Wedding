@@ -25,7 +25,6 @@
      service cloud.firestore {
        match /databases/{database}/documents {
          match /rsvps/{id}    { allow create: true; allow read: false; }
-         match /messages/{id} { allow create: true; allow read: true;  }
        }
      }
 
@@ -212,6 +211,19 @@
     margin-top: 2rem;
     animation: fadeUp .8s .4s ease both;
   }
+  .hero-events-preview {
+    margin-top: 1.4rem;
+    display: flex;
+    gap: .4rem 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-family: 'Lato', sans-serif;
+    font-size: .82rem;
+    letter-spacing: .03em;
+    color: var(--muted);
+    animation: fadeUp .8s .45s ease both;
+  }
+  .hero-events-preview strong { color: var(--charcoal); font-weight: 500; }
   .hero-cta {
     margin-top: 3rem;
     display: flex;
@@ -219,6 +231,18 @@
     flex-wrap: wrap;
     justify-content: center;
     animation: fadeUp .8s .6s ease both;
+  }
+  .hero-game-block {
+    margin-top: 1.6rem;
+    text-align: center;
+    animation: fadeUp .8s .7s ease both;
+  }
+  .hero-game-hint {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: .95rem;
+    color: var(--muted);
+    margin-bottom: .7rem;
   }
   .invite-badge {
     margin-top: 2.2rem;
@@ -710,10 +734,40 @@
   }
   .form-select option { background: var(--charcoal); }
   .form-textarea { resize: vertical; min-height: 80px; }
+  .radio-group { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-family: 'Lato', sans-serif;
+    font-size: .9rem;
+    color: #fff;
+    cursor: pointer;
+  }
+  .radio-option input[type="radio"] { accent-color: var(--gold); width: 17px; height: 17px; cursor: pointer; }
   .rsvp-note {
     font-size: .8rem;
     color: rgba(255,255,255,.35);
     text-align: center;
+    margin-top: .5rem;
+  }
+  .rsvp-wa-caption {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: .62rem;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,.4);
+    margin: .5rem 0 -.4rem;
+  }
+  .rsvp-wa-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .rsvp-gift-link {
+    display: block;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--gold);
+    text-decoration: underline;
     margin-top: .5rem;
   }
   .rsvp-success {
@@ -936,42 +990,6 @@
     nav ul { display: none; }
   }
 
-  /* ── BUZÓN DE MENSAJES ── */
-  #messages { background: var(--cream); }
-  .msg-intro {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 1.1rem;
-    color: var(--muted);
-    text-align: center;
-    max-width: 560px;
-    margin: 0 auto 2.5rem;
-    line-height: 1.9;
-  }
-  .msg-form-wrap {
-    max-width: 600px;
-    margin: 0 auto 3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .msg-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  @media(max-width:520px){ .msg-form-row { grid-template-columns:1fr; } }
-  .msg-input, .msg-textarea {
-    background: var(--warm-white);
-    border: 1px solid rgba(184,154,106,.25);
-    padding: .8rem 1rem;
-    font-family: 'Lato', sans-serif;
-    font-size: .9rem;
-    color: var(--charcoal);
-    outline: none;
-    transition: border-color .3s;
-    border-radius: 0;
-  }
-  .msg-input:focus, .msg-textarea:focus { border-color: var(--gold); }
-  .msg-textarea { min-height: 90px; resize: vertical; }
-  .msg-submit-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-  .msg-char-count { font-size: .75rem; color: var(--muted); }
   /* WhatsApp confirm button */
   .btn-whatsapp {
     background: #25D366;
@@ -990,62 +1008,6 @@
   }
   .btn-whatsapp:hover { background: #128C7E; }
   .btn-whatsapp svg { width:16px;height:16px;fill:#fff;flex-shrink:0; }
-  /* Messages wall */
-  .msg-wall {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.2rem;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .msg-card {
-    background: var(--warm-white);
-    border: 1px solid rgba(184,154,106,.2);
-    padding: 1.5rem 1.6rem;
-    position: relative;
-    animation: fadeUp .5s ease both;
-  }
-  .msg-card::before {
-    content: '"';
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 3.5rem;
-    color: rgba(184,154,106,.2);
-    position: absolute;
-    top: .2rem; left: .8rem;
-    line-height: 1;
-  }
-  .msg-card-text {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--charcoal);
-    margin-bottom: .8rem;
-    padding-top: 1rem;
-  }
-  .msg-card-author {
-    font-family: 'Cinzel', serif;
-    font-size: .58rem;
-    letter-spacing: .2em;
-    color: var(--gold);
-  }
-  .msg-empty {
-    text-align: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    color: var(--muted);
-    font-size: 1rem;
-    padding: 2rem 0;
-    grid-column: 1/-1;
-  }
-  .msg-status {
-    font-family: 'Cinzel', serif;
-    font-size: .65rem;
-    letter-spacing: .1em;
-    color: var(--gold);
-    text-align: center;
-    min-height: 1.2em;
-  }
 
   /* ── ADMIN PANEL ── */
   #admin-panel {
@@ -1187,14 +1149,14 @@
 <!-- NAV -->
 <nav id="navbar">
   <ul>
-    <li><a href="#events" data-es="Eventos" data-en="Events">Eventos</a></li>
+    <li><a href="#events" data-es="Recepción" data-en="Reception">Recepción</a></li>
     <li><a href="#story" data-es="Nuestra Historia" data-en="Our Story">Nuestra Historia</a></li>
-    <li><a href="#gifts" data-es="Regalos" data-en="Gifts">Regalos</a></li>
-    <li><a href="#menu" data-es="Menú" data-en="Menu">Menú</a></li>
-    <li><a href="#messages" data-es="Mensajes" data-en="Messages">Mensajes</a></li>
-    <li><a href="#gallery" data-es="Galería" data-en="Gallery">Galería</a></li>
-    <li><a href="#faq" data-es="FAQ" data-en="FAQ">FAQ</a></li>
     <li><a href="#rsvp" data-es="Confirmar" data-en="RSVP">Confirmar</a></li>
+    <li><a href="#gifts" data-es="Regalos" data-en="Gifts">Regalos</a></li>
+    <li><a href="#gallery" data-es="Galería" data-en="Gallery">Galería</a></li>
+    <li><a href="#menu" data-es="Menú" data-en="Menu">Menú</a></li>
+    <li><a href="game.html" data-es="¡Jugar!" data-en="Play!">¡Jugar!</a></li>
+    <li><a href="#faq" data-es="FAQ" data-en="FAQ">FAQ</a></li>
   </ul>
 </nav>
 
@@ -1209,6 +1171,10 @@
   </h1>
   <div class="hero-ornament"></div>
   <p class="hero-date" data-es="03 · OCTUBRE · 2026" data-en="OCTOBER 3 · 2026">03 · OCTUBRE · 2026</p>
+  <div class="hero-events-preview">
+    <span data-es="Misa: Catedral · 12:00 PM" data-en="Mass: Cathedral · 12:00 PM">Misa: Catedral · 12:00 PM</span>
+    <span data-es="Recepción: Salón Las Cascadas · 7:00 PM" data-en="Reception: Salón Las Cascadas · 7:00 PM">Recepción: Salón Las Cascadas · 7:00 PM</span>
+  </div>
 
   <!-- Personalized invite badge — shown only when opened via ?familia=&pases= -->
   <div class="invite-badge" id="invite-badge" style="display:none">
@@ -1228,6 +1194,10 @@
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
+  </div>
+
+  <div class="hero-game-block" id="hero-game-block">
+    <p class="hero-game-hint" data-es="Hemos creado un juego para nuestros invitados. Juega aquí" data-en="We made a game for our guests. Play here">Hemos creado un juego para nuestros invitados. Juega aquí</p>
     <a href="game.html" class="btn btn-game" id="btn-jugar"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
   </div>
 </section>
@@ -1264,8 +1234,8 @@
     <p class="section-eyebrow" data-es="NUESTRA HISTORIA" data-en="OUR STORY">NUESTRA HISTORIA</p>
     <h2 class="section-title" data-es="Dos caminos,<br>un mismo destino" data-en="Two paths,<br>one shared destination">Dos caminos,<br>un mismo destino</h2>
     <div class="divider"></div>
-    <p class="story-text" data-es="Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida." data-en="Cristina and Roberto found each other when they least expected it, and since then they have built together a story full of love, laughter, and adventure. Today, with hearts full of gratitude, they invite you to witness the most beautiful chapter of their lives.">
-      Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida.
+    <p class="story-text" data-es="Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Junto a su hija Valentina y sus tres gatitos, Iker, Pilly y Finch, han formado una pequeña familia con grandes vínculos y mucho amor. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida." data-en="Cristina and Roberto found each other when they least expected it, and since then they have built together a story full of love, laughter, and adventure. Together with their daughter Valentina and their three cats, Iker, Pilly, and Finch, they have formed a small family with great bonds and so much love. Today, with hearts full of gratitude, they invite you to witness the most beautiful chapter of their lives.">
+      Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Junto a su hija Valentina y sus tres gatitos, Iker, Pilly y Finch, han formado una pequeña familia con grandes vínculos y mucho amor. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida.
     </p>
   </div>
 </section>
@@ -1358,25 +1328,6 @@
       <div class="gallery-slot"><img src="assets/gallery/gallery-13.jpg" alt="Cristina y Roberto" loading="lazy"></div>
       <div class="gallery-slot"><img src="assets/gallery/gallery-14.jpg" alt="Cristina y Roberto" loading="lazy"></div>
       <div class="gallery-slot"><img src="assets/gallery/gallery-15.jpg" alt="Cristina y Roberto" loading="lazy"></div>
-    </div>
-  </div>
-</section>
-
-<!-- VIDEO -->
-<section id="video-section">
-  <div class="section-inner">
-    <p class="section-eyebrow reveal" data-es="VIDEO" data-en="VIDEO">VIDEO</p>
-    <h2 class="section-title reveal" data-es="Nuestro Save the Date" data-en="Our Save the Date">Nuestro Save the Date</h2>
-    <div class="divider reveal"></div>
-    <div class="video-wrapper reveal">
-      <!-- OPTION A: YouTube embed — replace VIDEO_ID with your YouTube video ID -->
-      <!-- <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe> -->
-      <!-- OPTION B: Local video file -->
-      <!-- <video controls><source src="video.mp4" type="video/mp4"></video> -->
-      <div class="video-placeholder">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(184,154,106,.6)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-        <p data-es="REEMPLAZA CON TU VIDEO" data-en="REPLACE WITH YOUR VIDEO">REEMPLAZA CON TU VIDEO</p>
-      </div>
     </div>
   </div>
 </section>
@@ -1524,6 +1475,7 @@
       <p style="color:rgba(255,255,255,.6); font-size:.9rem" data-es="Tu confirmación ha sido registrada. ¡Nos vemos en la boda!" data-en="Your RSVP has been recorded. See you at the wedding!">Tu confirmación ha sido registrada. ¡Nos vemos en la boda!</p>
     </div>
     <form class="rsvp-form reveal" id="rsvp-form" onsubmit="submitRSVP(event)">
+      <input type="hidden" name="personas" id="rsvp-personas" value="1">
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" data-es="NOMBRE" data-en="FIRST NAME">NOMBRE</label>
@@ -1538,28 +1490,18 @@
         <label class="form-label" data-es="CORREO ELECTRÓNICO" data-en="EMAIL">CORREO ELECTRÓNICO</label>
         <input class="form-input" type="email" name="email" required placeholder="tu@correo.com">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" data-es="ASISTENCIA" data-en="ATTENDING">ASISTENCIA</label>
-          <select class="form-select" name="asistencia" required>
-            <option value="" data-es="Selecciona..." data-en="Select...">Selecciona...</option>
-            <option value="si" data-es="Sí, asistiré" data-en="Yes, I'll be there">Sí, asistiré</option>
-            <option value="no" data-es="No podré asistir" data-en="I can't make it">No podré asistir</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" data-es="N° DE PERSONAS" data-en="GUESTS">N° DE PERSONAS</label>
-          <select class="form-select" name="personas">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </div>
-      </div>
       <div class="form-group">
-        <label class="form-label" data-es="RESTRICCIONES ALIMENTARIAS" data-en="DIETARY RESTRICTIONS">RESTRICCIONES ALIMENTARIAS</label>
-        <input class="form-input" type="text" name="dieta" placeholder="Vegetariano, alergias, etc.">
+        <label class="form-label" data-es="ASISTENCIA" data-en="ATTENDING">ASISTENCIA</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="asistencia" value="si" required>
+            <span data-es="Confirmo Asistencia" data-en="I'll Be There">Confirmo Asistencia</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="asistencia" value="no" required>
+            <span data-es="NO Asistiré" data-en="I Won't Attend">NO Asistiré</span>
+          </label>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label" data-es="MENSAJE PARA LOS NOVIOS (OPCIONAL)" data-en="MESSAGE FOR THE COUPLE (OPTIONAL)">MENSAJE PARA LOS NOVIOS (OPCIONAL)</label>
@@ -1567,33 +1509,23 @@
       </div>
       <button type="submit" class="btn btn-primary" style="align-self:center; margin-top:1rem" data-es="ENVIAR CONFIRMACIÓN" data-en="SEND RSVP">ENVIAR CONFIRMACIÓN</button>
       <p class="rsvp-note" id="rsvp-status"></p>
+
+      <p class="rsvp-wa-caption" data-es="— o confirma por WhatsApp —" data-en="— or confirm via WhatsApp —">— o confirma por WhatsApp —</p>
+      <div class="rsvp-wa-links">
+        <a href="https://wa.me/526621461622" target="_blank" rel="noopener" class="btn-whatsapp">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
+          <span data-es="ROBERTO · 662 146 1622" data-en="ROBERTO · 662 146 1622">ROBERTO · 662 146 1622</span>
+        </a>
+        <a href="https://wa.me/526623419038" target="_blank" rel="noopener" class="btn-whatsapp">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
+          <span data-es="CRISTINA · 662 341 9038" data-en="CRISTINA · 662 341 9038">CRISTINA · 662 341 9038</span>
+        </a>
+      </div>
+
+      <a href="#gifts" class="rsvp-gift-link" data-es="Si deseas otorgarnos algún detalle, puedes hacerlo aquí →" data-en="If you'd like to give us a gift, you can do so here →">Si deseas otorgarnos algún detalle, puedes hacerlo aquí →</a>
     </form>
   </div>
 </section>
-
-<!-- MESSAGES WALL -->
-<section id="messages">
-  <div class="section-inner">
-    <p class="section-eyebrow reveal" data-es="BUZÓN DE MENSAJES" data-en="MESSAGE WALL">BUZÓN DE MENSAJES</p>
-    <h2 class="section-title reveal" data-es="Déjanos un mensaje" data-en="Leave us a message">Déjanos un mensaje</h2>
-    <div class="divider reveal"></div>
-    <p class="msg-intro reveal" data-es="Tus palabras son el regalo más preciado. Cuéntanos un recuerdo, un deseo, o simplemente escríbenos con cariño." data-en="Your words are the most treasured gift. Share a memory, a wish, or simply write to us from the heart.">
-      Tus palabras son el regalo más preciado. Cuéntanos un recuerdo, un deseo, o simplemente escríbenos con cariño.
-    </p>
-    <div class="msg-form-wrap reveal">
-      <div class="msg-form-row">
-        <input class="msg-input" id="msg-name" type="text" placeholder="Tu nombre" maxlength="60">
-        <input class="msg-input" id="msg-relation" type="text" placeholder="¿Cómo los conoces? (amigo, familiar…)" maxlength="60">
-      </div>
-      <textarea class="msg-textarea" id="msg-text" placeholder="Escribe tu mensaje aquí…" maxlength="300" oninput="document.getElementById('msg-chars').textContent=(300-this.value.length)+' caracteres restantes'"></textarea>
-      <div class="msg-submit-row">
-        <button class="btn btn-primary" onclick="submitMessage()" data-es="ENVIAR MENSAJE" data-en="SEND MESSAGE">ENVIAR MENSAJE</button>
-        <span class="msg-char-count" id="msg-chars">300 caracteres restantes</span>
-      </div>
-      <p class="msg-status" id="msg-status"></p>
-    </div>
-    <div class="msg-wall" id="msg-wall">
-      <p class="msg-empty" data-es="Sé el primero en escribir…" data-en="Be the first to write…">Sé el primero en escribir…</p>
     </div>
   </div>
 </section>
@@ -1726,7 +1658,8 @@ let currentLang = 'es';
   document.getElementById('invite-familia').textContent = nombreFamilia;
   document.getElementById('invite-pases-num').textContent = Number.isFinite(pases) && pases > 0 ? pases : '—';
   document.getElementById('invite-badge').style.display = 'block';
-  document.getElementById('btn-jugar').style.display = 'none';
+  document.getElementById('hero-game-block').style.display = 'none';
+  if (Number.isFinite(pases) && pases > 0) document.getElementById('rsvp-personas').value = pases;
 
   const waMsg = encodeURIComponent(
     familia
@@ -1862,79 +1795,6 @@ function showRSVPSuccess() {
   s.style.display = 'block';
   setLang(currentLang);
 }
-
-/* ── MESSAGES WALL ── */
-async function submitMessage() {
-  const name     = document.getElementById('msg-name').value.trim();
-  const relation = document.getElementById('msg-relation').value.trim();
-  const text     = document.getElementById('msg-text').value.trim();
-  const status   = document.getElementById('msg-status');
-
-  if (!name || !text) {
-    status.textContent = currentLang === 'es' ? 'Por favor escribe tu nombre y mensaje.' : 'Please enter your name and message.';
-    return;
-  }
-  status.textContent = currentLang === 'es' ? 'Enviando…' : 'Sending…';
-
-  if (window._firebaseReady && window._db) {
-    try {
-      await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
-        name, relation, text,
-        timestamp: window._fbTimestamp()
-      });
-      document.getElementById('msg-name').value     = '';
-      document.getElementById('msg-relation').value = '';
-      document.getElementById('msg-text').value     = '';
-      document.getElementById('msg-chars').textContent = '300 caracteres restantes';
-      status.textContent = currentLang === 'es' ? '¡Mensaje enviado con amor!' : 'Message sent with love!';
-      setTimeout(() => { status.textContent = ''; }, 3000);
-    } catch(err) {
-      status.textContent = currentLang === 'es' ? 'Error al enviar. Intenta de nuevo.' : 'Error sending. Please try again.';
-    }
-  } else {
-    /* Fallback offline: muestra localmente */
-    renderMessage({ name, relation, text, ts: new Date() });
-    status.textContent = currentLang === 'es' ? '¡Mensaje enviado! (modo offline)' : 'Message sent! (offline mode)';
-    setTimeout(() => { status.textContent = ''; }, 3000);
-  }
-}
-
-function renderMessage(msg) {
-  const wall = document.getElementById('msg-wall');
-  const empty = wall.querySelector('.msg-empty');
-  if (empty) empty.remove();
-  const card = document.createElement('div');
-  card.className = 'msg-card';
-  const rel = msg.relation ? `<span style="opacity:.6"> · ${msg.relation}</span>` : '';
-  card.innerHTML = `
-    <p class="msg-card-text">${msg.text.replace(/</g,'&lt;')}</p>
-    <p class="msg-card-author">${msg.name.replace(/</g,'&lt;')}${rel}</p>`;
-  wall.insertBefore(card, wall.firstChild);
-}
-
-/* Listen to messages in real-time */
-function initMessagesListener() {
-  if (!window._firebaseReady || !window._db) return;
-  const q = window._fbQuery(
-    window._fbCollection(window._db, 'messages'),
-    window._fbOrderBy('timestamp', 'desc')
-  );
-  window._fbOnSnapshot(q, snap => {
-    const wall = document.getElementById('msg-wall');
-    wall.innerHTML = '';
-    if (snap.empty) {
-      wall.innerHTML = `<p class="msg-empty">${currentLang==='es'?'Sé el primero en escribir…':'Be the first to write…'}</p>`;
-      return;
-    }
-    snap.forEach(doc => {
-      const d = doc.data();
-      renderMessage({ name: d.name, relation: d.relation, text: d.text });
-    });
-  });
-}
-
-document.addEventListener('firebaseReady', initMessagesListener);
-if (window._firebaseReady) initMessagesListener();
 
 /* ── MENU AUTO-UNLOCK (día del evento, 12 PM) ── */
 function checkMenuUnlock() {
