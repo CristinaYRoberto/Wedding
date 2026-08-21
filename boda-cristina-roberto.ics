@@ -1,0 +1,13 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Cristina y Roberto//Boda 2026//ES
+BEGIN:VEVENT
+UID:boda-cristina-roberto-2026@cristinayroberto.github.io
+DTSTAMP:20260821T000000Z
+DTSTART:20261003T190000Z
+DTEND:20261004T060000Z
+SUMMARY:Boda de Cristina y Roberto
+DESCRIPTION:Misa: Catedral de Hermosillo\, 12:00 PM.\nRecepción: Salón Las Cascadas\, 7:00 PM.
+LOCATION:Catedral de Hermosillo\, Blvr. Miguel Hidalgo S/N\, Centro Norte\, 83000 Hermosillo\, Son.
+END:VEVENT
+END:VCALENDAR

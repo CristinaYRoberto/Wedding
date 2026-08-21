@@ -1268,8 +1268,8 @@
     <span data-es="Recepción: Salón Las Cascadas · 7:00 PM" data-en="Reception: Salón Las Cascadas · 7:00 PM">Recepción: Salón Las Cascadas · 7:00 PM</span>
   </div>
   <div class="calendar-links">
-    <a href="#" onclick="return addToGoogleCalendar()" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
-    <a href="#" onclick="return downloadICS()" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
+    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda%20de%20Cristina%20y%20Roberto&dates=20261003T120000/20261003T230000&details=Misa%3A%20Catedral%20de%20Hermosillo%2C%2012%3A00%20PM.%0ARecepci%C3%B3n%3A%20Sal%C3%B3n%20Las%20Cascadas%2C%207%3A00%20PM.&location=Catedral%20de%20Hermosillo%2C%20Blvr.%20Miguel%20Hidalgo%20S%2FN%2C%20Centro%20Norte%2C%2083000%20Hermosillo%2C%20Son.&ctz=America/Hermosillo" target="_blank" rel="noopener" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
+    <a href="boda-cristina-roberto.ics" download="boda-cristina-roberto.ics" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
   </div>
 
   <!-- Personalized invite badge — shown only when opened via ?familia=&pases= -->
@@ -1570,8 +1570,8 @@
       <h3 data-es="¡Gracias!" data-en="Thank you!">¡Gracias!</h3>
       <p style="color:rgba(255,255,255,.6); font-size: 1.05rem" data-es="Tu confirmación ha sido registrada. ¡Nos vemos en la boda!" data-en="Your RSVP has been recorded. See you at the wedding!">Tu confirmación ha sido registrada. ¡Nos vemos en la boda!</p>
       <div class="calendar-links" style="margin-top:1.4rem">
-        <a href="#" onclick="return addToGoogleCalendar()" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
-        <a href="#" onclick="return downloadICS()" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
+        <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda%20de%20Cristina%20y%20Roberto&dates=20261003T120000/20261003T230000&details=Misa%3A%20Catedral%20de%20Hermosillo%2C%2012%3A00%20PM.%0ARecepci%C3%B3n%3A%20Sal%C3%B3n%20Las%20Cascadas%2C%207%3A00%20PM.&location=Catedral%20de%20Hermosillo%2C%20Blvr.%20Miguel%20Hidalgo%20S%2FN%2C%20Centro%20Norte%2C%2083000%20Hermosillo%2C%20Son.&ctz=America/Hermosillo" target="_blank" rel="noopener" data-es="+ Google Calendar" data-en="+ Google Calendar">+ Google Calendar</a>
+        <a href="boda-cristina-roberto.ics" download="boda-cristina-roberto.ics" data-es="+ Descargar .ics (Apple / Outlook)" data-en="+ Download .ics (Apple / Outlook)">+ Descargar .ics (Apple / Outlook)</a>
       </div>
     </div>
     <form class="rsvp-form reveal" id="rsvp-form" onsubmit="submitRSVP(event)">
@@ -1738,51 +1738,6 @@ const ADMIN_KEY = 'CR2026'; // ← cambia esto
 /* ── Init EmailJS ── */
 if (typeof emailjs !== 'undefined') {
   emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-}
-
-/* ── CALENDAR LINKS ── */
-function addToGoogleCalendar() {
-  const dates = '20261003T120000/20261003T230000';
-  const text  = encodeURIComponent('Boda de Cristina y Roberto');
-  const details = encodeURIComponent(
-    currentLang === 'es'
-      ? 'Misa: Catedral de Hermosillo, 12:00 PM.\nRecepción: Salón Las Cascadas, 7:00 PM.'
-      : 'Mass: Catedral de Hermosillo, 12:00 PM.\nReception: Salón Las Cascadas, 7:00 PM.'
-  );
-  const location = encodeURIComponent('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Son.');
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}&location=${location}&ctz=America/Hermosillo`;
-  window.open(url, '_blank', 'noopener');
-  return false;
-}
-function downloadICS() {
-  const desc = currentLang === 'es'
-    ? 'Misa: Catedral de Hermosillo\\, 12:00 PM.\\nRecepción: Salón Las Cascadas\\, 7:00 PM.'
-    : 'Mass: Catedral de Hermosillo\\, 12:00 PM.\\nReception: Salón Las Cascadas\\, 7:00 PM.';
-  const ics = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Cristina y Roberto//Boda 2026//ES',
-    'BEGIN:VEVENT',
-    'UID:boda-cristina-roberto-2026@cristinayroberto.github.io',
-    'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z',
-    'DTSTART:20261003T190000Z',
-    'DTEND:20261004T060000Z',
-    'SUMMARY:Boda de Cristina y Roberto',
-    'DESCRIPTION:' + desc,
-    'LOCATION:Catedral de Hermosillo\\, Blvr. Miguel Hidalgo S/N\\, Centro Norte\\, 83000 Hermosillo\\, Son.',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
-  const blob = new Blob([ics], { type: 'text/calendar' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'boda-cristina-roberto.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  return false;
 }
 
 /* ── WHATSAPP LINKS ── */
