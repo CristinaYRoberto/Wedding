@@ -627,6 +627,9 @@
   #lightbox {
     border: none;
     padding: 0;
+    /* The `* { margin: 0 }` reset kills the UA's margin:auto that centres a
+       modal dialog, pinning it to the top-left corner. Put it back. */
+    margin: auto;
     background: transparent;
     max-width: 100vw;
     max-height: 100vh;
