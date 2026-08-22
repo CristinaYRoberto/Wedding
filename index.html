@@ -737,38 +737,26 @@
     color: var(--muted);
     line-height: 1.8;
   }
-  .color-swatches {
-    display: flex;
-    gap: .75rem;
-    flex-wrap: wrap;
-    margin-top: 1.5rem;
+  /* Spans both columns so the fabrics are big enough to actually read. */
+  .avoid-fabrics { grid-column: 1 / -1; }
+  .avoid-fabrics img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid rgba(184,154,106,.35);
   }
-  .swatch {
-    width: 50px; height: 50px;
-    border-radius: 50%;
-    position: relative;
-  }
-  .swatch::after {
-    content: attr(data-label);
-    position: absolute;
-    bottom: -1.4rem;
-    left: 50%; transform: translateX(-50%);
+  /* Four equal columns, matching the four panels in the photo, so each label
+     stays under its own fabric at any width. */
+  .avoid-fabrics figcaption {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: .7rem;
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
     font-size: .85rem;
     letter-spacing: .05em;
     color: var(--muted);
-    white-space: nowrap;
-  }
-  /* Shades guests are asked not to wear: ringed and struck through, so the
-     message does not rest on colour alone. */
-  .swatch-avoid { border: 2px solid var(--avoid); }
-  .swatch-avoid::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: linear-gradient(45deg,
-      transparent calc(50% - 1px), var(--avoid) calc(50% - 1px),
-      var(--avoid) calc(50% + 1px), transparent calc(50% + 1px));
+    text-align: center;
   }
   .avoid-note {
     margin-top: 3rem;
@@ -1546,16 +1534,21 @@
       </div>
       <div>
         <p class="section-eyebrow" style="text-align:left; margin-bottom:1.5rem; color:var(--avoid)" data-es="POR FAVOR EVITA ESTOS TONOS" data-en="PLEASE AVOID THESE SHADES">POR FAVOR EVITA ESTOS TONOS</p>
-        <div class="color-swatches">
-          <div class="swatch swatch-avoid" style="background:#f7f4ec" data-label="Blanco"></div>
-          <div class="swatch swatch-avoid" style="background:#9d9d9d" data-label="Gris"></div>
-          <div class="swatch swatch-avoid" style="background:#c9a227" data-label="Dorado"></div>
-          <div class="swatch swatch-avoid" style="background:#1a1a1a" data-label="Negro"></div>
-        </div>
         <p class="avoid-note" data-es="Reservados para los novios y la decoración. Te pedimos elegir otro color." data-en="Reserved for the couple and the décor. Please choose another colour.">
           Reservados para los novios y la decoración. Te pedimos elegir otro color.
         </p>
       </div>
+      <figure class="avoid-fabrics">
+        <!-- The caption below names the four shades, so the image itself is
+             decorative as far as a screen reader is concerned. -->
+        <img src="assets/dress-code_v1.png" loading="lazy" alt="">
+        <figcaption>
+          <span data-es="Blanco" data-en="White">Blanco</span>
+          <span data-es="Gris" data-en="Grey">Gris</span>
+          <span data-es="Dorado" data-en="Gold">Dorado</span>
+          <span data-es="Negro" data-en="Black">Negro</span>
+        </figcaption>
+      </figure>
     </div>
   </div>
 </section>
