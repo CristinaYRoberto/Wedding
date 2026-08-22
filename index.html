@@ -66,6 +66,7 @@
     --muted: #7a6f63;
     --sage: #7a8c6e;
     --light-sage: #e8ede4;
+    --avoid: #b4534b;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -757,6 +758,25 @@
     color: var(--muted);
     white-space: nowrap;
   }
+  /* Shades guests are asked not to wear: ringed and struck through, so the
+     message does not rest on colour alone. */
+  .swatch-avoid { border: 2px solid var(--avoid); }
+  .swatch-avoid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(45deg,
+      transparent calc(50% - 1px), var(--avoid) calc(50% - 1px),
+      var(--avoid) calc(50% + 1px), transparent calc(50% + 1px));
+  }
+  .avoid-note {
+    margin-top: 3rem;
+    font-size: .95rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .avoid-note strong { color: var(--avoid); font-weight: 700; }
 
   /* ── FAQ ── */
   #faq { background: var(--warm-white); }
@@ -1526,15 +1546,15 @@
         </p>
       </div>
       <div>
-        <p class="section-eyebrow" style="text-align:left; margin-bottom:1.5rem" data-es="PALETA DE COLORES" data-en="COLOR PALETTE">PALETA DE COLORES</p>
+        <p class="section-eyebrow" style="text-align:left; margin-bottom:1.5rem; color:var(--avoid)" data-es="POR FAVOR EVITA ESTOS TONOS" data-en="PLEASE AVOID THESE SHADES">POR FAVOR EVITA ESTOS TONOS</p>
         <div class="color-swatches">
-          <div class="swatch" style="background:#b89a6a" data-label="Dorado"></div>
-          <div class="swatch" style="background:#7a8c6e" data-label="Sage"></div>
-          <div class="swatch" style="background:#f5f0e8" data-label="Crema" style="border:1px solid #ddd"></div>
-          <div class="swatch" style="background:#2c2c2c" data-label="Negro"></div>
+          <div class="swatch swatch-avoid" style="background:#f7f4ec" data-label="Blanco"></div>
+          <div class="swatch swatch-avoid" style="background:#9d9d9d" data-label="Gris"></div>
+          <div class="swatch swatch-avoid" style="background:#c9a227" data-label="Dorado"></div>
+          <div class="swatch swatch-avoid" style="background:#1a1a1a" data-label="Negro"></div>
         </div>
-        <p style="margin-top:3rem; font-size: .95rem; color:var(--muted); line-height:1.7" data-es="Estos son los colores de la boda. No es necesario coordinar, sólo úsalos como inspiración." data-en="These are the wedding colors. No need to match exactly — use them as inspiration.">
-          Estos son los colores de la boda. No es necesario coordinar, sólo úsalos como inspiración.
+        <p class="avoid-note" data-es="Estos tonos están reservados para los novios y la decoración de la boda. Te pedimos <strong>no usarlos</strong> — cualquier otro color es bienvenido." data-en="These shades are reserved for the couple and the wedding décor. We kindly ask you <strong>not to wear them</strong> — any other colour is welcome.">
+          Estos tonos están reservados para los novios y la decoración de la boda. Te pedimos <strong>no usarlos</strong> — cualquier otro color es bienvenido.
         </p>
       </div>
     </div>
