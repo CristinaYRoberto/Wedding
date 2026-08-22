@@ -623,6 +623,36 @@
     color: rgba(184,154,106,.5);
   }
 
+  /* ── LIGHTBOX ── */
+  #lightbox {
+    border: none;
+    padding: 0;
+    background: transparent;
+    max-width: 100vw;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  #lightbox::backdrop { background: rgba(18,18,18,.93); }
+  #lightbox img {
+    display: block;
+    width: auto; height: auto;
+    max-width: 92vw; max-height: 92vh;
+    cursor: zoom-out;
+  }
+  #lightbox[open] { animation: lightboxIn .3s cubic-bezier(.2,.8,.3,1); }
+  #lightbox[open]::backdrop { animation: lightboxFade .3s ease-out; }
+  @keyframes lightboxIn {
+    from { opacity: 0; transform: scale(.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes lightboxFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @media(prefers-reduced-motion: reduce) {
+    #lightbox[open], #lightbox[open]::backdrop { animation: none; }
+  }
+
   /* ── VIDEO ── */
   #video-section { background: var(--cream); }
   .video-wrapper {
@@ -1428,6 +1458,8 @@
   </div>
 </section>
 
+<dialog id="lightbox"><img src="" alt=""></dialog>
+
 <!-- DRESS CODE -->
 <section id="dresscode">
   <div class="section-inner">
@@ -2058,6 +2090,19 @@ function exportCSV() {
 
 /* Close admin with Escape key */
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAdmin(); });
+
+/* ── GALLERY LIGHTBOX ── */
+const lightbox    = document.getElementById('lightbox');
+const lightboxImg = lightbox.querySelector('img');
+document.querySelector('.gallery-placeholder').addEventListener('click', e => {
+  const img = e.target.closest('.gallery-slot img');
+  if (!img) return;
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightbox.showModal();
+});
+/* A click on the image or on the backdrop both land on the dialog. */
+lightbox.addEventListener('click', () => lightbox.close());
 
 /* ── REVEAL ON SCROLL ── */
 const reveals = document.querySelectorAll('.reveal');
