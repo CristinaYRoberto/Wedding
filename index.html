@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cristina & Roberto · 03.Oct.2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&family=Great+Vibes&display=swap" rel="stylesheet">
 <!-- Firebase SDK (ESM) -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -445,6 +445,34 @@
     height: 1px;
     background: var(--gold);
     margin: 1.5rem auto 3rem;
+  }
+
+  /* ── PARENTS ── */
+  #parents { background: var(--cream); }
+  /* One stacked column, so even the longest name stays on a single line. */
+  .parents-grid {
+    display: grid;
+    gap: 3rem;
+    text-align: center;
+  }
+  .parents-label {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: .95rem;
+    letter-spacing: .25em;
+    color: var(--gold);
+    margin-bottom: 1.4rem;
+  }
+  .parents-name {
+    /* Falls back to the serif the rest of the page already loads, rather
+       than to whatever the browser calls "cursive". */
+    font-family: 'Great Vibes', 'Cormorant Garamond', cursive;
+    /* 7.2vw keeps the longest name ("Héctor Javier Bórquez Bernal") on one
+       line down to ~320px wide; capped so it stays elegant on desktop. */
+    font-size: clamp(1.4rem, 7.2vw, 2.6rem);
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--charcoal);
   }
 
   /* ── STORY ── */
@@ -1356,6 +1384,27 @@
     </div>
   </div>
 </div>
+
+<!-- PARENTS -->
+<section id="parents">
+  <div class="section-inner reveal">
+    <p class="section-eyebrow" data-es="NUESTROS PADRES" data-en="OUR PARENTS">NUESTROS PADRES</p>
+    <h2 class="section-title" data-es="Con la bendición de Dios<br>y de nuestros padres" data-en="With the blessing of God<br>and of our parents">Con la bendición de Dios<br>y de nuestros padres</h2>
+    <div class="divider"></div>
+    <div class="parents-grid">
+      <div>
+        <p class="parents-label" data-es="PADRES DE LA NOVIA" data-en="THE BRIDE'S PARENTS">PADRES DE LA NOVIA</p>
+        <p class="parents-name">Juana Beatriz Bernal Zuñiga</p>
+        <p class="parents-name">Héctor Javier Bórquez Bernal</p>
+      </div>
+      <div>
+        <p class="parents-label" data-es="PADRES DEL NOVIO" data-en="THE GROOM'S PARENTS">PADRES DEL NOVIO</p>
+        <p class="parents-name">Marla María Ruiz Figueroa</p>
+        <p class="parents-name">Martin Moreno Estrada</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- STORY -->
 <section id="story">
