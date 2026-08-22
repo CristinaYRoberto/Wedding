@@ -720,15 +720,14 @@
 
   /* ── DRESS CODE ── */
   #dresscode { background: var(--light-sage); }
+  /* One column: the rules read in order, and the warning lands directly on
+     top of the photo it refers to. */
   .dresscode-inner {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    align-items: center;
+    gap: 2.5rem;
     max-width: 800px;
     margin: 0 auto;
   }
-  @media(max-width: 640px) { .dresscode-inner { grid-template-columns: 1fr; } }
   .dresscode-text .section-title,
   .dresscode-text .section-eyebrow { text-align: left; }
   .dresscode-text .divider { margin-left: 0; }
@@ -737,8 +736,29 @@
     color: var(--muted);
     line-height: 1.8;
   }
-  /* Spans both columns so the fabrics are big enough to actually read. */
-  .avoid-fabrics { grid-column: 1 / -1; }
+  .dresscode-list {
+    margin: 1.4rem 0 0 1.1rem;
+    padding: 0;
+    font-size: 1.1rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .dresscode-list li { margin-bottom: .7rem; }
+  .dresscode-list li::marker { color: var(--gold); }
+  .avoid-block {
+    border: 1px solid rgba(180,83,75,.35);
+    background: rgba(180,83,75,.05);
+    padding: 1.6rem;
+  }
+  .avoid-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .15em;
+    line-height: 1.6;
+    color: var(--avoid);
+    margin-bottom: .5rem;
+  }
   .avoid-fabrics img {
     display: block;
     width: 100%;
@@ -759,7 +779,7 @@
     text-align: center;
   }
   .avoid-note {
-    margin-top: 3rem;
+    margin-bottom: 1.2rem;
     font-size: .95rem;
     color: var(--muted);
     line-height: 1.7;
@@ -1525,30 +1545,38 @@
   <div class="section-inner">
     <div class="dresscode-inner reveal">
       <div class="dresscode-text">
-        <p class="section-eyebrow" data-es="ETIQUETA" data-en="DRESS CODE">ETIQUETA</p>
+        <p class="section-eyebrow" data-es="DRESS CODE" data-en="DRESS CODE">DRESS CODE</p>
         <h2 class="section-title" data-es="Vestimenta<br>Formal" data-en="Formal<br>Attire">Vestimenta<br>Formal</h2>
         <div class="divider"></div>
-        <p class="dresscode-desc" data-es="Les pedimos asistir con vestimenta formal. Traje o smoking para caballeros; vestido largo o cóctel para damas. Apreciamos mucho su colaboración para mantener el estilo de la celebración." data-en="We kindly ask guests to arrive in formal attire. Suits or tuxedos for gentlemen; floor-length or cocktail dresses for ladies. We appreciate your collaboration in keeping the style of the celebration.">
-          Les pedimos asistir con vestimenta formal. Traje o smoking para caballeros; vestido largo o cóctel para damas. Apreciamos mucho su colaboración para mantener el estilo de la celebración.
+        <p class="dresscode-desc" data-es="Queremos que se sientan seguros y apreciamos mucho su colaboración para mantener el estilo de la celebración atendiendo este Dress Code:" data-en="We want you to feel at ease, and we truly appreciate your help in keeping the style of the celebration by following this dress code:">
+          Queremos que se sientan seguros y apreciamos mucho su colaboración para mantener el estilo de la celebración atendiendo este Dress Code:
         </p>
+        <ul class="dresscode-list">
+          <li data-es="Traje sastre para caballero, clásico. Sugerencias de color: negro, gris, azul marino." data-en="A classic tailored suit for gentlemen. Suggested colours: black, grey, navy.">Traje sastre para caballero, clásico. Sugerencias de color: negro, gris, azul marino.</li>
+          <li data-es="Corbata o pañuelos de cualquier color menos blancos." data-en="Tie or pocket square in any colour except white.">Corbata o pañuelos de cualquier color menos blancos.</li>
+          <li data-es="Vestido largo o cóctel para nuestras invitadas." data-en="A floor-length or cocktail dress for our lady guests.">Vestido largo o cóctel para nuestras invitadas.</li>
+        </ul>
       </div>
-      <div>
-        <p class="section-eyebrow" style="text-align:left; margin-bottom:1.5rem; color:var(--avoid)" data-es="POR FAVOR EVITA ESTOS TONOS" data-en="PLEASE AVOID THESE SHADES">POR FAVOR EVITA ESTOS TONOS</p>
+
+      <!-- Heading, reason and photo grouped so the warning reads against the
+           dresses it refers to. -->
+      <div class="avoid-block">
+        <p class="avoid-title" data-es="POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO" data-en="PLEASE AVOID THESE SHADES IN YOUR DRESS">POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO</p>
         <p class="avoid-note" data-es="Reservados para los novios y la decoración. Te pedimos elegir otro color." data-en="Reserved for the couple and the décor. Please choose another colour.">
           Reservados para los novios y la decoración. Te pedimos elegir otro color.
         </p>
+        <figure class="avoid-fabrics">
+          <!-- The caption below names the four shades, so the image itself is
+               decorative as far as a screen reader is concerned. -->
+          <img src="assets/dress-code_v2.jpg" loading="lazy" alt="">
+          <figcaption>
+            <span data-es="Blanco" data-en="White">Blanco</span>
+            <span data-es="Gris" data-en="Grey">Gris</span>
+            <span data-es="Dorado" data-en="Gold">Dorado</span>
+            <span data-es="Negro" data-en="Black">Negro</span>
+          </figcaption>
+        </figure>
       </div>
-      <figure class="avoid-fabrics">
-        <!-- The caption below names the four shades, so the image itself is
-             decorative as far as a screen reader is concerned. -->
-        <img src="assets/dress-code_v2.jpg" loading="lazy" alt="">
-        <figcaption>
-          <span data-es="Blanco" data-en="White">Blanco</span>
-          <span data-es="Gris" data-en="Grey">Gris</span>
-          <span data-es="Dorado" data-en="Gold">Dorado</span>
-          <span data-es="Negro" data-en="Black">Negro</span>
-        </figcaption>
-      </figure>
     </div>
   </div>
 </section>
