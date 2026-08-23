@@ -163,7 +163,7 @@ window.InvitacionPDF = (function () {
 
   /* ── Page 1 — the invitation ──────────────────────────────────────
      Coordinates are fixed rather than accumulated: the page has no room
-     to spare below 205mm, and a drifting cursor is what pushed the
+     to spare below 206mm, and a drifting cursor is what pushed the
      button under the footer before. */
   function pageOne(doc, a, familia, pases) {
     page(doc, true);
@@ -171,14 +171,14 @@ window.InvitacionPDF = (function () {
     const bandH = W / BAND_ASPECT;                       /* 46mm */
     doc.addImage(a.band.data, 'JPEG', 0, 0, W, bandH, undefined, 'FAST');
 
-    tracked(doc, 'NOS CASAMOS', 58, 7.5, GOLD, 1.1);
-    centred(doc, 'Cristina', 72, 'Cormorant', 30, CHARCOAL);
-    centred(doc, '&',        80, 'CormorantI', 16, GOLD);
-    centred(doc, 'Roberto',  91, 'Cormorant', 30, CHARCOAL);
-    rule(doc, 99, 34, GOLD);
-    tracked(doc, '03 · OCTUBRE · 2026', 105.5, 8.5, MUTED, 0.9);
+    tracked(doc, 'NOS CASAMOS', 57, 7.5, GOLD, 1.1);
+    centred(doc, 'Cristina', 70, 'Cormorant', 27, CHARCOAL);
+    centred(doc, '&',        77.5, 'CormorantI', 15, GOLD);
+    centred(doc, 'Roberto',  87.5, 'Cormorant', 27, CHARCOAL);
+    rule(doc, 95, 34, GOLD);
+    tracked(doc, '03 · OCTUBRE · 2026', 101, 8.5, MUTED, 0.9);
 
-    const boxY = 114.5, boxH = 20;
+    const boxY = 109, boxH = 20;
     doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
     doc.rect(M, boxY, W - 2 * M, boxH, 'F');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
@@ -192,7 +192,7 @@ window.InvitacionPDF = (function () {
       doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
-    const ey = 145.5, colL = W / 4, colR = 3 * W / 4;
+    const ey = 139, colL = W / 4, colR = 3 * W / 4;
     function event(cx, label, name, time, place, url) {
       tracked(doc, label, ey, 6.2, GOLD, 0.7, cx);
       centred(doc, name, ey + 8, 'Cormorant', 15, CHARCOAL, cx);
@@ -211,10 +211,13 @@ window.InvitacionPDF = (function () {
     event(colR, 'RECEPCIÓN', 'Cena y Baile', '7:00 PM',
           'Salón Las Cascadas, Los Molinos 97, Las Minitas', MAPS_FIESTA);
 
-    button(doc, 'CONFIRMAR ASISTENCIA', 183.5, SITE + '#rsvp', CHARCOAL, CREAM);
+    /* The one rule the couple wants read before the day itself */
+    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 177, 8, CHARCOAL, 0.9);
+
+    button(doc, 'CONFIRMAR ASISTENCIA', 184, SITE + '#rsvp', CHARCOAL, CREAM);
     setF(doc, 'CormorantI', 8.5, MUTED);
     doc.text('Se confirma en la página, antes del 1 de septiembre de 2026',
-             W / 2, 199.5, { align: 'center' });
+             W / 2, 200, { align: 'center' });
 
     footer(doc, '1 / 4');
   }

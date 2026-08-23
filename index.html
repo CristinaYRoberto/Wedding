@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cristina & Roberto · 03.Oct.2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500&family=Lato:wght@300;400&family=Great+Vibes&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600;700&family=Lato:wght@300;400&family=Great+Vibes&display=swap" rel="stylesheet">
 <!-- Firebase SDK (ESM) -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -152,7 +152,7 @@
 
   /* ── HERO ── */
   #hero {
-    min-height: 88vh;
+    min-height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -189,7 +189,7 @@
   }
   .hero-names {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(3.5rem, 10vw, 7.5rem);
+    font-size: clamp(2.8rem, 7.5vw, 5.6rem);
     font-weight: 300;
     line-height: 1.05;
     color: var(--charcoal);
@@ -202,7 +202,7 @@
   .hero-ampersand {
     display: block;
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 5vw, 4rem);
+    font-size: clamp(1.5rem, 3.6vw, 2.8rem);
     font-weight: 300;
     font-style: italic;
     color: var(--muted);
@@ -232,6 +232,14 @@
     animation: fadeUp .8s .45s ease both;
   }
   .hero-events-preview strong { color: var(--charcoal); font-weight: 500; }
+  .hero-nokids {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: .88rem;
+    letter-spacing: .16em;
+    color: var(--charcoal);
+    margin-top: 1rem;
+  }
   .calendar-links {
     display: flex;
     gap: 1.3rem;
@@ -1468,6 +1476,7 @@
     <span data-es="Misa: Catedral · 12:00 PM" data-en="Mass: Cathedral · 12:00 PM">Misa: Catedral · 12:00 PM</span>
     <span data-es="Recepción: Salón Las Cascadas · 7:00 PM" data-en="Reception: Salón Las Cascadas · 7:00 PM">Recepción: Salón Las Cascadas · 7:00 PM</span>
   </div>
+  <p class="hero-nokids" data-es="ESTRICTAMENTE NO NIÑOS" data-en="STRICTLY NO CHILDREN">ESTRICTAMENTE NO NIÑOS</p>
   <div class="calendar-links">
     <a href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Frender%3Faction%3DTEMPLATE%26text%3DBoda%2520de%2520Cristina%2520y%2520Roberto%26dates%3D20261003T120000%2F20261003T230000%26details%3DMisa%253A%2520Catedral%2520de%2520Hermosillo%252C%252012%253A00%2520PM.%250ARecepci%25C3%25B3n%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25207%253A00%2520PM.%26location%3DCatedral%2520de%2520Hermosillo%252C%2520Blvr.%2520Miguel%2520Hidalgo%2520S%252FN%252C%2520Centro%2520Norte%252C%252083000%2520Hermosillo%252C%2520Son.%26ctz%3DAmerica%2FHermosillo" target="_blank" rel="noopener" data-es="+ Agregar a Google Calendar" data-en="+ Add to Google Calendar">+ Agregar a Google Calendar</a>
   </div>
