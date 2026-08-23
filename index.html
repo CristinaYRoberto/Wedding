@@ -1385,6 +1385,14 @@
   .badge-si { color: #7ab87a; }
   .badge-no { color: #b87a7a; }
   .admin-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .admin-csv-help {
+    font-size: .85rem;
+    color: rgba(255,255,255,.55);
+    line-height: 1.6;
+    margin-bottom: .8rem;
+    max-width: 520px;
+  }
+  .admin-btn[disabled] { opacity: .4; cursor: not-allowed; }
   .admin-btn {
     font-family: 'Cinzel', serif;
     font-weight: 600;
@@ -2004,10 +2012,26 @@
         <input type="number" id="gen-pases" class="admin-invite-input" placeholder="N° de pases" min="1" style="max-width:140px">
       </div>
       <div class="admin-actions">
-        <button class="admin-btn" onclick="abrirInvitacionGenerada()">↗ ABRIR INVITACIÓN</button>
+        <button class="admin-btn" onclick="abrirInvitacionGenerada()">↗ ABRIR ENLACE</button>
         <button class="admin-btn" onclick="copiarEnlaceInvitacion()">⧉ COPIAR ENLACE</button>
+        <button class="admin-btn" onclick="pdfPreview()">👁 VER PDF</button>
+        <button class="admin-btn" onclick="pdfUno()">↓ DESCARGAR PDF</button>
       </div>
       <p class="admin-loading" id="gen-status" style="margin-top:.6rem"></p>
+
+      <p class="admin-title" style="font-size:.95rem; margin:1.6rem 0 .5rem">POR LOTE — SUBIR CSV</p>
+      <p class="admin-csv-help">
+        Dos columnas: nombre completo y número de pases. Si la primera fila es
+        un encabezado se ignora. Genera un PDF por invitado y los entrega en un ZIP.
+      </p>
+      <div class="admin-actions">
+        <label class="admin-btn" style="cursor:pointer">
+          ⇧ ELEGIR CSV
+          <input type="file" id="gen-csv" accept=".csv,text/csv" style="display:none" onchange="pdfCsvElegido(event)">
+        </label>
+        <button class="admin-btn" id="gen-lote-btn" onclick="pdfLote()" disabled>⚙ GENERAR TODOS</button>
+      </div>
+      <p class="admin-loading" id="gen-lote-status" style="margin-top:.6rem"></p>
     </div>
   </div>
 </div>
@@ -2272,6 +2296,87 @@ function buildInvitationLink() {
 function abrirInvitacionGenerada() {
   window.open(buildInvitationLink(), '_blank', 'noopener');
 }
+/* ── INVITACIONES EN PDF ── */
+let _csvRows = null;
+
+function pdfCampos() {
+  const familia = document.getElementById('gen-familia').value.trim();
+  const pases   = parseInt(document.getElementById('gen-pases').value.trim(), 10);
+  return { familia: familia, pases: isNaN(pases) || pases < 1 ? null : pases };
+}
+
+async function conPdf(fn, statusId) {
+  const status = document.getElementById(statusId);
+  try {
+    if (!window.InvitacionPDF) {
+      status.textContent = 'Cargando el generador…';
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'assets/invitacion-pdf.js';
+        s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador'));
+        document.head.appendChild(s);
+      });
+    }
+    await fn(status);
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+function pdfPreview() {
+  const c = pdfCampos();
+  if (!c.familia) { document.getElementById('gen-status').textContent = 'Escribe un nombre primero.'; return; }
+  conPdf(async status => {
+    status.textContent = 'Generando…';
+    await window.InvitacionPDF.preview(c.familia, c.pases);
+    status.textContent = 'PDF abierto en otra pestaña.';
+  }, 'gen-status');
+}
+
+function pdfUno() {
+  const c = pdfCampos();
+  if (!c.familia) { document.getElementById('gen-status').textContent = 'Escribe un nombre primero.'; return; }
+  conPdf(async status => {
+    status.textContent = 'Generando…';
+    await window.InvitacionPDF.one(c.familia, c.pases);
+    status.textContent = 'PDF descargado.';
+  }, 'gen-status');
+}
+
+function pdfCsvElegido(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  const status = document.getElementById('gen-lote-status');
+  const btn = document.getElementById('gen-lote-btn');
+  if (!file) return;
+  conPdf(async () => {
+    const text = await file.text();
+    _csvRows = window.InvitacionPDF.parseCSV(text);
+    if (!_csvRows.length) {
+      status.textContent = 'No se encontró ningún invitado en el archivo.';
+      btn.disabled = true;
+      return;
+    }
+    const muestra = _csvRows.slice(0, 3).map(r => r.familia + ' (' + r.pases + ')').join(' · ');
+    status.textContent = _csvRows.length + ' invitados leídos. Ejemplo: ' + muestra;
+    btn.disabled = false;
+  }, 'gen-lote-status');
+}
+
+function pdfLote() {
+  if (!_csvRows || !_csvRows.length) return;
+  const btn = document.getElementById('gen-lote-btn');
+  conPdf(async status => {
+    btn.disabled = true;
+    const t0 = Date.now();
+    await window.InvitacionPDF.batch(_csvRows, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' — ' + label;
+    });
+    status.textContent = _csvRows.length + ' invitaciones listas en ' +
+      Math.round((Date.now() - t0) / 1000) + ' s. Revisa tus descargas.';
+    btn.disabled = false;
+  }, 'gen-lote-status');
+}
+
 async function copiarEnlaceInvitacion() {
   const url    = buildInvitationLink();
   const status = document.getElementById('gen-status');
