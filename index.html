@@ -1933,6 +1933,8 @@ let currentLang = 'es';
 
 function setLang(lang) {
   currentLang = lang;
+  /* game.html reads this to render itself in the same language. */
+  try { localStorage.setItem('wedding_lang', lang); } catch (_e) {}
   document.querySelectorAll('#lang-toggle button').forEach((b,i) => {
     b.classList.toggle('active', (i===0 && lang==='es') || (i===1 && lang==='en'));
   });
@@ -2196,6 +2198,13 @@ document.querySelector('.gallery-placeholder').addEventListener('click', e => {
 });
 /* A click on the image or on the backdrop both land on the dialog. */
 lightbox.addEventListener('click', () => lightbox.close());
+
+/* ── RESTORE LANGUAGE ── */
+(function () {
+  let saved = null;
+  try { saved = localStorage.getItem('wedding_lang'); } catch (_e) {}
+  if (saved === 'en' || saved === 'es') setLang(saved);
+})();
 
 /* ── REVEAL ON SCROLL ── */
 const reveals = document.querySelectorAll('.reveal');

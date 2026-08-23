@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cris y José — Wedding Memory</title>
+  <title>Cris y José — Memoria de Boda</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
@@ -265,11 +265,90 @@ window.AudioMgr = (function() {
 const { useState, useEffect, useRef } = React;
 const AudioMgr = window.AudioMgr;
 
-/* ── Storage ─────────────────────────────────────────────────────────── */
-const storage = window.storage || {
-  getItem:  function(k)   { try { return localStorage.getItem(k);  } catch(_e) { return null; } },
-  setItem:  function(k,v) { try { localStorage.setItem(k, v);     } catch(_e) {} },
+/* --- Language -------------------------------------------------------
+   Follows the choice made on the wedding site, which stores it under
+   'wedding_lang'. Defaults to Spanish, same as index.html. */
+const LANG = (function () {
+  try { return localStorage.getItem('wedding_lang') === 'en' ? 'en' : 'es'; }
+  catch (_e) { return 'es'; }
+})();
+const LOCALE = LANG === 'en' ? 'en-US' : 'es-MX';
+
+const STRINGS = {
+  es: {
+    pageTitle:       'Cris y José — Memoria de Boda',
+    gameTitle:       '✦ Juego de Memoria ✦',
+    nameLabel:       'Escribe tu nombre para jugar',
+    namePlaceholder: 'Tu nombre...',
+    play:            'Jugar ✨',
+    leaderboard:     '🏆 Tabla de Posiciones',
+    backToSite:      '← Volver al sitio',
+    weddingSite:     '← Sitio de la Boda',
+    mute:            'Silenciar',
+    unmute:          'Activar sonido',
+    lbTitle:         'Tabla de Posiciones',
+    lbLoading:       'Cargando la tabla…',
+    lbOffline:       'No pudimos cargar la tabla. Revisa tu conexión a internet.',
+    lbEmpty:         'Aún no hay puntajes. ¡Sé el primero!',
+    back:            '← Volver',
+    thRank:   'Puesto',
+    thName:   'Nombre',
+    thScore:  'Puntaje',
+    thTime:   'Tiempo',
+    thErrors: 'Errores',
+    thDate:   'Fecha',
+    quit:            'Salir',
+    allFound:        '✨ ¡Todos encontrados! ✨',
+    congrats:        '¡Felicidades!',
+    foundAll:        function (n) { return n + ', ¡encontraste todos los pares!'; },
+    time:            'TIEMPO',
+    errors:          'ERRORES',
+    finalScore:      'PUNTAJE FINAL',
+    rankLine:        function (r) { return '🏆 ¡Puesto #' + r + ' en la tabla!'; },
+    playAgain:       'Jugar de Nuevo',
+    offlineTitle:    'Sin conexión',
+    offlineBody:     'Conéctate a internet para registrar tu puntaje.',
+    offlineOk:       'Entendido',
+  },
+  en: {
+    pageTitle:       'Cris & José — Wedding Memory',
+    gameTitle:       '✦ Memory Game ✦',
+    nameLabel:       'Enter your name to play',
+    namePlaceholder: 'Your name...',
+    play:            'Play ✨',
+    leaderboard:     '🏆 Leaderboard',
+    backToSite:      '← Back to site',
+    weddingSite:     '← Wedding Site',
+    mute:            'Mute',
+    unmute:          'Unmute',
+    lbTitle:         'Leaderboard',
+    lbLoading:       'Loading the leaderboard…',
+    lbOffline:       'We could not load the leaderboard. Check your internet connection.',
+    lbEmpty:         'No scores yet — be the first!',
+    back:            '← Back',
+    thRank:   'Rank',
+    thName:   'Name',
+    thScore:  'Score',
+    thTime:   'Time',
+    thErrors: 'Errors',
+    thDate:   'Date',
+    quit:            'Quit',
+    allFound:        '✨ All found! ✨',
+    congrats:        'Congratulations!',
+    foundAll:        function (n) { return n + ', you found all the pairs!'; },
+    time:            'TIME',
+    errors:          'ERRORS',
+    finalScore:      'FINAL SCORE',
+    rankLine:        function (r) { return '🏆 Leaderboard rank #' + r + '!'; },
+    playAgain:       'Play Again',
+    offlineTitle:    'No connection',
+    offlineBody:     'Connect to the internet to record your score.',
+    offlineOk:       'Got it',
+  },
 };
+const T = STRINGS[LANG];
+document.documentElement.lang = LANG;
+document.title = T.pageTitle;
 
 /* ── Constants ───────────────────────────────────────────────────────── */
 const WEDDING_IMAGE   = 'assets/UI/GamePortada.png';
@@ -384,24 +463,22 @@ function buildDeck() {
   return [...h1, ...h2];
 }
 
-/* ── Leaderboard ─────────────────────────────────────────────────────── */
-function getLB() {
-  try { const r = storage.getItem('wedding_lb_v2'); return r ? JSON.parse(r) : []; }
-  catch { return []; }
-}
-function addEntry(entry) {
-  const lb = getLB();
-  lb.push(entry);
-  lb.sort((a, b) => b.score - a.score);
-  const top = lb.slice(0, 10);
-  try { storage.setItem('wedding_lb_v2', JSON.stringify(top)); } catch {}
-
-  if (window._firebaseReady) {
-    window._fbAddDoc(window._fbCollection(window._db, 'game_scores'), entry)
-      .catch(e => console.warn('No se pudo subir score a Firestore:', e.message));
+/* --- Leaderboard -----------------------------------------------------
+   Firestore is the only store. A score that cannot be uploaded is not
+   kept locally: the player is asked to get back online instead, so the
+   board every guest sees is the same board. */
+async function addEntry(entry) {
+  if (!window._firebaseReady || !navigator.onLine) return { rank: null, offline: true };
+  try {
+    await window._fbAddDoc(window._fbCollection(window._db, 'game_scores'), entry);
+  } catch (e) {
+    console.warn('No se pudo subir score a Firestore:', e.message);
+    return { rank: null, offline: true };
   }
-
-  return top.findIndex(e => e.timestamp === entry.timestamp) + 1;
+  const global = await getGlobalLB();
+  if (!global) return { rank: null, offline: false };
+  const i = global.findIndex(x => x.timestamp === entry.timestamp);
+  return { rank: i >= 0 ? i + 1 : null, offline: false };
 }
 
 async function getGlobalLB() {
@@ -502,30 +579,28 @@ function EntryScreen({ onPlay, onLeaderboard }) {
         }}>
           <div style={{ textAlign:'center', marginBottom:'clamp(14px,1.8vmin,20px)' }}>
             <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#e8c96b', fontSize:'clamp(1rem,1.5vmin,1.25rem)', fontWeight:700, letterSpacing:'0.05em', textShadow:'0 2px 12px rgba(0,0,0,0.7)' }}>
-              ✦ Memory Game ✦
+              {T.gameTitle}
             </div>
             <div style={{ width:44, height:1, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'8px auto 0' }}/>
           </div>
 
           <label style={{ display:'block', color:'rgba(253,248,240,0.7)', marginBottom:'clamp(6px,0.8vmin,10px)', fontSize:'clamp(0.72rem,1vmin,0.84rem)', fontStyle:'italic' }}>
-            Enter your name to play
+            {T.nameLabel}
           </label>
           <input
             className="name-input"
             type="text" value={name} maxLength={20}
-            placeholder="Your name..."
+            placeholder={T.namePlaceholder}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key==='Enter' && go()}
             style={{ maxWidth:'100%' }}
           />
           <div style={{ marginTop:'clamp(12px,1.6vmin,18px)', display:'flex', flexDirection:'column', gap:'clamp(6px,0.8vmin,10px)' }}>
             <button className="btn-primary" onClick={go} style={{ opacity: name.trim() ? 1 : 0.45 }}>
-              Play ✨
+              {T.play}
             </button>
-            <button className="btn-ghost" onClick={onLeaderboard}>🏆 Leaderboard</button>
-          </div>
-          <div style={{ marginTop:'clamp(10px,1.2vmin,14px)', color:'rgba(253,248,240,0.3)', fontSize:'clamp(0.6rem,0.82vmin,0.72rem)', fontStyle:'italic', textAlign:'center' }}>
-            12 pairs · random each game
+            <button className="btn-ghost" onClick={onLeaderboard}>{T.leaderboard}</button>
+            <a className="btn-ghost" href={MAIN_SITE_URL} style={{ textAlign:'center', textDecoration:'none' }}>{T.backToSite}</a>
           </div>
         </div>
       </div>
@@ -537,18 +612,24 @@ function EntryScreen({ onPlay, onLeaderboard }) {
    LEADERBOARD
 ══════════════════════════════════════════════════════════════ */
 function LeaderboardScreen({ onBack, highlightTs }) {
-  const [entries, setEntries] = useState(getLB());
-  const [loading, setLoading] = useState(true);
+  /* null while the Firestore read is still in flight, so the table is
+     never painted twice with two different sets of rows. */
+  const [entries, setEntries] = useState(null);
+  const [failed,  setFailed]  = useState(false);
   const medals = ['🥇','🥈','🥉'];
 
   useEffect(() => {
     let cancelled = false;
     getGlobalLB().then(global => {
-      if (!cancelled && global) setEntries(global);
-      if (!cancelled) setLoading(false);
+      if (cancelled) return;
+      if (global) setEntries(global); else setFailed(true);
     });
     return () => { cancelled = true; };
   }, []);
+
+  const note = txt => (
+    <div style={{ padding:40, textAlign:'center', color:'rgba(253,248,240,0.75)', fontStyle:'italic' }}>{txt}</div>
+  );
 
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', padding:'clamp(10px,1.5vmin,20px)' }}>
@@ -557,23 +638,22 @@ function LeaderboardScreen({ onBack, highlightTs }) {
         <div style={{ textAlign:'center', marginBottom:'clamp(8px,1.2vmin,16px)', flexShrink:0 }}>
           <div style={{ fontSize:'clamp(1.4rem,2.5vmin,2rem)', marginBottom:4 }}>🏆</div>
           <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#fdf8f0', fontSize:'clamp(1.3rem,2.2vmin,1.8rem)', fontWeight:700, textShadow:'0 2px 8px rgba(0,0,0,0.5)' }}>
-            Leaderboard
+            {T.lbTitle}
           </h2>
           <div style={{ width:50, height:2, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'8px auto 0' }}/>
         </div>
 
-        {/* Table */}
-        <div style={{ flex:1, overflow:'auto', background:'rgba(253,248,240,0.1)', backdropFilter:'blur(12px)', border:'1px solid rgba(201,168,76,0.3)', borderRadius:14, marginBottom:'clamp(8px,1.2vmin,14px)' }}>
-          {entries.length === 0 ? (
-            <div style={{ padding:40, textAlign:'center', color:'rgba(253,248,240,0.55)', fontStyle:'italic' }}>
-              No scores yet — be the first!
-            </div>
-          ) : (
+        {/* Table — solid dark panel so the rows stay legible over the art */}
+        <div style={{ flex:1, overflow:'auto', background:'rgba(10,4,0,0.88)', backdropFilter:'blur(12px)', border:'1px solid rgba(201,168,76,0.45)', borderRadius:14, marginBottom:'clamp(8px,1.2vmin,14px)', boxShadow:'0 10px 40px rgba(0,0,0,0.45)' }}>
+          {entries === null && !failed ? note(T.lbLoading)
+           : failed                    ? note(T.lbOffline)
+           : entries.length === 0      ? note(T.lbEmpty)
+           : (
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
-                <tr style={{ background:'rgba(201,168,76,0.18)', position:'sticky', top:0 }}>
-                  {['Rank','Name','Score','Time','Errors','Date'].map(h => (
-                    <th key={h} style={{ padding:'8px 10px', color:'#e8c96b', fontSize:'clamp(0.65rem,0.9vmin,0.78rem)', fontWeight:700, letterSpacing:'0.06em', textAlign:'center', borderBottom:'1px solid rgba(201,168,76,0.22)' }}>{h}</th>
+                <tr style={{ background:'rgba(201,168,76,0.28)', position:'sticky', top:0 }}>
+                  {[T.thRank,T.thName,T.thScore,T.thTime,T.thErrors,T.thDate].map(h => (
+                    <th key={h} style={{ padding:'8px 10px', color:'#e8c96b', fontSize:'clamp(0.65rem,0.9vmin,0.78rem)', fontWeight:700, letterSpacing:'0.06em', textAlign:'center', borderBottom:'1px solid rgba(201,168,76,0.35)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -582,15 +662,15 @@ function LeaderboardScreen({ onBack, highlightTs }) {
                   const hi = e.timestamp === highlightTs;
                   return (
                     <tr key={i} style={{
-                      background: hi ? 'rgba(201,168,76,0.2)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.05)',
+                      background: hi ? 'rgba(201,168,76,0.28)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.07)',
                       borderLeft: hi ? '4px solid #c9a84c' : '4px solid transparent',
                     }}>
                       <td style={{ padding:'8px 10px', textAlign:'center', fontSize:'clamp(0.9rem,1.3vmin,1.1rem)' }}>{medals[i] || '#'+(i+1)}</td>
                       <td style={{ padding:'8px 10px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#fdf8f0', fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.name}</td>
-                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8c96b', fontWeight:700, fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.score.toLocaleString()}</td>
-                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.72)', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.time}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8c96b', fontWeight:700, fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.score.toLocaleString(LOCALE)}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.85)', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.time}</td>
                       <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8a0c0', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.errors}</td>
-                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.4)', fontSize:'clamp(0.65rem,0.9vmin,0.76rem)' }}>{e.date}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.6)', fontSize:'clamp(0.65rem,0.9vmin,0.76rem)' }}>{e.date}</td>
                     </tr>
                   );
                 })}
@@ -600,7 +680,7 @@ function LeaderboardScreen({ onBack, highlightTs }) {
         </div>
 
         <div style={{ textAlign:'center', flexShrink:0 }}>
-          <button className="btn-ghost" onClick={onBack}>← Back</button>
+          <button className="btn-ghost" onClick={onBack}>{T.back}</button>
         </div>
       </div>
     </div>
@@ -626,38 +706,38 @@ function VictoryModal({ playerName, errors, seconds, rank, onPlayAgain, onLeader
         }}>
           <div style={{ fontSize:'clamp(1.6rem,2.8vmin,2.2rem)', marginBottom:4 }}>🎉</div>
           <h2 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'clamp(1.05rem,1.7vmin,1.4rem)', fontWeight:700, marginBottom:3 }}>
-            Congratulations!
+            {T.congrats}
           </h2>
           <p style={{ color:'#8b4a6b', fontStyle:'italic', marginBottom:'clamp(10px,1.5vmin,16px)', fontSize:'clamp(0.72rem,1vmin,0.86rem)' }}>
-            {playerName}, you found all the pairs!
+            {T.foundAll(playerName)}
           </p>
 
           <div style={{ background:'rgba(201,168,76,0.1)', border:'1px solid #c9a84c', borderRadius:10, padding:'clamp(10px,1.4vmin,16px)', marginBottom:'clamp(10px,1.4vmin,16px)' }}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
               <div>
-                <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>TIME</div>
+                <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>{T.time}</div>
                 <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>⏱ {formatTime(seconds)}</div>
               </div>
               <div>
-                <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>ERRORS</div>
+                <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>{T.errors}</div>
                 <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>❌ {errors}</div>
               </div>
             </div>
             <div style={{ paddingTop:10, borderTop:'1px solid #e8d8a0' }}>
-              <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:3, letterSpacing:'0.06em' }}>FINAL SCORE</div>
-              <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'clamp(1.5rem,2.5vmin,2rem)' }}>{score.toLocaleString()}</div>
+              <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:3, letterSpacing:'0.06em' }}>{T.finalScore}</div>
+              <div style={{ color:'#c9a84c', fontWeight:700, fontSize:'clamp(1.5rem,2.5vmin,2rem)' }}>{score.toLocaleString(LOCALE)}</div>
             </div>
           </div>
 
           {rank && (
             <div style={{ background:'rgba(201,168,76,0.2)', borderRadius:8, padding:'6px 12px', marginBottom:'clamp(10px,1.4vmin,14px)', color:'#8b6a00', fontWeight:600, fontSize:'clamp(0.7rem,0.95vmin,0.82rem)' }}>
-              🏆 Leaderboard rank #{rank}!
+              {T.rankLine(rank)}
             </div>
           )}
 
           <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-            <button className="btn-primary" onClick={onPlayAgain}>Play Again</button>
-            <button className="btn-outline" onClick={onLeaderboard}>🏆 Leaderboard</button>
+            <button className="btn-primary" onClick={onPlayAgain}>{T.playAgain}</button>
+            <button className="btn-outline" onClick={onLeaderboard}>{T.leaderboard}</button>
           </div>
         </div>
       </div>
@@ -737,16 +817,16 @@ function GameBoard({ playerName, onVictory, onQuit }) {
       setTimeout(() => {
         AudioMgr.play('victory');
         setPhase('revealing');
-        setTimeout(() => {
+        setTimeout(async () => {
           const fe = errorsRef.current, fs = secondsRef.current;
           const entry = {
             name: playerName, score: calcScore(fe, fs),
             time: formatTime(fs), errors: fe,
-            date: new Date().toLocaleDateString(), timestamp: Date.now(),
+            date: new Date().toLocaleDateString(LOCALE), timestamp: Date.now(),
           };
-          const rank = addEntry(entry);
+          const res = await addEntry(entry);
           setPhase('done');
-          onVictory(fe, fs, rank, entry.timestamp);
+          onVictory(fe, fs, res.rank, entry.timestamp, res.offline);
         }, 2000);
       }, 400);
     }
@@ -760,7 +840,7 @@ function GameBoard({ playerName, onVictory, onQuit }) {
         <div style={{ position:'absolute', top:'50%', left:'50%', zIndex:40, pointerEvents:'none', animation:'popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards' }}>
           <div style={{ background:'linear-gradient(135deg,rgba(253,248,240,0.97),rgba(255,249,240,0.97))', border:'2px solid #c9a84c', borderRadius:18, padding:'clamp(12px,2vmin,18px) clamp(28px,4vw,48px)', boxShadow:'0 12px 50px rgba(201,168,76,0.6)', whiteSpace:'nowrap' }}>
             <span style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:'clamp(1.1rem,2.2vmin,1.7rem)', color:'#3d2b00', fontWeight:700 }}>
-              ✨ All found! ✨
+              {T.allFound}
             </span>
           </div>
         </div>
@@ -777,7 +857,7 @@ function GameBoard({ playerName, onVictory, onQuit }) {
           <span className="hud-stat" style={{ color:'#e8a0c0' }}>❌ <strong>{errors}</strong></span>
           <span className="hud-stat" style={{ color:'#e8c96b' }}>✅ <strong>{matched.size}/{TOTAL_PAIRS}</strong></span>
         </div>
-        <button className="btn-sm" onClick={onQuit}>Quit</button>
+        <button className="btn-sm" onClick={onQuit}>{T.quit}</button>
       </div>
 
       {/* Card grid */}
@@ -820,6 +900,7 @@ function App() {
   const [gameKey,     setGameKey]     = useState(0);
   const [bgAlpha,     setBgAlpha]     = useState(0.35);
   const [muted,       setMuted]       = useState(false);
+  const [showOffline, setShowOffline] = useState(false);
 
   useEffect(() => {
     const link = document.createElement('link');
@@ -841,9 +922,10 @@ function App() {
     setPlayerName(name); setVictoryData(null);
     setGameKey(k => k+1); setBgAlpha(0.50); setScreen('game');
   }
-  function handleVictory(errors, seconds, rank, timestamp) {
+  function handleVictory(errors, seconds, rank, timestamp, offline) {
     setBgAlpha(0.08);
     setVictoryData({ errors, seconds, rank, timestamp });
+    if (offline) setShowOffline(true);
   }
   function handlePlayAgain() {
     setVictoryData(null); setGameKey(k => k+1); setBgAlpha(0.50);
@@ -872,18 +954,16 @@ function App() {
         <BgLayer alpha={bgAlpha}/>
 
         {/* Top-right controls — always visible */}
-        <div style={{ position:'absolute', zIndex:20, top:'clamp(10px,1.5vmin,18px)', right:'clamp(10px,1.5vw,20px)', display:'flex', gap:8, alignItems:'center' }}>
-          {screen === 'entry' && (
-            <a href={MAIN_SITE_URL} style={Object.assign({}, topBtnBase, {padding:'7px 16px'})}
-              onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
-            >← Wedding Site</a>
-          )}
-          <button onClick={toggleMute}
-            style={Object.assign({}, topBtnBase, {padding:'7px 11px', fontSize:'clamp(0.9rem,1.4vmin,1.15rem)', border:'1px solid rgba(201,168,76,0.45)'})}
+        <div style={{ position:'absolute', zIndex:20, top:'clamp(10px,1.5vmin,18px)', right:'clamp(10px,1.5vw,20px)', display:'flex', gap:8, alignItems:'stretch', flexWrap:'nowrap' }}>
+          <a href={MAIN_SITE_URL} style={Object.assign({}, topBtnBase, {padding:'7px 16px', flex:'0 0 auto', whiteSpace:'nowrap'})}
             onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
             onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
-            title={muted ? 'Unmute' : 'Mute'}
+          >{T.weddingSite}</a>
+          <button onClick={toggleMute}
+            style={Object.assign({}, topBtnBase, {padding:'7px 11px', fontSize:'clamp(0.9rem,1.4vmin,1.15rem)', border:'1px solid rgba(201,168,76,0.45)', flex:'0 0 auto'})}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(201,168,76,0.25)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.8)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background='rgba(8,3,0,0.55)'; e.currentTarget.style.borderColor='rgba(201,168,76,0.45)'; }}
+            title={muted ? T.unmute : T.mute}
           >{muted ? '🔇' : '🔊'}</button>
         </div>
 
@@ -919,6 +999,27 @@ function App() {
             <LeaderboardScreen onBack={handleBack} highlightTs={lbHighlight}/>
           )}
         </div>
+
+        {showOffline && (
+          <div style={{ position:'absolute', inset:0, zIndex:60, background:'rgba(6,2,0,0.72)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+            <div className="fade-in" style={{
+              background:'linear-gradient(145deg,rgba(253,248,240,0.97),rgba(255,249,240,0.97))',
+              border:'2px solid #c9a84c', borderRadius:18,
+              padding:'clamp(20px,3vmin,30px) clamp(18px,2.6vmin,28px)',
+              maxWidth:360, width:'100%', textAlign:'center',
+              boxShadow:'0 20px 60px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ fontSize:'clamp(1.6rem,2.8vmin,2.2rem)', marginBottom:6 }}>📶</div>
+              <h3 style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#3d2b00', fontSize:'clamp(1rem,1.6vmin,1.3rem)', fontWeight:700, marginBottom:8 }}>
+                {T.offlineTitle}
+              </h3>
+              <p style={{ color:'#8b4a6b', fontSize:'clamp(0.78rem,1.1vmin,0.92rem)', lineHeight:1.6, marginBottom:'clamp(14px,2vmin,20px)' }}>
+                {T.offlineBody}
+              </p>
+              <button className="btn-primary" onClick={() => setShowOffline(false)}>{T.offlineOk}</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
