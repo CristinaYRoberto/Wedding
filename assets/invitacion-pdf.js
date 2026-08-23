@@ -54,14 +54,20 @@ window.InvitacionPDF = (function () {
      jsPDF stretches whatever it is handed, so the cropping has to
      happen here or faces come out squashed. focusY biases the crop
      window vertically: 0 keeps the top, 1 the bottom. */
-  function loadPhoto(src, aspect, outW, focusY) {
+  function loadPhoto(src, aspect, outW, focusY, zoom, focusX) {
+    zoom = zoom || 1;
+    focusX = focusX === undefined ? 0.5 : focusX;
     return new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => {
         const sw = img.naturalWidth, sh = img.naturalHeight;
         let cw = sw, ch = Math.round(sw / aspect);
         if (ch > sh) { ch = sh; cw = Math.round(sh * aspect); }
-        const sx = Math.round((sw - cw) / 2);
+        /* zoom shrinks that window before it is positioned, so a crop can
+           frame a detail (a face) rather than only the widest fit. */
+        cw = Math.round(cw / zoom);
+        ch = Math.round(ch / zoom);
+        const sx = Math.round((sw - cw) * focusX);
         const sy = Math.round((sh - ch) * (focusY === undefined ? 0.5 : focusY));
 
         const c = document.createElement('canvas');
@@ -83,10 +89,11 @@ window.InvitacionPDF = (function () {
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
-      loadPhoto('assets/dress-code_v2.jpg', 1813 / 868, 1000, 0.5),
-      /* Closes the dress code page. Cropped wide around the couple so
-         the arch reads without the figure being clipped by the strip. */
-      loadPhoto('assets/gallery/gallery-13.jpg', 2.4, 900, 0.72),
+      loadPhoto('assets/gallery/dress-code_v2.jpg', 1600 / 482, 1000, 0.5),
+      /* Full-page background for the dress code: zoomed and positioned so
+         the couple's faces sit in the page's own empty margin at the top,
+         clear of the rules text and the fabric photo below them. */
+      loadPhoto('assets/gallery/gallery-13.jpg', W / H, 900, 0.32, 1.35),
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
@@ -192,23 +199,22 @@ window.InvitacionPDF = (function () {
       doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
-    const ey = 139, colL = W / 4, colR = 3 * W / 4;
-    function event(cx, label, name, time, place, url) {
+    const ey = 141, colL = W / 4, colR = 3 * W / 4;
+    function event(cx, label, time, place, url) {
       tracked(doc, label, ey, 6.2, GOLD, 0.7, cx);
-      centred(doc, name, ey + 8, 'Cormorant', 15, CHARCOAL, cx);
-      centred(doc, time, ey + 15, 'Cinzel', 9, DARKGOLD, cx);
+      centred(doc, time, ey + 10, 'Cinzel', 11, DARKGOLD, cx);
       setF(doc, 'Lato', 7, MUTED);
       const lines = doc.splitTextToSize(place, 56);
-      lines.forEach((ln, i) => doc.text(ln, cx, ey + 21 + i * 3.6, { align: 'center' }));
-      const by = ey + 21 + lines.length * 3.6 + 1.5;
+      lines.forEach((ln, i) => doc.text(ln, cx, ey + 18 + i * 3.6, { align: 'center' }));
+      const by = ey + 18 + lines.length * 3.6 + 1.5;
       setF(doc, 'Cinzel', 6, GOLD);
       doc.text('VER EN MAPA', cx, by, { align: 'center' });
       const tw = doc.getTextWidth('VER EN MAPA');
       doc.link(cx - tw / 2, by - 3, tw, 4.5, { url: url });
     }
-    event(colL, 'CEREMONIA', 'Misa', '12:00 PM',
+    event(colL, 'CEREMONIA', '12:00 PM',
           'Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', MAPS_MISA);
-    event(colR, 'RECEPCIÓN', 'Cena y Baile', '7:00 PM',
+    event(colR, 'RECEPCIÓN', '7:00 PM',
           'Salón Las Cascadas, Los Molinos 97, Las Minitas', MAPS_FIESTA);
 
     /* The one rule the couple wants read before the day itself */
@@ -223,10 +229,17 @@ window.InvitacionPDF = (function () {
   }
 
   /* ── Page 2 — dress code ──────────────────────────────────────────
-     The fabric strip is deliberately narrower than the text column so
-     the photo below it has room to sit whole rather than be clipped. */
+     The cathedral sits as a full-page background again, cropped and
+     zoomed so the couple's faces land in the empty band above the
+     title rather than under the rules or the fabric photo, and faint
+     enough that it reads as texture rather than competing with either. */
   function pageTwo(doc, a) {
     page(doc);
+
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.11 }));
+    doc.addImage(a.veil.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
+    doc.restoreGraphicsState();
 
     tracked(doc, 'DRESS CODE', 18, 7.5, GOLD, 1.1);
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
@@ -252,29 +265,30 @@ window.InvitacionPDF = (function () {
       y += 1.6;
     });
 
-    y += 4;
+    y += 5;
+    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', y, 7.5, CHARCOAL, 0.8);
+    y += 10;
+
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
     y += 5.5;
 
-    const bw = 98, bx = (W - bw) / 2, bh = bw / a.telas.aspect;   /* ≈ 47mm */
+    /* The strip is short at this photo's own aspect (~3.3:1), so it can
+       run the full text-column width without dominating the page. */
+    const bw = W - 2 * M, bx = M, bh = bw / a.telas.aspect;
     doc.addImage(a.telas.data, 'JPEG', bx, y, bw, bh, undefined, 'FAST');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(bx, y, bw, bh, 'S');
     y += bh + 5;
 
-    ['Blanco', 'Gris', 'Dorado', 'Negro'].forEach((label, i) => {
-      setF(doc, 'Cinzel', 6.4, MUTED);
+    ['Evitar Blanco', 'Evitar Gris', 'Evitar Dorado', 'Evitar Negro'].forEach((label, i) => {
+      setF(doc, 'Cinzel', 6, MUTED);
       doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 7.5;
+    y += 8;
 
     paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
-              y, 'CormorantI', 9, AVOID, W - 2 * M - 10, 4.6);
-
-    /* The cathedral closes the page, whole and clear of everything else */
-    const iw = W - 2 * M, ih = iw / 2.4, iy = H - 9 - ih;         /* ≈ 149 */
-    doc.addImage(a.veil.data, 'JPEG', M, iy, iw, ih, undefined, 'FAST');
+              y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
 
     footer(doc, '2 / 4');
   }
@@ -301,24 +315,20 @@ window.InvitacionPDF = (function () {
       y += bankH + 3.5;
     });
 
-    tracked(doc, 'HOTELES CERCANOS', 84, 7, GOLD, 1);
-    const hotels = [
-      ['Lucerna Hermosillo', '662 259 2000'],
-      ['Fiesta Inn Hermosillo', '662 289 1700'],
-      ['Holiday Inn Express', '662 289 0000'],
-      ['Araiza Hermosillo', '662 210 9700'],
-    ];
-    const hw = (W - 2 * M) / 2;
-    hotels.forEach((h, i) => {
-      const cx = M + hw * (i % 2) + hw / 2;
-      const ry = 92 + Math.floor(i / 2) * 11;
-      centred(doc, h[0], ry, 'Cormorant', 11.5, CHARCOAL, cx);
-      setF(doc, 'Lato', 7, DARKGOLD);
-      doc.text(h[1], cx, ry + 4.4, { align: 'center' });
-    });
+    /* The hotel list now lives on the site as a popup, since a printed
+       page can't hold one and stay current — point there instead of
+       duplicating hotel data that can drift out of date in two places. */
+    y += 11;
+    tracked(doc, 'HOSPEDAJE', y, 7, GOLD, 1);
+    y += 7;
+    y = paragraph(doc, 'Si te vas a hospedar en un hotel, en la página encontrarás una lista de hoteles recomendados en Hermosillo con teléfono y distancia a cada evento.',
+                  y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
+    y += 8;
+    y = button(doc, 'VER LISTA DE HOTELES', y, SITE + '#hoteles', GOLD, CREAM);
+    y += 8;
 
     /* Two square crops, side by side */
-    const gap = 6, pw = (W - 2 * M - gap) / 2, py = 122;
+    const gap = 6, pw = (W - 2 * M - gap) / 2, py = y;
     doc.addImage(a.twoA.data, 'JPEG', M, py, pw, pw, undefined, 'FAST');
     doc.addImage(a.twoB.data, 'JPEG', M + pw + gap, py, pw, pw, undefined, 'FAST');
 
