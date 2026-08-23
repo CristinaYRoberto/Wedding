@@ -1,24 +1,24 @@
 /* ══════════════════════════════════════════════════════════════════════
    INVITACIONES EN PDF
    ──────────────────────────────────────────────────────────────────────
-   Draws a two page A5 invitation with the same palette and typefaces as
-   the site. Text is drawn as vectors rather than rasterised, so it stays
-   sharp, stays selectable, and the buttons can carry real links.
+   Three A5 pages with the same palette and typefaces as the site. Text
+   is drawn as vectors rather than rasterised, so it stays sharp, stays
+   selectable, and the buttons carry real links.
+
+   Confirming happens on the site, in the form, so that every reply
+   lands in one place. The PDF only carries the button that opens it.
 
    Everything heavy — jsPDF, JSZip, the fonts, the photos — loads only
-   when an invitation is actually generated, and is then reused for the
-   whole batch.
+   when an invitation is generated, then is reused for the whole batch.
    ══════════════════════════════════════════════════════════════════════ */
 window.InvitacionPDF = (function () {
 
-  /* ── Where the guest is sent from the PDF ─────────────────────────── */
   const SITE = (window.SITE_URL || 'https://cristinayroberto.github.io/Wedding/');
   const WA_ROBERTO  = '526621461622';
   const WA_CRISTINA = '526623419038';
-  const MAPS_MISA  = 'https://maps.app.goo.gl/SFEHyiZqfgwzFr6AA';
+  const MAPS_MISA   = 'https://maps.app.goo.gl/SFEHyiZqfgwzFr6AA';
   const MAPS_FIESTA = 'https://maps.app.goo.gl/YP5qQpQrmvKPxaF79';
 
-  /* ── Palette, lifted from the site's custom properties ────────────── */
   const GOLD     = [184, 154, 106];
   const DARKGOLD = [138, 111,  69];
   const CHARCOAL = [ 44,  44,  44];
@@ -26,6 +26,7 @@ window.InvitacionPDF = (function () {
   const CREAM    = [245, 240, 232];
   const SAGE     = [232, 237, 228];
   const AVOID    = [180,  83,  75];
+  const WHITE    = [255, 255, 255];
 
   const W = 148, H = 210, M = 13;          /* A5 in mm, with margin */
 
@@ -49,32 +50,43 @@ window.InvitacionPDF = (function () {
     return _libs;
   }
 
-  /* Downscale a photo through a canvas so each PDF carries a sensibly
-     sized JPEG rather than the full 2048px original. */
-  function loadPhoto(src, maxW) {
+  /* Crop the source to the aspect the layout needs, then downscale.
+     jsPDF stretches whatever it is handed, so the cropping has to
+     happen here or faces come out squashed. focusY biases the crop
+     window vertically: 0 keeps the top, 1 the bottom. */
+  function loadPhoto(src, aspect, outW, focusY) {
     return new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => {
-        const scale = Math.min(1, maxW / img.naturalWidth);
+        const sw = img.naturalWidth, sh = img.naturalHeight;
+        let cw = sw, ch = Math.round(sw / aspect);
+        if (ch > sh) { ch = sh; cw = Math.round(sh * aspect); }
+        const sx = Math.round((sw - cw) / 2);
+        const sy = Math.round((sh - ch) * (focusY === undefined ? 0.5 : focusY));
+
         const c = document.createElement('canvas');
-        c.width  = Math.round(img.naturalWidth  * scale);
-        c.height = Math.round(img.naturalHeight * scale);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        res({ data: c.toDataURL('image/jpeg', 0.72), w: c.width, h: c.height });
+        c.width  = Math.min(outW, cw);
+        c.height = Math.round(c.width / aspect);
+        c.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, c.width, c.height);
+        res({ data: c.toDataURL('image/jpeg', 0.72), aspect: aspect });
       };
       img.onerror = () => rej(new Error('No se pudo cargar la foto ' + src));
       img.src = src;
     });
   }
 
+  const BAND_ASPECT = W / 46;
+
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [wide, tallA, tallB] = await Promise.all([
-      loadPhoto('assets/gallery/gallery-02.jpg', 900),
-      loadPhoto('assets/gallery/gallery-04.jpg', 460),
-      loadPhoto('assets/gallery/gallery-12.jpg', 460),
+    const [band, telas, closeL, closeR] = await Promise.all([
+      /* Faces sit high in this frame, so bias the crop upward. */
+      loadPhoto('assets/gallery/gallery-02.jpg', BAND_ASPECT, 1000, 0.34),
+      loadPhoto('assets/dress-code_v2.jpg', 1813 / 868, 1000, 0.5),
+      loadPhoto('assets/gallery/gallery-06.jpg', 0.78, 420, 0.35),
+      loadPhoto('assets/gallery/gallery-12.jpg', 0.78, 420, 0.35),
     ]);
-    _assets = { wide, tallA, tallB };
+    _assets = { band: band, telas: telas, closeL: closeL, closeR: closeR };
     return _assets;
   }
 
@@ -93,23 +105,21 @@ window.InvitacionPDF = (function () {
     doc.setTextColor(colour[0], colour[1], colour[2]);
   }
 
-  /* Cinzel has no lowercase of its own character, and the site always
-     letterspaces it, so mirror that here. */
-  function tracked(doc, text, y, size, colour, spacing) {
+  /* The site always letterspaces Cinzel, so mirror that here. */
+  function tracked(doc, text, y, size, colour, spacing, cx) {
     setF(doc, 'Cinzel', size, colour);
     const sp = spacing === undefined ? 0.6 : spacing;
     const chars = String(text).split('');
     let total = 0;
     chars.forEach(ch => { total += doc.getTextWidth(ch) + sp; });
     total -= sp;
-    let x = (W - total) / 2;
+    let x = (cx === undefined ? W / 2 : cx) - total / 2;
     chars.forEach(ch => { doc.text(ch, x, y); x += doc.getTextWidth(ch) + sp; });
-    return total;
   }
 
-  function centred(doc, text, y, family, size, colour) {
+  function centred(doc, text, y, family, size, colour, cx) {
     setF(doc, family, size, colour);
-    doc.text(String(text), W / 2, y, { align: 'center' });
+    doc.text(String(text), cx === undefined ? W / 2 : cx, y, { align: 'center' });
   }
 
   function rule(doc, y, width, colour) {
@@ -118,18 +128,16 @@ window.InvitacionPDF = (function () {
     doc.line((W - width) / 2, y, (W + width) / 2, y);
   }
 
-  /* A filled pill with a label, wired to a URL. Returns the y below it. */
   function button(doc, label, y, url, fill, textColour) {
-    const h = 9, w = 84, x = (W - w) / 2;
+    const h = 10, w = 88, x = (W - w) / 2;
     doc.setFillColor(fill[0], fill[1], fill[2]);
-    doc.roundedRect(x, y, w, h, 4.5, 4.5, 'F');
+    doc.roundedRect(x, y, w, h, 5, 5, 'F');
     setF(doc, 'Cinzel', 8, textColour);
-    doc.text(label, W / 2, y + 5.9, { align: 'center' });
+    doc.text(label, W / 2, y + 6.4, { align: 'center' });
     doc.link(x, y, w, h, { url: url });
     return y + h;
   }
 
-  /* Wrapped body copy, centred, returns the y below the last line. */
   function paragraph(doc, text, y, family, size, colour, maxW, lead) {
     setF(doc, family, size, colour);
     const lines = doc.splitTextToSize(String(text), maxW);
@@ -137,63 +145,58 @@ window.InvitacionPDF = (function () {
     return y + (lines.length - 1) * lead;
   }
 
-  /* ── Page 1: the invitation ───────────────────────────────────────── */
-  function pageOne(doc, a, familia, pases) {
+  function page(doc, first) {
+    if (!first) doc.addPage();
     doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
     doc.rect(0, 0, W, H, 'F');
+  }
 
-    /* Photo band across the top, cropped to a letterbox */
-    const bandH = 46;
-    doc.addImage(a.wide.data, 'JPEG', 0, 0, W, bandH, undefined, 'FAST');
-    doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
+  function footer(doc, n) {
+    setF(doc, 'Cinzel', 6, GOLD);
+    doc.text('C  &  R    ·    03 · 10 · 2026    ·    ' + n, W / 2, H - 5.5, { align: 'center' });
+  }
 
-    let y = bandH + 13;
-    tracked(doc, 'NOS CASAMOS', y, 7.5, GOLD, 1.1);
+  /* ── Page 1 — the invitation ──────────────────────────────────────
+     Coordinates are laid out so the button and the note clear the
+     footer; the page has no room to spare below 205mm. */
+  function pageOne(doc, a, familia, pases) {
+    page(doc, true);
 
-    y += 15;
-    centred(doc, 'Cristina', y, 'Cormorant', 34, CHARCOAL);
-    y += 9;
-    centred(doc, '&', y, 'CormorantI', 17, GOLD);
-    y += 12;
-    centred(doc, 'Roberto', y, 'Cormorant', 34, CHARCOAL);
+    const bandH = W / BAND_ASPECT;                       /* 46mm */
+    doc.addImage(a.band.data, 'JPEG', 0, 0, W, bandH, undefined, 'FAST');
 
-    y += 9;
-    rule(doc, y, 34, GOLD);
-
-    y += 7;
-    tracked(doc, '03 · OCTUBRE · 2026', y, 8.5, MUTED, 0.9);
+    tracked(doc, 'NOS CASAMOS', 58, 7.5, GOLD, 1.1);
+    centred(doc, 'Cristina', 72, 'Cormorant', 30, CHARCOAL);
+    centred(doc, '&',        80, 'CormorantI', 16, GOLD);
+    centred(doc, 'Roberto',  91, 'Cormorant', 30, CHARCOAL);
+    rule(doc, 99, 34, GOLD);
+    tracked(doc, '03 · OCTUBRE · 2026', 105.5, 8.5, MUTED, 0.9);
 
     /* Who this copy is for */
-    y += 11;
-    const boxH = pases ? 20 : 14;
+    const boxY = 114.5, boxH = 20;
     doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
-    doc.rect(M, y, W - 2 * M, boxH, 'F');
+    doc.rect(M, boxY, W - 2 * M, boxH, 'F');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
-    doc.rect(M, y, W - 2 * M, boxH, 'S');
-
-    tracked(doc, 'PARA', y + 6, 6.5, GOLD, 1);
+    doc.rect(M, boxY, W - 2 * M, boxH, 'S');
+    tracked(doc, 'PARA', boxY + 6, 6.5, GOLD, 1);
     setF(doc, 'CormorantI', 15, CHARCOAL);
-    doc.text(String(familia || 'Nuestro invitado'), W / 2, y + 12.5, { align: 'center' });
+    doc.text(String(familia || 'Nuestro invitado'), W / 2, boxY + 12.6, { align: 'center' });
     if (pases) {
       setF(doc, 'Cinzel', 7, DARKGOLD);
-      doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, y + 17.6, { align: 'center' });
+      doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, boxY + 17.6, { align: 'center' });
     }
-    y += boxH + 11;
 
     /* The two events, side by side */
-    const colL = W / 4, colR = 3 * W / 4;
+    const ey = 145.5, colL = W / 4, colR = 3 * W / 4;
     function event(cx, label, name, time, place, url) {
-      setF(doc, 'Cinzel', 6.2, GOLD);
-      doc.text(label, cx, y, { align: 'center' });
-      setF(doc, 'Cormorant', 14, CHARCOAL);
-      doc.text(name, cx, y + 7, { align: 'center' });
-      setF(doc, 'Cinzel', 9, DARKGOLD);
-      doc.text(time, cx, y + 13.5, { align: 'center' });
+      tracked(doc, label, ey, 6.2, GOLD, 0.7, cx);
+      centred(doc, name, ey + 8, 'Cormorant', 15, CHARCOAL, cx);
+      centred(doc, time, ey + 15, 'Cinzel', 9, DARKGOLD, cx);
       setF(doc, 'Lato', 7, MUTED);
       const lines = doc.splitTextToSize(place, 56);
-      lines.forEach((ln, i) => doc.text(ln, cx, y + 19 + i * 3.6, { align: 'center' }));
-      const by = y + 19 + lines.length * 3.6 + 1;
+      lines.forEach((ln, i) => doc.text(ln, cx, ey + 21 + i * 3.6, { align: 'center' }));
+      const by = ey + 21 + lines.length * 3.6 + 1.5;
       setF(doc, 'Cinzel', 6, GOLD);
       doc.text('VER EN MAPA', cx, by, { align: 'center' });
       const tw = doc.getTextWidth('VER EN MAPA');
@@ -204,84 +207,66 @@ window.InvitacionPDF = (function () {
     event(colR, 'RECEPCIÓN', 'Cena y Baile', '7:00 PM',
           'Salón Las Cascadas, Los Molinos 97, Las Minitas', MAPS_FIESTA);
 
-    y += 40;
-    button(doc, 'CONFIRMAR ASISTENCIA', y, SITE + '#rsvp', CHARCOAL, CREAM);
-
-    y += 13;
+    button(doc, 'CONFIRMAR ASISTENCIA', 183.5, SITE + '#rsvp', CHARCOAL, CREAM);
     setF(doc, 'CormorantI', 8.5, MUTED);
-    doc.text('Confirma antes del 1 de septiembre de 2026', W / 2, y, { align: 'center' });
+    doc.text('Se confirma en la página, antes del 1 de septiembre de 2026',
+             W / 2, 199.5, { align: 'center' });
+
+    footer(doc, '1 / 3');
   }
 
-  /* ── Page 2: what a guest needs at a glance ───────────────────────── */
+  /* ── Page 2 — dress code and where to stay ────────────────────────── */
   function pageTwo(doc, a) {
-    doc.addPage();
-    doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
-    doc.rect(0, 0, W, H, 'F');
+    page(doc);
 
-    let y = 16;
-    tracked(doc, 'DRESS CODE', y, 7.5, GOLD, 1.1);
-    y += 8;
-    centred(doc, 'Vestimenta Formal', y, 'Cormorant', 20, CHARCOAL);
-    y += 6;
-    rule(doc, y, 26, GOLD);
+    tracked(doc, 'DRESS CODE', 18, 7.5, GOLD, 1.1);
+    centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
+    rule(doc, 33, 26, GOLD);
 
-    y += 7;
-    setF(doc, 'Lato', 7.6, MUTED);
+    let y = 42;
+    y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
+                  y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
+    y += 9;
+
     const rules = [
-      'Traje sastre clásico para caballero. Sugerencias: negro, gris, azul marino.',
+      'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
       'Corbata o pañuelo de cualquier color menos blanco.',
       'Vestido largo o cóctel para nuestras invitadas.',
     ];
     rules.forEach(r => {
-      const lines = doc.splitTextToSize('·  ' + r, W - 2 * M - 6);
-      lines.forEach(ln => { doc.text(ln, M + 3, y); y += 4.2; });
-      y += 1.2;
+      setF(doc, 'Lato', 7.8, CHARCOAL);
+      const lines = doc.splitTextToSize(r, W - 2 * M - 8);
+      lines.forEach((ln, i) => {
+        if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
+        doc.text(ln, M + 6, y); y += 4.5;
+      });
+      y += 1.6;
     });
 
-    /* Colours to avoid — the one loud thing on the page */
-    y += 2;
-    const avH = 26;
-    doc.setFillColor(250, 244, 243);
-    doc.rect(M, y, W - 2 * M, avH, 'F');
-    doc.setDrawColor(AVOID[0], AVOID[1], AVOID[2]);
+    /* The shades to avoid, on the same fabrics the site shows */
+    y += 3;
+    tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 7, AVOID, 0.5);
+    y += 6;
+    const bw = W - 2 * M, bh = bw / a.telas.aspect;
+    doc.addImage(a.telas.data, 'JPEG', M, y, bw, bh, undefined, 'FAST');
+    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
-    doc.rect(M, y, W - 2 * M, avH, 'S');
-    setF(doc, 'Cinzel', 7, AVOID);
-    doc.text('POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', W / 2, y + 6, { align: 'center' });
+    doc.rect(M, y, bw, bh, 'S');
+    y += bh + 5;
 
-    const sw = ['Blanco', 'Gris', 'Dorado', 'Negro'];
-    const fills = [[247, 244, 236], [157, 157, 157], [201, 162, 39], [26, 26, 26]];
-    const cw = (W - 2 * M) / 4;
-    sw.forEach((label, i) => {
-      const cx = M + cw * i + cw / 2;
-      doc.setFillColor(fills[i][0], fills[i][1], fills[i][2]);
-      doc.circle(cx, y + 13, 3.2, 'F');
-      doc.setDrawColor(AVOID[0], AVOID[1], AVOID[2]);
-      doc.setLineWidth(0.4);
-      doc.circle(cx, y + 13, 3.2, 'S');
-      doc.line(cx - 2.3, y + 15.3, cx + 2.3, y + 10.7);   /* struck through */
-      setF(doc, 'Lato', 6.4, MUTED);
-      doc.text(label, cx, y + 21, { align: 'center' });
+    ['Blanco', 'Gris', 'Dorado', 'Negro'].forEach((label, i) => {
+      setF(doc, 'Cinzel', 6.6, MUTED);
+      doc.text(label, M + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += avH + 10;
+    y += 7.5;
 
-    /* Gifts */
-    tracked(doc, 'REGALOS', y, 7, GOLD, 1);
-    y += 6;
-    y = paragraph(doc, 'Su presencia es el regalo más valioso. Si desean tener un detalle, lo recibimos con cariño.',
-                  y, 'Lato', 7.4, MUTED, W - 2 * M - 10, 4);
-    y += 7;
-    setF(doc, 'Lato', 7.2, CHARCOAL);
-    const banks = [
-      'BBVA · Cristina Borquez Bernal · CLABE 4152314000799307',
-      'Santander · José Roberto Moreno Ruiz · CLABE 014760200064187105',
-    ];
-    banks.forEach(b => { doc.text(b, W / 2, y, { align: 'center' }); y += 4.6; });
-    y += 6;
+    y = paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
+                  y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
 
-    /* Hotels */
+    /* Hotels fill the space the dress code leaves */
+    y += 13;
     tracked(doc, 'HOTELES CERCANOS', y, 7, GOLD, 1);
-    y += 6.5;
+    y += 7.5;
     const hotels = [
       ['Lucerna Hermosillo', '662 259 2000'],
       ['Fiesta Inn Hermosillo', '662 289 1700'],
@@ -291,41 +276,68 @@ window.InvitacionPDF = (function () {
     const hw = (W - 2 * M) / 2;
     hotels.forEach((h, i) => {
       const cx = M + hw * (i % 2) + hw / 2;
-      const ry = y + Math.floor(i / 2) * 10;
-      setF(doc, 'Cormorant', 11, CHARCOAL);
-      doc.text(h[0], cx, ry, { align: 'center' });
+      const ry = y + Math.floor(i / 2) * 11;
+      centred(doc, h[0], ry, 'Cormorant', 11.5, CHARCOAL, cx);
       setF(doc, 'Lato', 7, DARKGOLD);
-      doc.text(h[1], cx, ry + 4.2, { align: 'center' });
+      doc.text(h[1], cx, ry + 4.4, { align: 'center' });
     });
-    y += 24;
 
-    /* Confirm, by whichever route suits the guest */
-    tracked(doc, 'CONFIRMA POR WHATSAPP', y, 7, GOLD, 1);
+    footer(doc, '2 / 3');
+  }
+
+  /* ── Page 3 — gifts and how to reply ──────────────────────────────── */
+  function pageThree(doc, a) {
+    page(doc);
+
+    tracked(doc, 'REGALOS', 18, 7.5, GOLD, 1.1);
+    let y = paragraph(doc, 'Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
+                      25, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
+    y += 8;
+
+    const bankH = 15, bankW = W - 2 * M;
+    [['BBVA', 'Cristina Borquez Bernal', '4152314000799307'],
+     ['Santander', 'José Roberto Moreno Ruiz', '014760200064187105']].forEach(b => {
+      doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
+      doc.rect(M, y, bankW, bankH, 'F');
+      setF(doc, 'Cinzel', 6.4, DARKGOLD);
+      doc.text('BANCO · ' + b[0], W / 2, y + 5, { align: 'center' });
+      setF(doc, 'Lato', 7.4, CHARCOAL);
+      doc.text(b[1], W / 2, y + 9.4, { align: 'center' });
+      doc.text('CLABE ' + b[2], W / 2, y + 13.2, { align: 'center' });
+      y += bankH + 3.5;
+    });
+
+    /* Replying: one road, the form on the site */
+    y += 9;
+    tracked(doc, 'CONFIRMA TU ASISTENCIA', y, 7.5, GOLD, 1.1);
+    y += 7;
+    y = paragraph(doc, 'Toca el botón y llena el formulario en la página. Ahí encontrarás también la historia, la galería, los padrinos y el menú.',
+                  y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
+    y += 8;
+    y = button(doc, 'IR A LA PÁGINA Y CONFIRMAR', y, SITE + '#rsvp', CHARCOAL, CREAM);
+
+    y += 7;
+    setF(doc, 'CormorantI', 7.8, MUTED);
+    doc.text('¿Se te complica? Escríbenos y te ayudamos:', W / 2, y, { align: 'center' });
     y += 5;
-    const bw = 56, gap = 6, bx = (W - (bw * 2 + gap)) / 2;
-    [['ROBERTO', WA_ROBERTO], ['CRISTINA', WA_CRISTINA]].forEach((c, i) => {
-      const x = bx + (bw + gap) * i;
-      doc.setFillColor(37, 211, 102);
-      doc.roundedRect(x, y, bw, 8, 4, 4, 'F');
-      setF(doc, 'Cinzel', 7, [255, 255, 255]);
-      doc.text(c[0], x + bw / 2, y + 5.4, { align: 'center' });
-      doc.link(x, y, bw, 8, { url: 'https://wa.me/' + c[1] });
-    });
-    y += 15;
+    /* Contact, not a second way to confirm: replies still come through
+       the form so they all land in one list. */
+    [['Roberto · 662 146 1622', WA_ROBERTO], ['Cristina · 662 341 9038', WA_CRISTINA]]
+      .forEach((n, i) => {
+        const cx = W / 4 + (W / 2) * i;
+        setF(doc, 'Cinzel', 6.8, DARKGOLD);
+        doc.text(n[0], cx, y, { align: 'center' });
+        const tw = doc.getTextWidth(n[0]);
+        doc.link(cx - tw / 2, y - 3, tw, 4.5, { url: 'https://wa.me/' + n[1] });
+      });
 
-    /* Back to the site for everything this page could not hold */
-    button(doc, 'VER LA INVITACIÓN COMPLETA', y, SITE, GOLD, [255, 255, 255]);
-    y += 6;
-    setF(doc, 'CormorantI', 7.6, MUTED);
-    doc.text('Historia, galería, padrinos, menú y preguntas frecuentes', W / 2, y, { align: 'center' });
+    /* Two portraits closing the invitation, at their own proportions */
+    const pw = 42, ph = pw / 0.78, gap = 6;
+    const px = (W - (pw * 2 + gap)) / 2, py = H - 14 - ph;
+    doc.addImage(a.closeL.data, 'JPEG', px, py, pw, ph, undefined, 'FAST');
+    doc.addImage(a.closeR.data, 'JPEG', px + pw + gap, py, pw, ph, undefined, 'FAST');
 
-    /* Two portraits closing the page */
-    const py = H - 42, pw = (W - 2 * M - 5) / 2, ph = 30;
-    doc.addImage(a.tallA.data, 'JPEG', M, py, pw, ph, undefined, 'FAST');
-    doc.addImage(a.tallB.data, 'JPEG', M + pw + 5, py, pw, ph, undefined, 'FAST');
-
-    setF(doc, 'Cinzel', 6.5, GOLD);
-    doc.text('C  &  R    ·    03 · 10 · 2026', W / 2, H - 7, { align: 'center' });
+    footer(doc, '3 / 3');
   }
 
   /* ── Public API ───────────────────────────────────────────────────── */
@@ -341,6 +353,7 @@ window.InvitacionPDF = (function () {
     });
     pageOne(doc, a, familia, pases);
     pageTwo(doc, a);
+    pageThree(doc, a);
     return doc;
   }
 
@@ -360,11 +373,12 @@ window.InvitacionPDF = (function () {
     window.open(doc.output('bloburl'), '_blank', 'noopener');
   }
 
-  /* Minimal CSV reader: handles quoted fields, commas or semicolons. */
+  /* Minimal CSV reader: quoted fields, comma or semicolon. */
   function parseCSV(text) {
     const rows = [];
     let row = [], field = '', q = false;
-    const delim = (text.split('\n')[0].split(';').length > text.split('\n')[0].split(',').length) ? ';' : ',';
+    const head = text.split('\n')[0];
+    const delim = head.split(';').length > head.split(',').length ? ';' : ',';
     for (let i = 0; i < text.length; i++) {
       const c = text[i];
       if (q) {
@@ -382,7 +396,6 @@ window.InvitacionPDF = (function () {
     rows.forEach((r, i) => {
       const name = (r[0] || '').trim();
       if (!name) return;
-      /* Skip a header row if the first cell is obviously a label */
       if (i === 0 && /nombre|name|invitad|familia/i.test(name)) return;
       const n = parseInt((r[1] || '').trim(), 10);
       out.push({ familia: name, pases: isNaN(n) || n < 1 ? 1 : n });
@@ -402,7 +415,6 @@ window.InvitacionPDF = (function () {
       if (used[fn]) { used[fn]++; fn += '_' + used[fn]; } else { used[fn] = 1; }
       zip.file(fn + '.pdf', doc.output('arraybuffer'));
       if (onProgress) onProgress(i + 1, rows.length, r.familia);
-      /* Yield so the progress line actually paints between documents. */
       if (i % 5 === 4) await new Promise(res => setTimeout(res, 0));
     }
     const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' },
