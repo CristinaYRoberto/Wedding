@@ -84,8 +84,9 @@ window.InvitacionPDF = (function () {
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
       loadPhoto('assets/dress-code_v2.jpg', 1813 / 868, 1000, 0.5),
-      /* Sits behind the dress code, veiled down to a texture. */
-      loadPhoto('assets/gallery/gallery-13.jpg', W / H, 700, 0.45),
+      /* Closes the dress code page. Cropped wide around the couple so
+         the arch reads without the figure being clipped by the strip. */
+      loadPhoto('assets/gallery/gallery-13.jpg', 2.4, 900, 0.72),
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
@@ -218,24 +219,20 @@ window.InvitacionPDF = (function () {
     footer(doc, '1 / 4');
   }
 
-  /* ── Page 2 — dress code, over a veiled photo ─────────────────────── */
+  /* ── Page 2 — dress code ──────────────────────────────────────────
+     The fabric strip is deliberately narrower than the text column so
+     the photo below it has room to sit whole rather than be clipped. */
   function pageTwo(doc, a) {
     page(doc);
-
-    /* The photo is dropped to a whisper so the rules stay readable. */
-    doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.10 }));
-    doc.addImage(a.veil.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
-    doc.restoreGraphicsState();
 
     tracked(doc, 'DRESS CODE', 18, 7.5, GOLD, 1.1);
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
     rule(doc, 33, 26, GOLD);
 
-    let y = 42;
+    let y = 41;
     y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 10;
+    y += 9;
 
     const rules = [
       'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
@@ -249,27 +246,32 @@ window.InvitacionPDF = (function () {
         if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
         doc.text(ln, M + 6, y); y += 4.5;
       });
-      y += 1.8;
+      y += 1.6;
     });
 
-    y += 6;
-    tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 7, AVOID, 0.5);
-    y += 6;
-    const bw = W - 2 * M, bh = bw / a.telas.aspect;
-    doc.addImage(a.telas.data, 'JPEG', M, y, bw, bh, undefined, 'FAST');
+    y += 4;
+    tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
+    y += 5.5;
+
+    const bw = 98, bx = (W - bw) / 2, bh = bw / a.telas.aspect;   /* ≈ 47mm */
+    doc.addImage(a.telas.data, 'JPEG', bx, y, bw, bh, undefined, 'FAST');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
-    doc.rect(M, y, bw, bh, 'S');
-    y += bh + 5.5;
+    doc.rect(bx, y, bw, bh, 'S');
+    y += bh + 5;
 
     ['Blanco', 'Gris', 'Dorado', 'Negro'].forEach((label, i) => {
-      setF(doc, 'Cinzel', 6.6, MUTED);
-      doc.text(label, M + bw * (i + 0.5) / 4, y, { align: 'center' });
+      setF(doc, 'Cinzel', 6.4, MUTED);
+      doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 9;
+    y += 7.5;
 
     paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
-              y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
+              y, 'CormorantI', 9, AVOID, W - 2 * M - 10, 4.6);
+
+    /* The cathedral closes the page, whole and clear of everything else */
+    const iw = W - 2 * M, ih = iw / 2.4, iy = H - 9 - ih;         /* ≈ 149 */
+    doc.addImage(a.veil.data, 'JPEG', M, iy, iw, ih, undefined, 'FAST');
 
     footer(doc, '2 / 4');
   }
