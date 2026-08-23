@@ -476,6 +476,54 @@
     color: var(--charcoal);
   }
 
+  /* ── PADRINOS ── */
+  #padrinos { background: var(--light-sage); }
+  .padrinos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem 2rem;
+    text-align: left;
+  }
+  @media(max-width: 820px) { .padrinos-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(max-width: 520px) { .padrinos-grid { grid-template-columns: 1fr; } }
+  .padrino-role {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: .88rem;
+    letter-spacing: .12em;
+    color: var(--dark-gold);
+    margin-bottom: .3rem;
+  }
+  .padrino-name {
+    font-size: 1rem;
+    color: var(--charcoal);
+    line-height: 1.55;
+  }
+  /* Court and page children are just names, so they run inline to keep
+     the section short. */
+  .corte-block {
+    text-align: center;
+    margin-top: 2.6rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(184,154,106,.35);
+  }
+  .corte-label {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .2em;
+    color: var(--dark-gold);
+    margin-bottom: .6rem;
+  }
+  .corte-names {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--charcoal);
+    line-height: 1.7;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
   /* ── STORY ── */
   #story { background: var(--warm-white); }
   .story-text {
@@ -1436,6 +1484,60 @@
         <p class="parents-name">Marla María Ruiz Figueroa</p>
         <p class="parents-name">Martin Moreno Estrada</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- PADRINOS -->
+<section id="padrinos">
+  <div class="section-inner reveal">
+    <h2 class="section-title" data-es="Quienes nos&nbsp;acompañan" data-en="Those who walk&nbsp;with us">Quienes nos&nbsp;acompañan</h2>
+    <div class="divider"></div>
+
+    <div class="padrinos-grid">
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE VELACIÓN" data-en="VEILING SPONSORS">PADRINOS DE VELACIÓN</p>
+        <p class="padrino-name">Sr. Amos Benjamin Moreno R. y Sra. Marisela Galindo</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE ANILLOS" data-en="RING SPONSORS">PADRINOS DE ANILLOS</p>
+        <p class="padrino-name">Sr. Martin Omar Moreno R. y Sra. Carolina Navarro C.</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE ARRAS" data-en="ARRAS SPONSORS">PADRINOS DE ARRAS</p>
+        <p class="padrino-name">Sr. Carlos Reyes F. y Concepción Bernal Z.</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE LAZO" data-en="LASSO SPONSORS">PADRINOS DE LAZO</p>
+        <p class="padrino-name">Sr. Didier Figueroa M. y Sra. Marysol Moreno R.</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE BIBLIA" data-en="BIBLE SPONSORS">PADRINOS DE BIBLIA</p>
+        <p class="padrino-name">Sr. Abner Canales y Sra. Fernanda Borquez B.</p>
+        <p class="padrino-name">Sr. José Dávila y Sra. Verónica Bernal Z.</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="MADRINA DE RAMO" data-en="BOUQUET SPONSOR">MADRINA DE RAMO</p>
+        <p class="padrino-name">Srita. Valentina Cañez B.</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE ROSARIO" data-en="ROSARY SPONSORS">PADRINOS DE ROSARIO</p>
+        <p class="padrino-name">Sr. Alán René Moreno R. y Sra. Lupita Luna</p>
+      </div>
+      <div>
+        <p class="padrino-role" data-es="PADRINOS DE COJINES" data-en="CUSHION SPONSORS">PADRINOS DE COJINES</p>
+        <p class="padrino-name">Sr. Alberto Mendoza y Sra. Alejandra Borquez M.</p>
+      </div>
+    </div>
+
+    <div class="corte-block">
+      <p class="corte-label" data-es="CORTE DE HONOR" data-en="COURT OF HONOUR">CORTE DE HONOR</p>
+      <p class="corte-names">Carolina Bustamante · Sarah · Lilia · Elsa</p>
+    </div>
+
+    <div class="corte-block">
+      <p class="corte-label" data-es="PAJECITOS" data-en="FLOWER GIRLS &amp; PAGE BOYS">PAJECITOS</p>
+      <p class="corte-names">Evan · Rodrigo · Pablito · Ángel · Sofía · Mariel · Rebeca · Nicole</p>
     </div>
   </div>
 </section>
