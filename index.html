@@ -894,8 +894,12 @@
     font-style: italic;
     font-size: 1rem;
     color: var(--gold);
-    text-decoration: underline;
+    text-decoration: none;
     margin-top: .5rem;
+  }
+  .rsvp-gift-link span {
+    text-decoration: underline;
+    text-underline-offset: .18em;
   }
   .rsvp-success {
     display: none;
@@ -1374,7 +1378,7 @@
   <div class="hero-cta">
     <a href="#rsvp" class="btn btn-primary" data-es="CONFIRMAR ASISTENCIA" data-en="RSVP NOW">CONFIRMAR ASISTENCIA</a>
     <!-- WhatsApp confirm button -->
-    <a id="wa-hero-btn" href="#" class="btn-whatsapp" onclick="return openWAModal(WA_NUMBER, event)" data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">
+    <a id="wa-hero-btn" href="#" class="btn-whatsapp" onclick="return openWAModal(WA_NUMBER, event)">
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.52 5.847L.057 23.443a.5.5 0 00.6.6l5.597-1.463A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.877 9.877 0 01-5.032-1.378l-.36-.214-3.724.976.993-3.622-.235-.374A9.867 9.867 0 012.1 12C2.1 6.534 6.534 2.1 12 2.1S21.9 6.534 21.9 12 17.466 21.9 12 21.9z"/></svg>
       <span data-es="CONFIRMAR POR WHATSAPP" data-en="CONFIRM VIA WHATSAPP">CONFIRMAR POR WHATSAPP</span>
     </a>
@@ -1745,7 +1749,7 @@
         </a>
       </div>
 
-      <a href="#gifts" class="rsvp-gift-link" data-es="Si deseas otorgarnos algún detalle, puedes hacerlo aquí →" data-en="If you'd like to give us a gift, you can do so here →">Si deseas otorgarnos algún detalle, puedes hacerlo aquí →</a>
+      <a href="#gifts" class="rsvp-gift-link" data-es="Si deseas otorgarnos algún detalle, puedes hacerlo <span>aquí →</span>" data-en="If you'd like to give us a gift, you can do so <span>here →</span>">Si deseas otorgarnos algún detalle, puedes hacerlo <span>aquí →</span></a>
     </form>
   </div>
 </section>
@@ -1823,8 +1827,6 @@
 <footer>
   <div class="footer-monogram" id="footer-monogram" style="cursor:default">C &amp; R</div>
   <p data-es="03 · OCTUBRE · 2026 · HERMOSILLO, SONORA" data-en="OCTOBER 3 · 2026 · HERMOSILLO, SONORA">03 · OCTUBRE · 2026 · HERMOSILLO, SONORA</p>
-  <br>
-  <p style="margin-top:.5rem; opacity:.4" data-es="Cristina Borquez & José Roberto Moreno" data-en="Cristina Borquez & José Roberto Moreno">Cristina Borquez & José Roberto Moreno</p>
 </footer>
 
 <script>
@@ -1941,7 +1943,7 @@ function setLang(lang) {
     const text = el.getAttribute('data-' + lang);
     if (!text) return;
     if (el.tagName === 'INPUT' || el.tagName === 'OPTION') el.textContent = text;
-    else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'LABEL') el.textContent = text;
+    else if (el.tagName === 'BUTTON' || el.tagName === 'LABEL') el.textContent = text;
     else el.innerHTML = text;
   });
   buildFAQ();
