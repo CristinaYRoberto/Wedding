@@ -563,7 +563,7 @@
 
   /* ── CÓMO LLEGAR ── */
   .directions-box {
-    max-width: 780px;
+    max-width: 900px;
     margin: 3rem auto 0;
     text-align: center;
   }
@@ -577,11 +577,13 @@
   }
   .directions-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
     text-align: left;
   }
-  @media(max-width: 700px) { .directions-grid { grid-template-columns: 1fr; } }
+  /* 4 -> 2 -> 1. Three columns would strand a single card on its own row. */
+  @media(max-width: 900px) { .directions-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(max-width: 520px) { .directions-grid { grid-template-columns: 1fr; } }
   .direction-item {
     border-left: 2px solid var(--gold);
     padding: .2rem 0 .2rem 1.1rem;
@@ -1481,20 +1483,12 @@
           <p class="direction-desc" data-es="Toma Blvd. Quiroga hacia el sur hasta Carretera 26. Continúa; Carretera 26 se convierte en Av. Lázaro Cárdenas. Sigue hasta Los Molinos y gira ahí. El salón está en el #97." data-en="Take Blvd. Quiroga south to Highway 26. Continue; Highway 26 becomes Av. Lázaro Cárdenas. Follow it to Los Molinos and turn there. The venue is at #97.">Toma Blvd. Quiroga hacia el sur hasta Carretera 26. Continúa; Carretera 26 se convierte en Av. Lázaro Cárdenas. Sigue hasta Los Molinos y gira ahí. El salón está en el #97.</p>
         </div>
         <div class="direction-item">
-          <p class="direction-from" data-es="🚗 DESDE CARRETERA 26" data-en="🚗 FROM HIGHWAY 26">🚗 DESDE CARRETERA 26</p>
-          <p class="direction-desc" data-es="Sigue Carretera 26 hacia Hermosillo. Al entrar a la ciudad se convierte en Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Follow Highway 26 toward Hermosillo. As you enter the city it becomes Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Sigue Carretera 26 hacia Hermosillo. Al entrar a la ciudad se convierte en Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
-        </div>
-        <div class="direction-item">
-          <p class="direction-from" data-es="🚗 DESDE BLVD. SOLIDARIDAD" data-en="🚗 FROM BLVD. SOLIDARIDAD">🚗 DESDE BLVD. SOLIDARIDAD</p>
-          <p class="direction-desc" data-es="Toma Blvd. Solidaridad hacia el sur hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Take Blvd. Solidaridad south to Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Toma Blvd. Solidaridad hacia el sur hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
+          <p class="direction-from" data-es="🚗 DESDE SOLIDARIDAD O FRANCISCO VILLA" data-en="🚗 FROM SOLIDARIDAD OR FRANCISCO VILLA">🚗 DESDE SOLIDARIDAD O FRANCISCO VILLA</p>
+          <p class="direction-desc" data-es="Toma Blvd. Solidaridad hacia el sur, o Blvd. Francisco Villa hacia el poniente, hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97." data-en="Take Blvd. Solidaridad south, or Blvd. Francisco Villa west, to Av. Lázaro Cárdenas. Continue to Los Molinos, turn, and follow it to #97.">Toma Blvd. Solidaridad hacia el sur, o Blvd. Francisco Villa hacia el poniente, hasta Av. Lázaro Cárdenas. Continúa hasta Los Molinos, gira y sigue hasta el #97.</p>
         </div>
         <div class="direction-item">
           <p class="direction-from" data-es="🚗 DESDE CAMINO DEL SERI" data-en="🚗 FROM CAMINO DEL SERI">🚗 DESDE CAMINO DEL SERI</p>
           <p class="direction-desc" data-es="Toma Camino del Seri hacia el sur. Dirígete hacia Los Molinos y continúa hasta el #97, donde está el salón." data-en="Take Camino del Seri south. Head toward Los Molinos and continue to #97, where the venue is located.">Toma Camino del Seri hacia el sur. Dirígete hacia Los Molinos y continúa hasta el #97, donde está el salón.</p>
-        </div>
-        <div class="direction-item">
-          <p class="direction-from" data-es="🚗 DESDE BLVD. FRANCISCO VILLA" data-en="🚗 FROM BLVD. FRANCISCO VILLA">🚗 DESDE BLVD. FRANCISCO VILLA</p>
-          <p class="direction-desc" data-es="Toma Blvd. Francisco Villa hacia el poniente hasta Av. Lázaro Cárdenas. Sigue hasta Los Molinos, gira y continúa hasta el #97." data-en="Take Blvd. Francisco Villa west to Av. Lázaro Cárdenas. Follow it to Los Molinos, turn, and continue to #97.">Toma Blvd. Francisco Villa hacia el poniente hasta Av. Lázaro Cárdenas. Sigue hasta Los Molinos, gira y continúa hasta el #97.</p>
         </div>
         <div class="direction-item">
           <p class="direction-from" data-es="🚗 DESDE BLVD. LAS QUINTAS" data-en="🚗 FROM BLVD. LAS QUINTAS">🚗 DESDE BLVD. LAS QUINTAS</p>
