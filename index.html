@@ -152,14 +152,14 @@
 
   /* ── HERO ── */
   #hero {
-    min-height: 100vh;
+    min-height: 88vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     position: relative;
-    padding: 4rem 2rem 6rem;
+    padding: 3rem 2rem 3.5rem;
     background: var(--warm-white);
     overflow: hidden;
   }
@@ -176,7 +176,7 @@
     width: 180px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 1.2rem auto;
+    margin: 1.5rem auto;
   }
   .hero-eyebrow {
     font-family: 'Cinzel', serif;
@@ -184,7 +184,7 @@
     font-size: .95rem;
     letter-spacing: .3em;
     color: var(--gold);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0;
     animation: fadeUp .8s ease both;
   }
   .hero-names {
@@ -213,11 +213,13 @@
     font-size: clamp(.9rem, 2vw, 1.1rem);
     letter-spacing: .25em;
     color: var(--muted);
-    margin-top: 2rem;
+    /* The rule above already carries the 1.5rem margin; adding more here
+       would push the date off the hero's 24px rhythm. */
+    margin-top: 0;
     animation: fadeUp .8s .4s ease both;
   }
   .hero-events-preview {
-    margin-top: 1.4rem;
+    margin-top: 1.1rem;
     display: flex;
     gap: .4rem 2rem;
     flex-wrap: wrap;
@@ -249,7 +251,7 @@
   }
   .calendar-links a:hover { color: var(--dark-gold); }
   .hero-cta {
-    margin-top: 3rem;
+    margin-top: 2rem;
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
@@ -257,7 +259,7 @@
     animation: fadeUp .8s .6s ease both;
   }
   .hero-game-block {
-    margin-top: 1.6rem;
+    margin-top: 1.4rem;
     text-align: center;
     animation: fadeUp .8s .7s ease both;
   }
@@ -497,8 +499,9 @@
   .padrino-name {
     font-size: 1rem;
     color: var(--charcoal);
-    line-height: 1.55;
+    line-height: 1.5;
   }
+  .padrino-pareja { margin-top: .5rem; }
   /* Court and page children are just names, so they run inline to keep
      the section short. */
   .corte-block {
@@ -1547,24 +1550,30 @@
     <div class="padrinos-grid">
       <div>
         <p class="padrino-role" data-es="PADRINOS DE VELACIÓN" data-en="VEILING SPONSORS">PADRINOS DE VELACIÓN</p>
-        <p class="padrino-name">Sr. Amos Benjamin Moreno R. y Sra. Marisela Galindo</p>
+        <p class="padrino-name">Sr. Amos Benjamin Moreno R.</p>
+        <p class="padrino-name">Sra. Marisela Galindo</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE ANILLOS" data-en="RING SPONSORS">PADRINOS DE ANILLOS</p>
-        <p class="padrino-name">Sr. Martin Omar Moreno R. y Sra. Carolina Navarro C.</p>
+        <p class="padrino-name">Sr. Martin Omar Moreno R.</p>
+        <p class="padrino-name">Sra. Carolina Navarro C.</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE ARRAS" data-en="ARRAS SPONSORS">PADRINOS DE ARRAS</p>
-        <p class="padrino-name">Sr. Carlos Reyes F. y Sra. Concepción Bernal Z.</p>
+        <p class="padrino-name">Sr. Carlos Reyes F.</p>
+        <p class="padrino-name">Sra. Concepción Bernal Z.</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE LAZO" data-en="LASSO SPONSORS">PADRINOS DE LAZO</p>
-        <p class="padrino-name">Sr. Didier Figueroa M. y Sra. Marysol Moreno R.</p>
+        <p class="padrino-name">Sr. Didier Figueroa M.</p>
+        <p class="padrino-name">Sra. Marysol Moreno R.</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE BIBLIA" data-en="BIBLE SPONSORS">PADRINOS DE BIBLIA</p>
-        <p class="padrino-name">Sr. Abner Canales y Sra. Fernanda Borquez B.</p>
-        <p class="padrino-name">Sr. José Dávila y Sra. Verónica Bernal Z.</p>
+        <p class="padrino-name">Sr. Abner Canales</p>
+        <p class="padrino-name">Sra. Fernanda Borquez B.</p>
+        <p class="padrino-name padrino-pareja">Sr. José Dávila</p>
+        <p class="padrino-name">Sra. Verónica Bernal Z.</p>
       </div>
       <div>
         <p class="padrino-role" data-es="MADRINA DE RAMO" data-en="BOUQUET SPONSOR">MADRINA DE RAMO</p>
@@ -1572,11 +1581,13 @@
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE ROSARIO" data-en="ROSARY SPONSORS">PADRINOS DE ROSARIO</p>
-        <p class="padrino-name">Sr. Alán René Moreno R. y Sra. Lupita Luna</p>
+        <p class="padrino-name">Sr. Alán René Moreno R.</p>
+        <p class="padrino-name">Sra. Lupita Luna</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE COJINES" data-en="CUSHION SPONSORS">PADRINOS DE COJINES</p>
-        <p class="padrino-name">Sr. Alberto Mendoza y Sra. Alejandra Borquez M.</p>
+        <p class="padrino-name">Sr. Alberto Mendoza</p>
+        <p class="padrino-name">Sra. Alejandra Borquez M.</p>
       </div>
     </div>
 

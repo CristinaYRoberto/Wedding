@@ -79,14 +79,18 @@ window.InvitacionPDF = (function () {
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telas, closeL, closeR] = await Promise.all([
-      /* Faces sit high in this frame, so bias the crop upward. */
-      loadPhoto('assets/gallery/gallery-02.jpg', BAND_ASPECT, 1000, 0.34),
+    const [band, telas, veil, twoA, twoB, closing] = await Promise.all([
+      /* The hands sit just past the middle of this portrait, so the
+         wide strip is cropped around them. */
+      loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
       loadPhoto('assets/dress-code_v2.jpg', 1813 / 868, 1000, 0.5),
-      loadPhoto('assets/gallery/gallery-06.jpg', 0.78, 420, 0.35),
-      loadPhoto('assets/gallery/gallery-12.jpg', 0.78, 420, 0.35),
+      /* Sits behind the dress code, veiled down to a texture. */
+      loadPhoto('assets/gallery/gallery-13.jpg', W / H, 700, 0.45),
+      loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
+      loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
+      loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
     ]);
-    _assets = { band: band, telas: telas, closeL: closeL, closeR: closeR };
+    _assets = { band, telas, veil, twoA, twoB, closing };
     return _assets;
   }
 
@@ -157,8 +161,9 @@ window.InvitacionPDF = (function () {
   }
 
   /* ── Page 1 — the invitation ──────────────────────────────────────
-     Coordinates are laid out so the button and the note clear the
-     footer; the page has no room to spare below 205mm. */
+     Coordinates are fixed rather than accumulated: the page has no room
+     to spare below 205mm, and a drifting cursor is what pushed the
+     button under the footer before. */
   function pageOne(doc, a, familia, pases) {
     page(doc, true);
 
@@ -172,7 +177,6 @@ window.InvitacionPDF = (function () {
     rule(doc, 99, 34, GOLD);
     tracked(doc, '03 · OCTUBRE · 2026', 105.5, 8.5, MUTED, 0.9);
 
-    /* Who this copy is for */
     const boxY = 114.5, boxH = 20;
     doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
     doc.rect(M, boxY, W - 2 * M, boxH, 'F');
@@ -187,7 +191,6 @@ window.InvitacionPDF = (function () {
       doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
-    /* The two events, side by side */
     const ey = 145.5, colL = W / 4, colR = 3 * W / 4;
     function event(cx, label, name, time, place, url) {
       tracked(doc, label, ey, 6.2, GOLD, 0.7, cx);
@@ -212,12 +215,18 @@ window.InvitacionPDF = (function () {
     doc.text('Se confirma en la página, antes del 1 de septiembre de 2026',
              W / 2, 199.5, { align: 'center' });
 
-    footer(doc, '1 / 3');
+    footer(doc, '1 / 4');
   }
 
-  /* ── Page 2 — dress code and where to stay ────────────────────────── */
+  /* ── Page 2 — dress code, over a veiled photo ─────────────────────── */
   function pageTwo(doc, a) {
     page(doc);
+
+    /* The photo is dropped to a whisper so the rules stay readable. */
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.10 }));
+    doc.addImage(a.veil.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
+    doc.restoreGraphicsState();
 
     tracked(doc, 'DRESS CODE', 18, 7.5, GOLD, 1.1);
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
@@ -226,7 +235,7 @@ window.InvitacionPDF = (function () {
     let y = 42;
     y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 9;
+    y += 10;
 
     const rules = [
       'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
@@ -240,11 +249,10 @@ window.InvitacionPDF = (function () {
         if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
         doc.text(ln, M + 6, y); y += 4.5;
       });
-      y += 1.6;
+      y += 1.8;
     });
 
-    /* The shades to avoid, on the same fabrics the site shows */
-    y += 3;
+    y += 6;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 7, AVOID, 0.5);
     y += 6;
     const bw = W - 2 * M, bh = bw / a.telas.aspect;
@@ -252,48 +260,29 @@ window.InvitacionPDF = (function () {
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(M, y, bw, bh, 'S');
-    y += bh + 5;
+    y += bh + 5.5;
 
     ['Blanco', 'Gris', 'Dorado', 'Negro'].forEach((label, i) => {
       setF(doc, 'Cinzel', 6.6, MUTED);
       doc.text(label, M + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 7.5;
+    y += 9;
 
-    y = paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
-                  y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
+    paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
+              y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
 
-    /* Hotels fill the space the dress code leaves */
-    y += 13;
-    tracked(doc, 'HOTELES CERCANOS', y, 7, GOLD, 1);
-    y += 7.5;
-    const hotels = [
-      ['Lucerna Hermosillo', '662 259 2000'],
-      ['Fiesta Inn Hermosillo', '662 289 1700'],
-      ['Holiday Inn Express', '662 289 0000'],
-      ['Araiza Hermosillo', '662 210 9700'],
-    ];
-    const hw = (W - 2 * M) / 2;
-    hotels.forEach((h, i) => {
-      const cx = M + hw * (i % 2) + hw / 2;
-      const ry = y + Math.floor(i / 2) * 11;
-      centred(doc, h[0], ry, 'Cormorant', 11.5, CHARCOAL, cx);
-      setF(doc, 'Lato', 7, DARKGOLD);
-      doc.text(h[1], cx, ry + 4.4, { align: 'center' });
-    });
-
-    footer(doc, '2 / 3');
+    footer(doc, '2 / 4');
   }
 
-  /* ── Page 3 — gifts and how to reply ──────────────────────────────── */
+  /* ── Page 3 — gifts, hotels, two portraits ────────────────────────── */
   function pageThree(doc, a) {
     page(doc);
 
     tracked(doc, 'REGALOS', 18, 7.5, GOLD, 1.1);
-    let y = paragraph(doc, 'Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
-                      25, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 8;
+    paragraph(doc, 'Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
+              25, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
 
+    let y = 38;
     const bankH = 15, bankW = W - 2 * M;
     [['BBVA', 'Cristina Borquez Bernal', '4152314000799307'],
      ['Santander', 'José Roberto Moreno Ruiz', '014760200064187105']].forEach(b => {
@@ -307,19 +296,52 @@ window.InvitacionPDF = (function () {
       y += bankH + 3.5;
     });
 
-    /* Replying: one road, the form on the site */
-    y += 9;
+    tracked(doc, 'HOTELES CERCANOS', 84, 7, GOLD, 1);
+    const hotels = [
+      ['Lucerna Hermosillo', '662 259 2000'],
+      ['Fiesta Inn Hermosillo', '662 289 1700'],
+      ['Holiday Inn Express', '662 289 0000'],
+      ['Araiza Hermosillo', '662 210 9700'],
+    ];
+    const hw = (W - 2 * M) / 2;
+    hotels.forEach((h, i) => {
+      const cx = M + hw * (i % 2) + hw / 2;
+      const ry = 92 + Math.floor(i / 2) * 11;
+      centred(doc, h[0], ry, 'Cormorant', 11.5, CHARCOAL, cx);
+      setF(doc, 'Lato', 7, DARKGOLD);
+      doc.text(h[1], cx, ry + 4.4, { align: 'center' });
+    });
+
+    /* Two square crops, side by side */
+    const gap = 6, pw = (W - 2 * M - gap) / 2, py = 122;
+    doc.addImage(a.twoA.data, 'JPEG', M, py, pw, pw, undefined, 'FAST');
+    doc.addImage(a.twoB.data, 'JPEG', M + pw + gap, py, pw, pw, undefined, 'FAST');
+
+    setF(doc, 'CormorantI', 8.5, MUTED);
+    doc.text('Nos vemos el 3 de octubre', W / 2, py + pw + 9, { align: 'center' });
+
+    footer(doc, '3 / 4');
+  }
+
+  /* ── Page 4 — one photo, and the one way to reply ─────────────────── */
+  function pageFour(doc, a) {
+    page(doc);
+
+    const iw = W - 2 * M, ih = iw / 1.4;
+    doc.addImage(a.closing.data, 'JPEG', M, 18, iw, ih, undefined, 'FAST');
+
+    let y = 18 + ih + 14;                                /* ≈ 118 */
     tracked(doc, 'CONFIRMA TU ASISTENCIA', y, 7.5, GOLD, 1.1);
-    y += 7;
+    y += 8;
     y = paragraph(doc, 'Toca el botón y llena el formulario en la página. Ahí encontrarás también la historia, la galería, los padrinos y el menú.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 8;
+    y += 9;
     y = button(doc, 'IR A LA PÁGINA Y CONFIRMAR', y, SITE + '#rsvp', CHARCOAL, CREAM);
 
-    y += 7;
+    y += 8;
     setF(doc, 'CormorantI', 7.8, MUTED);
     doc.text('¿Se te complica? Escríbenos y te ayudamos:', W / 2, y, { align: 'center' });
-    y += 5;
+    y += 5.5;
     /* Contact, not a second way to confirm: replies still come through
        the form so they all land in one list. */
     [['Roberto · 662 146 1622', WA_ROBERTO], ['Cristina · 662 341 9038', WA_CRISTINA]]
@@ -331,13 +353,12 @@ window.InvitacionPDF = (function () {
         doc.link(cx - tw / 2, y - 3, tw, 4.5, { url: 'https://wa.me/' + n[1] });
       });
 
-    /* Two portraits closing the invitation, at their own proportions */
-    const pw = 42, ph = pw / 0.78, gap = 6;
-    const px = (W - (pw * 2 + gap)) / 2, py = H - 14 - ph;
-    doc.addImage(a.closeL.data, 'JPEG', px, py, pw, ph, undefined, 'FAST');
-    doc.addImage(a.closeR.data, 'JPEG', px + pw + gap, py, pw, ph, undefined, 'FAST');
+    y += 12;
+    rule(doc, y, 34, GOLD);
+    y += 8;
+    centred(doc, 'Cristina  &  Roberto', y, 'CormorantI', 14, CHARCOAL);
 
-    footer(doc, '3 / 3');
+    footer(doc, '4 / 4');
   }
 
   /* ── Public API ───────────────────────────────────────────────────── */
@@ -354,6 +375,7 @@ window.InvitacionPDF = (function () {
     pageOne(doc, a, familia, pases);
     pageTwo(doc, a);
     pageThree(doc, a);
+    pageFour(doc, a);
     return doc;
   }
 
