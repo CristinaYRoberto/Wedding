@@ -159,7 +159,7 @@
     justify-content: center;
     text-align: center;
     position: relative;
-    padding: 3rem 2rem 3.5rem;
+    padding: 2.4rem 2rem 2.4rem;
     background: var(--warm-white);
     overflow: hidden;
   }
@@ -176,7 +176,7 @@
     width: 180px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 1.5rem auto;
+    margin: .95rem auto;
   }
   .hero-eyebrow {
     font-family: 'Cinzel', serif;
@@ -219,7 +219,7 @@
     animation: fadeUp .8s .4s ease both;
   }
   .hero-events-preview {
-    margin-top: 1.1rem;
+    margin-top: .8rem;
     display: flex;
     gap: .4rem 2rem;
     flex-wrap: wrap;
@@ -238,7 +238,7 @@
     font-size: .88rem;
     letter-spacing: .16em;
     color: var(--charcoal);
-    margin-top: 1rem;
+    margin-top: .7rem;
   }
   .calendar-links {
     display: flex;
@@ -259,7 +259,7 @@
   }
   .calendar-links a:hover { color: var(--dark-gold); }
   .hero-cta {
-    margin-top: 2rem;
+    margin-top: 1.3rem;
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
@@ -267,7 +267,7 @@
     animation: fadeUp .8s .6s ease both;
   }
   .hero-game-block {
-    margin-top: 1.4rem;
+    margin-top: 1rem;
     text-align: center;
     animation: fadeUp .8s .7s ease both;
   }
@@ -379,7 +379,7 @@
   /* ── COUNTDOWN ── */
   #countdown-section {
     background: var(--charcoal);
-    padding: 2.6rem 2rem;
+    padding: 2.1rem 2rem;
     text-align: center;
   }
   .countdown-label {
@@ -428,7 +428,7 @@
   }
 
   /* ── SECTIONS ── */
-  section { padding: 4.25rem 2rem; }
+  section { padding: 3.25rem 2rem; }
 
   .section-inner {
     max-width: 900px;
@@ -449,13 +449,13 @@
     font-weight: 300;
     text-align: center;
     line-height: 1.2;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
   .divider {
     width: 80px;
     height: 1px;
     background: var(--gold);
-    margin: 1.1rem auto 2rem;
+    margin: 1rem auto 1.6rem;
   }
 
   /* ── PARENTS ── */
@@ -559,7 +559,7 @@
   @media(max-width: 640px) { .events-grid { grid-template-columns: 1fr; } }
   .event-card {
     border: 1px solid rgba(184,154,106,.3);
-    padding: 3rem 2.5rem;
+    padding: 2.2rem 2.5rem;
     text-align: center;
     position: relative;
     background: var(--warm-white);
@@ -683,7 +683,7 @@
   #gallery .section-eyebrow { color: var(--gold); }
   .gallery-placeholder {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: .8rem;
     max-width: 900px;
     margin: 0 auto;
@@ -824,6 +824,9 @@
     display: block;
     width: 100%;
     height: auto;
+    /* Holds the slot open while the photo loads, so the page does not
+       jump once it arrives. */
+    aspect-ratio: 1813 / 868;
     border: 1px solid rgba(184,154,106,.35);
   }
   /* Four equal columns, matching the four panels in the photo, so each label
@@ -900,7 +903,7 @@
   }
   .faq-item {
     border-bottom: 1px solid rgba(184,154,106,.2);
-    padding: 1.5rem 0;
+    padding: 1.1rem 0;
     cursor: pointer;
   }
   .faq-q {
@@ -1069,7 +1072,7 @@
     color: var(--muted);
     text-align: center;
     max-width: 580px;
-    margin: 0 auto 3.5rem;
+    margin: 0 auto 2.4rem;
     line-height: 1.9;
   }
   .gifts-grid {
@@ -1082,7 +1085,7 @@
   @media(max-width: 700px) { .gifts-grid { grid-template-columns: 1fr; max-width: 420px; } }
   .gift-card {
     border: 1px solid rgba(184,154,106,.25);
-    padding: 2.5rem 2rem;
+    padding: 1.9rem 2rem;
     text-align: center;
     background: var(--cream);
     position: relative;
