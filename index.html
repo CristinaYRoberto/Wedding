@@ -159,7 +159,7 @@
     justify-content: center;
     text-align: center;
     position: relative;
-    padding: 2.4rem 2rem 2.4rem;
+    padding: 5rem 2rem 2.4rem;
     background: var(--warm-white);
     overflow: hidden;
   }
@@ -176,7 +176,7 @@
     width: 180px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: .95rem auto;
+    margin: .5rem auto;
   }
   .hero-eyebrow {
     font-family: 'Cinzel', serif;
@@ -510,6 +510,7 @@
     line-height: 1.5;
   }
   .padrino-pareja { margin-top: .5rem; }
+  .padrino-full { grid-column: 1 / -1; }
 
   /* ── STORY ── */
   #story { background: var(--warm-white); }
@@ -523,6 +524,35 @@
     max-width: 640px;
     margin: 0 auto;
     font-style: italic;
+  }
+  /* A quiet epigraph under the main paragraph: a single decorative
+     quotation mark gives the section some texture without adding a
+     photo or a second heading. */
+  .story-quote {
+    position: relative;
+    max-width: 460px;
+    margin: 2.6rem auto 0;
+    padding-top: 1.6rem;
+  }
+  .story-quote-mark {
+    position: absolute;
+    top: -1.4rem; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--gold);
+    opacity: .3;
+    pointer-events: none;
+  }
+  .story-quote-text {
+    position: relative;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: .98rem;
+    line-height: 1.8;
+    color: var(--muted);
+    text-align: center;
   }
 
   /* ── EVENTS ── */
@@ -821,7 +851,7 @@
   }
 
   /* ── HOTELES ── */
-  #hoteles { background: var(--warm-white); }
+  #hoteles { background: var(--light-sage); }
   .hoteles-intro {
     text-align: center;
     max-width: 480px;
@@ -1624,12 +1654,7 @@
         <p class="padrino-name">Sr. Carlos Reyes F.</p>
         <p class="padrino-name">Sra. Concepción Bernal Z.</p>
       </div>
-      <div>
-        <p class="padrino-role" data-es="PADRINOS DE LAZO" data-en="LASSO SPONSORS">PADRINOS DE LAZO</p>
-        <p class="padrino-name">Sr. Didier Figueroa M.</p>
-        <p class="padrino-name">Sra. Marysol Moreno R.</p>
-      </div>
-      <div>
+      <div class="padrino-full">
         <p class="padrino-role" data-es="PADRINOS DE BIBLIA" data-en="BIBLE SPONSORS">PADRINOS DE BIBLIA</p>
         <p class="padrino-name">Sr. Abner Canales</p>
         <p class="padrino-name">Sra. Fernanda Borquez B.</p>
@@ -1637,8 +1662,9 @@
         <p class="padrino-name">Sra. Verónica Bernal Z.</p>
       </div>
       <div>
-        <p class="padrino-role" data-es="MADRINA DE RAMO" data-en="BOUQUET SPONSOR">MADRINA DE RAMO</p>
-        <p class="padrino-name">Srita. Valentina Cañez B.</p>
+        <p class="padrino-role" data-es="PADRINOS DE LAZO" data-en="LASSO SPONSORS">PADRINOS DE LAZO</p>
+        <p class="padrino-name">Sr. Didier Figueroa M.</p>
+        <p class="padrino-name">Sra. Marysol Moreno R.</p>
       </div>
       <div>
         <p class="padrino-role" data-es="PADRINOS DE ROSARIO" data-en="ROSARY SPONSORS">PADRINOS DE ROSARIO</p>
@@ -1649,6 +1675,10 @@
         <p class="padrino-role" data-es="PADRINOS DE COJINES" data-en="CUSHION SPONSORS">PADRINOS DE COJINES</p>
         <p class="padrino-name">Sr. Alberto Mendoza</p>
         <p class="padrino-name">Sra. Alejandra Borquez M.</p>
+      </div>
+      <div class="padrino-full" style="text-align:center">
+        <p class="padrino-role" data-es="MADRINA DE RAMO" data-en="BOUQUET SPONSOR">MADRINA DE RAMO</p>
+        <p class="padrino-name">Srita. Valentina Cañez B.</p>
       </div>
     </div>
 
@@ -1663,6 +1693,12 @@
     <p class="story-text" data-es="Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Junto a su hija Valentina y sus tres gatitos, Iker, Pilly y Finch, han formado una pequeña familia con grandes vínculos y mucho amor. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida." data-en="Cristina and Roberto found each other when they least expected it, and since then they have built together a story full of love, laughter, and adventure. Together with their daughter Valentina and their three cats, Iker, Pilly, and Finch, they have formed a small family with great bonds and so much love. Today, with hearts full of gratitude, they invite you to witness the most beautiful chapter of their lives.">
       Cristina y Roberto se encontraron cuando menos lo esperaban y desde entonces han construido juntos una historia llena de amor, risas y aventuras. Junto a su hija Valentina y sus tres gatitos, Iker, Pilly y Finch, han formado una pequeña familia con grandes vínculos y mucho amor. Hoy, con el corazón lleno de gratitud, los invitan a ser testigos del capítulo más hermoso de su vida.
     </p>
+    <div class="story-quote">
+      <span class="story-quote-mark" aria-hidden="true">&ldquo;</span>
+      <p class="story-quote-text" data-es="Cuando dos almas destinadas a encontrarse se unen, crean un universo propio donde el amor transforma, expande y da un nuevo sentido a la vida.<br>Dos almas, una nueva realidad, un universo compartido." data-en="When two souls destined to meet come together, they create a universe of their own, one where love transforms, expands, and gives life new meaning.<br>Two souls, one new reality, one shared universe.">
+        Cuando dos almas destinadas a encontrarse se unen, crean un universo propio donde el amor transforma, expande y da un nuevo sentido a la vida.<br>Dos almas, una nueva realidad, un universo compartido.
+      </p>
+    </div>
   </div>
 </section>
 
