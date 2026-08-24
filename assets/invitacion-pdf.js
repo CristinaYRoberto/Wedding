@@ -256,12 +256,14 @@ window.InvitacionPDF = (function () {
           'Salón Las Cascadas, Los Molinos 97, Las Minitas', MAPS_FIESTA);
 
     /* The one rule the couple wants read before the day itself */
-    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 177, 8, CHARCOAL, 0.9);
+    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 175.5, 8, CHARCOAL, 0.9);
 
-    button(doc, 'CONFIRMAR ASISTENCIA', 184, SITE + '#rsvp', CHARCOAL, CREAM);
-    setF(doc, 'CormorantI', 8.5, MUTED);
+    button(doc, 'CONFIRMAR ASISTENCIA', 182, SITE + '#rsvp', CHARCOAL, CREAM);
+    setF(doc, 'CormorantI', 8, MUTED);
     doc.text('Se confirma en la página, antes del 1 de septiembre de 2026',
-             W / 2, 200, { align: 'center' });
+             W / 2, 196.5, { align: 'center' });
+    doc.text('En caso de no asistencia, también nos gustaría conocerlo a la brevedad. Gracias.',
+             W / 2, 200.5, { align: 'center' });
 
     footer(doc, '1 / 4');
   }
