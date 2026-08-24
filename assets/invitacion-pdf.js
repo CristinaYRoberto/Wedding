@@ -129,9 +129,9 @@ window.InvitacionPDF = (function () {
     return _assets;
   }
 
-  /* Pages 1, 3 and 4 have no full-page photo background - this lays the
-     same faint texture the site uses under their content. Page 2 already
-     carries a.veil for that job, so it skips this. */
+  /* Same faint site texture under every page's content, so the cream
+     background never reads as flat white. Page 2 layers a.veil on top
+     of this at low opacity for its own photo detail. */
   function bgTexture(doc, a) {
     doc.saveGraphicsState();
     doc.setGState(new doc.GState({ opacity: 0.65 }));
@@ -273,6 +273,7 @@ window.InvitacionPDF = (function () {
      enough that it reads as texture rather than competing with either. */
   function pageTwo(doc, a) {
     page(doc);
+    bgTexture(doc, a);
 
     doc.saveGraphicsState();
     doc.setGState(new doc.GState({ opacity: 0.11 }));
