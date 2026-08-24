@@ -134,7 +134,7 @@ window.InvitacionPDF = (function () {
      carries a.veil for that job, so it skips this. */
   function bgTexture(doc, a) {
     doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.5 }));
+    doc.setGState(new doc.GState({ opacity: 0.65 }));
     doc.addImage(a.texture.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
     doc.restoreGraphicsState();
   }
@@ -234,7 +234,7 @@ window.InvitacionPDF = (function () {
     doc.text(String(familia || 'Nuestro invitado'), W / 2, boxY + 12.6, { align: 'center' });
     if (pases) {
       setF(doc, 'Cinzel', 7, DARKGOLD);
-      doc.text(pases + (pases === 1 ? ' PASE' : ' PASES'), W / 2, boxY + 17.6, { align: 'center' });
+      doc.text(pases + (pases === 1 ? ' ACOMPAÑANTE' : ' ACOMPAÑANTES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
     const ey = 141, colL = W / 4, colR = 3 * W / 4;
@@ -348,28 +348,36 @@ window.InvitacionPDF = (function () {
       setF(doc, 'Lato', 7.4, CHARCOAL);
       doc.text(b[1], W / 2, y + 9.4, { align: 'center' });
       doc.text('CLABE ' + b[2], W / 2, y + 13.2, { align: 'center' });
-      y += bankH + 3.5;
+      y += bankH + 2.5;
     });
+
+    y += 1.5;
+    setF(doc, 'Cinzel', 6.4, DARKGOLD);
+    doc.text('EFECTIVO', W / 2, y, { align: 'center' });
+    y += 4;
+    y = paragraph(doc, 'Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.',
+                  y, 'Lato', 7.4, CHARCOAL, W - 2 * M - 12, 4.2);
 
     /* The hotel list now lives on the site as a popup, since a printed
        page can't hold one and stay current — point there instead of
        duplicating hotel data that can drift out of date in two places. */
-    y += 11;
+    y += 6;
     tracked(doc, 'HOSPEDAJE', y, 7, GOLD, 1);
-    y += 7;
+    y += 6;
     y = paragraph(doc, 'Si te vas a hospedar en un hotel, en la página encontrarás una lista de hoteles recomendados en Hermosillo con teléfono y distancia a cada evento.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 8;
+    y += 6;
     y = button(doc, 'VER LISTA DE HOTELES', y, SITE + '#hoteles', GOLD, CREAM);
-    y += 8;
+    y += 6;
 
-    /* Two square crops, side by side */
-    const gap = 6, pw = (W - 2 * M - gap) / 2, py = y;
-    doc.addImage(a.twoA.data, 'JPEG', M, py, pw, pw, undefined, 'FAST');
-    doc.addImage(a.twoB.data, 'JPEG', M + pw + gap, py, pw, pw, undefined, 'FAST');
+    /* Two square crops, side by side - a touch smaller than a straight
+       half-width split, to leave room for everything above them. */
+    const gap = 6, pw = (W - 2 * M - gap) / 2 - 4, px = M + 2, py = y;
+    doc.addImage(a.twoA.data, 'JPEG', px, py, pw, pw, undefined, 'FAST');
+    doc.addImage(a.twoB.data, 'JPEG', px + pw + gap, py, pw, pw, undefined, 'FAST');
 
     setF(doc, 'CormorantI', 8.5, MUTED);
-    doc.text('Nos vemos el 3 de octubre', W / 2, py + pw + 9, { align: 'center' });
+    doc.text('Nos vemos el 3 de octubre', W / 2, py + pw + 7, { align: 'center' });
 
     footer(doc, '3 / 4');
   }
