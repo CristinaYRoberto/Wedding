@@ -134,7 +134,7 @@ window.InvitacionPDF = (function () {
      of this at low opacity for its own photo detail. */
   function bgTexture(doc, a) {
     doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.65 }));
+    doc.setGState(new doc.GState({ opacity: 0.8 }));
     doc.addImage(a.texture.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
     doc.restoreGraphicsState();
   }
