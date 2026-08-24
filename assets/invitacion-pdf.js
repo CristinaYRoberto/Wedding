@@ -283,10 +283,10 @@ window.InvitacionPDF = (function () {
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
     rule(doc, 33, 26, GOLD);
 
-    let y = 42;
+    let y = 39;
     y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 8;
+    y += 6;
 
     const rules = [
       'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
@@ -300,27 +300,27 @@ window.InvitacionPDF = (function () {
         if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
         doc.text(ln, M + 6, y); y += 4.5;
       });
-      y += 1.6;
+      y += 1.2;
     });
 
-    y += 7;
+    y += 5;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
-    y += 5.5;
+    y += 5;
 
-    /* Narrower than the text column now, and centred, so it reads as a
-       framed swatch rather than a full-width banner. */
-    const bw = (W - 2 * M) * 0.86, bx = M + ((W - 2 * M) - bw) / 2, bh = bw / a.telas.aspect;
+    /* Wide enough to feel substantial while still reading as a framed
+       swatch rather than a full-bleed banner. */
+    const bw = (W - 2 * M) * 0.94, bx = M + ((W - 2 * M) - bw) / 2, bh = bw / a.telas.aspect;
     doc.addImage(a.telas.data, 'JPEG', bx, y, bw, bh, undefined, 'FAST');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(bx, y, bw, bh, 'S');
-    y += bh + 5;
+    y += bh + 4.5;
 
     ['Evitar Blanco', 'Evitar Gris', 'Evitar Dorado', 'Evitar Negro'].forEach((label, i) => {
       setF(doc, 'Cinzel', 6, MUTED);
       doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 8;
+    y += 6.5;
 
     paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
               y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
