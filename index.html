@@ -197,13 +197,20 @@
        image's own intrinsic size instead of stretching it, so width
        and height still need to be explicit here. */
     position: absolute;
-    inset: 0;
-    width: 100%;
+    top: 0;
     height: 100%;
+    width: 50%;
     object-fit: cover;
-    object-position: center 15%;
     z-index: 0;
     pointer-events: none;
+  }
+  .hero-bg-photo-left {
+    left: 0;
+    object-position: center 68%;
+  }
+  .hero-bg-photo-right {
+    right: 0;
+    object-position: 15% 40%;
   }
   /* #hero's own ID gives this more specificity than .hero-bg-photo's
      "position: absolute", so without :not() it would win and silently
@@ -1576,7 +1583,8 @@
 
 <!-- HERO -->
 <section id="hero">
-  <img class="hero-bg-photo" src="assets/gallery/top-04.jpg" alt="">
+  <img class="hero-bg-photo hero-bg-photo-left" src="assets/gallery/top-01.jpg" alt="">
+  <img class="hero-bg-photo hero-bg-photo-right" src="assets/gallery/top-04.jpg" alt="">
   <div class="hero-card">
   <p class="hero-eyebrow" data-es="LOS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">LOS INVITAMOS A CELEBRAR CON NOSOTROS</p>
   <div class="hero-ornament"></div>
