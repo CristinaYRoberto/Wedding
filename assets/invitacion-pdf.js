@@ -481,7 +481,7 @@ window.InvitacionPDF = (function () {
       if (!name) return;
       if (i === 0 && /nombre|name|invitad|familia/i.test(name)) return;
       const n = parseInt((r[1] || '').trim(), 10);
-      out.push({ familia: name, pases: isNaN(n) || n < 1 ? 1 : n });
+      out.push({ familia: name, pases: isNaN(n) || n < 1 ? null : n });
     });
     return out;
   }

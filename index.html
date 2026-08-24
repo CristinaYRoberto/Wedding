@@ -2569,7 +2569,7 @@ function pdfCsvElegido(ev) {
       btn.disabled = true;
       return;
     }
-    const muestra = _csvRows.slice(0, 3).map(r => r.familia + ' (' + r.pases + ')').join(' · ');
+    const muestra = _csvRows.slice(0, 3).map(r => r.familia + (r.pases ? ' (' + r.pases + ')' : '')).join(' · ');
     status.textContent = _csvRows.length + ' invitados leídos. Ejemplo: ' + muestra;
     btn.disabled = false;
   }, 'gen-lote-status');
