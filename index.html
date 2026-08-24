@@ -166,16 +166,15 @@
     background: var(--warm-white);
     overflow: hidden;
   }
-  /* The photo sits at full strength; this wash is what keeps the text
-     legible over it, so it now carries a solid cream base under the
-     same decorative gold/sage glows it always had. */
+  /* ambient brand-color glow, unrelated to the texture underneath -
+     texture provides the paper grain, this just adds a soft gold/sage
+     bloom behind the card */
   #hero::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    background-color: rgba(250, 247, 242, .74);
     background-image:
       radial-gradient(ellipse 60% 50% at 20% 80%, rgba(184,154,106,0.14) 0%, transparent 60%),
       radial-gradient(ellipse 50% 60% at 80% 20%, rgba(122,140,110,0.12) 0%, transparent 60%);
@@ -192,30 +191,7 @@
     align-items: center;
   }
   @media(max-width: 560px) { .hero-card { padding: 2rem 1.4rem; } }
-  .hero-bg-photo {
-    /* <img> is a replaced element: inset:0 alone leaves height at the
-       image's own intrinsic size instead of stretching it, so width
-       and height still need to be explicit here. */
-    position: absolute;
-    top: 0;
-    height: 100%;
-    width: 50%;
-    object-fit: cover;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .hero-bg-photo-left {
-    left: 0;
-    object-position: center 68%;
-  }
-  .hero-bg-photo-right {
-    right: 0;
-    object-position: 15% 40%;
-  }
-  /* #hero's own ID gives this more specificity than .hero-bg-photo's
-     "position: absolute", so without :not() it would win and silently
-     turn the photo back into an in-flow, unstretched element. */
-  #hero > *:not(.hero-bg-photo) { position: relative; z-index: 2; }
+  #hero > * { position: relative; z-index: 2; }
   .hero-ornament {
     width: 180px;
     height: 1px;
@@ -1556,6 +1532,23 @@
     padding: 2rem;
     font-size: 1rem;
   }
+
+  /* ── PAPER TEXTURE ──
+     A faint scrollwork grain across every light (cream/warm-white/sage)
+     section, tying the whole site together like textured stationery.
+     background-blend-mode:multiply keeps each section's own color intact:
+     white areas of the texture vanish into it, linework only darkens it
+     a touch. Dark (charcoal) sections are left alone - the same texture
+     multiplied over near-black is invisible anyway. Longhand properties
+     only, and placed last, so they layer onto each section's existing
+     `background: var(--X)` shorthand instead of being reset by it. */
+  #hero, #parents, #padrinos, #story, #events, #video-section,
+  #dresscode, #hoteles, #faq, #gifts {
+    background-image: url('assets/gallery/textura_03_gold.jpg');
+    background-size: 520px;
+    background-repeat: repeat;
+    background-blend-mode: multiply;
+  }
 </style>
 </head>
 <body>
@@ -1583,8 +1576,6 @@
 
 <!-- HERO -->
 <section id="hero">
-  <img class="hero-bg-photo hero-bg-photo-left" src="assets/gallery/top-01.jpg" alt="">
-  <img class="hero-bg-photo hero-bg-photo-right" src="assets/gallery/top-04.jpg" alt="">
   <div class="hero-card">
   <p class="hero-eyebrow" data-es="LOS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">LOS INVITAMOS A CELEBRAR CON NOSOTROS</p>
   <div class="hero-ornament"></div>
@@ -1734,6 +1725,7 @@
         <p class="padrino-name">Sra. Irene Ibarra</p>
         <p class="padrino-name padrino-pareja">Srita. Elsa Álvarez</p>
         <p class="padrino-name">Srita. Sarah Pacheco</p>
+        <p class="padrino-name">Sr. Manuel Dávila</p>
       </div>
     </div>
 
