@@ -834,8 +834,9 @@
   /* The illustration floats inside the same text column as the rules
      list, so the note reads as the list's own closing line - text
      wrapping around it - instead of a separate boxed slide stacked
-     underneath. mix-blend-mode folds the artwork's flat grey backdrop
-     into the section's own cream, so no hard rectangle shows. */
+     underneath. The PNG has real alpha transparency around the couple,
+     so no blend-mode trick is needed (and mix-blend-mode actually
+     produced a white halo over the transparent pixels here). */
   .tennis-note {
     margin-top: .3rem;
     overflow: hidden;
@@ -845,7 +846,6 @@
     width: 108px;
     height: auto;
     margin: .2rem 1.3rem .6rem 0;
-    mix-blend-mode: multiply;
   }
   .tennis-note p {
     font-weight: 700;
