@@ -163,15 +163,37 @@
     background: var(--warm-white);
     overflow: hidden;
   }
+  /* The photo sits at full strength; this wash is what keeps the text
+     legible over it, so it now carries a solid cream base under the
+     same decorative gold/sage glows it always had. */
   #hero::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(184,154,106,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 80% 20%, rgba(122,140,110,0.10) 0%, transparent 60%);
+    z-index: 1;
+    background-color: rgba(250, 247, 242, .74);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(184,154,106,0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 20%, rgba(122,140,110,0.12) 0%, transparent 60%);
   }
+  .hero-bg-photo {
+    /* <img> is a replaced element: inset:0 alone leaves height at the
+       image's own intrinsic size instead of stretching it, so width
+       and height still need to be explicit here. */
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 15%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  /* #hero's own ID gives this more specificity than .hero-bg-photo's
+     "position: absolute", so without :not() it would win and silently
+     turn the photo back into an in-flow, unstretched element. */
+  #hero > *:not(.hero-bg-photo) { position: relative; z-index: 2; }
   .hero-ornament {
     width: 180px;
     height: 1px;
@@ -1539,6 +1561,7 @@
 
 <!-- HERO -->
 <section id="hero">
+  <img class="hero-bg-photo" src="assets/gallery/top-04.jpg" alt="">
   <p class="hero-eyebrow" data-es="LOS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">LOS INVITAMOS A CELEBRAR CON NOSOTROS</p>
   <div class="hero-ornament"></div>
   <h1 class="hero-names">
