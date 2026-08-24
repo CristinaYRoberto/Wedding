@@ -200,11 +200,13 @@
     }
     .name-input:focus { border-color:#8b4a6b; box-shadow:0 0 0 3px rgba(139,74,107,0.2); }
 
-    /* ── Side panels: entry (left) & victory (right) ────── */
+    /* ── Panels: entry (bottom-centre, clear of the artwork) &
+       victory (right on desktop, bottom-centre on phones) ── */
     .entry-panel {
-      position:absolute; top:50%; transform:translateY(-50%);
-      left:clamp(20px,2.8vw,52px);
-      width:min(300px,26vw); z-index:5;
+      position:absolute; z-index:5;
+      left:50%; bottom:clamp(14px,3vh,28px);
+      transform:translateX(-50%);
+      width:min(620px,94vw);
     }
     .victory-panel {
       position:absolute; top:50%; transform:translateY(-50%);
@@ -212,7 +214,7 @@
       width:min(300px,26vw); z-index:30;
     }
     @media (max-width:700px) {
-      .entry-panel, .victory-panel {
+      .victory-panel {
         top:auto !important; transform:translateX(-50%) !important;
         bottom:clamp(12px,3vh,24px) !important;
         left:50% !important; right:auto !important;
@@ -278,7 +280,6 @@ const STRINGS = {
   es: {
     pageTitle:       'Cris y José — Memoria de Boda',
     gameTitle:       '✦ Juego de Memoria ✦',
-    nameLabel:       'Escribe tu nombre para jugar',
     namePlaceholder: 'Tu nombre...',
     play:            'Jugar ✨',
     leaderboard:     '🏆 Tabla de Posiciones',
@@ -313,7 +314,6 @@ const STRINGS = {
   en: {
     pageTitle:       'Cris & José — Wedding Memory',
     gameTitle:       '✦ Memory Game ✦',
-    nameLabel:       'Enter your name to play',
     namePlaceholder: 'Your name...',
     play:            'Play ✨',
     leaderboard:     '🏆 Leaderboard',
@@ -569,38 +569,35 @@ function EntryScreen({ onPlay, onLeaderboard }) {
 
   return (
     <div style={{ flex:1, position:'relative' }}>
-      <div className="entry-panel fade-in">
-        <div style={{
-          background:'rgba(8,3,0,0.6)',
+      <div className="entry-panel">
+        <div className="fade-in" style={{
+          background:'rgba(8,3,0,0.68)',
           backdropFilter:'blur(22px)',
           border:'1px solid rgba(201,168,76,0.42)',
           borderRadius:'clamp(14px,1.8vmin,22px)',
-          padding:'clamp(20px,2.8vmin,32px) clamp(18px,2.2vmin,28px)',
+          padding:'clamp(12px,1.8vmin,18px) clamp(16px,2.2vmin,24px)',
         }}>
-          <div style={{ textAlign:'center', marginBottom:'clamp(14px,1.8vmin,20px)' }}>
-            <div style={{ fontFamily:"'Playfair Display',Georgia,serif", color:'#e8c96b', fontSize:'clamp(1rem,1.5vmin,1.25rem)', fontWeight:700, letterSpacing:'0.05em', textShadow:'0 2px 12px rgba(0,0,0,0.7)' }}>
-              {T.gameTitle}
-            </div>
-            <div style={{ width:44, height:1, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'8px auto 0' }}/>
+          <div style={{ textAlign:'center', marginBottom:'clamp(8px,1.2vmin,12px)', fontFamily:"'Playfair Display',Georgia,serif", color:'#e8c96b', fontSize:'clamp(0.85rem,1.3vmin,1.05rem)', fontWeight:700, letterSpacing:'0.05em', textShadow:'0 2px 12px rgba(0,0,0,0.7)' }}>
+            {T.gameTitle}
           </div>
 
-          <label style={{ display:'block', color:'rgba(253,248,240,0.7)', marginBottom:'clamp(6px,0.8vmin,10px)', fontSize:'clamp(0.72rem,1vmin,0.84rem)', fontStyle:'italic' }}>
-            {T.nameLabel}
-          </label>
-          <input
-            className="name-input"
-            type="text" value={name} maxLength={20}
-            placeholder={T.namePlaceholder}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => e.key==='Enter' && go()}
-            style={{ maxWidth:'100%' }}
-          />
-          <div style={{ marginTop:'clamp(12px,1.6vmin,18px)', display:'flex', flexDirection:'column', gap:'clamp(6px,0.8vmin,10px)' }}>
-            <button className="btn-primary" onClick={go} style={{ opacity: name.trim() ? 1 : 0.45 }}>
+          {/* One row on wide screens; wraps to stack on narrow ones, so
+              the same markup covers desktop and phone without a second
+              media-query layout to keep in sync. */}
+          <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'center', gap:'clamp(8px,1.2vmin,12px)' }}>
+            <input
+              className="name-input"
+              type="text" value={name} maxLength={20}
+              placeholder={T.namePlaceholder}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && go()}
+              style={{ flex:'1 1 180px', maxWidth:240, margin:0 }}
+            />
+            <button className="btn-primary" onClick={go} style={{ opacity: name.trim() ? 1 : 0.45, padding:'clamp(9px,1.1vmin,12px) clamp(18px,2.2vw,26px)', flex:'0 0 auto' }}>
               {T.play}
             </button>
-            <button className="btn-ghost" onClick={onLeaderboard}>{T.leaderboard}</button>
-            <a className="btn-ghost" href={MAIN_SITE_URL} style={{ textAlign:'center', textDecoration:'none' }}>{T.backToSite}</a>
+            <button className="btn-ghost" onClick={onLeaderboard} style={{ padding:'clamp(7px,0.9vmin,10px) clamp(14px,1.8vw,20px)', flex:'0 0 auto' }}>{T.leaderboard}</button>
+            <a className="btn-ghost" href={MAIN_SITE_URL} style={{ textAlign:'center', textDecoration:'none', padding:'clamp(7px,0.9vmin,10px) clamp(14px,1.8vw,20px)', flex:'0 0 auto' }}>{T.backToSite}</a>
           </div>
         </div>
       </div>
@@ -694,8 +691,8 @@ function VictoryModal({ playerName, errors, seconds, rank, onPlayAgain, onLeader
   const score = calcScore(errors, seconds);
   return (
     <div style={{ position:'absolute', inset:0, zIndex:30, pointerEvents:'none' }}>
-      <div className="victory-panel fade-in" style={{ pointerEvents:'auto' }}>
-        <div style={{
+      <div className="victory-panel" style={{ pointerEvents:'auto' }}>
+        <div className="fade-in" style={{
           background:'linear-gradient(145deg,rgba(253,248,240,0.95),rgba(255,249,240,0.95))',
           backdropFilter:'blur(20px)',
           border:'2px solid #c9a84c',
