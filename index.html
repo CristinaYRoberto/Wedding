@@ -125,8 +125,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    transition: background .4s;
+    background: rgba(255,255,255,.62);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 16px rgba(0,0,0,.05);
+    transition: background .4s, box-shadow .4s;
   }
   nav.scrolled {
     background: rgba(245,240,232,0.95);
@@ -177,6 +180,18 @@
       radial-gradient(ellipse 60% 50% at 20% 80%, rgba(184,154,106,0.14) 0%, transparent 60%),
       radial-gradient(ellipse 50% 60% at 80% 20%, rgba(122,140,110,0.12) 0%, transparent 60%);
   }
+  .hero-card {
+    background: rgba(255, 253, 248, .72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(184,154,106,.35);
+    box-shadow: 0 10px 50px rgba(0,0,0,.1);
+    padding: 2.6rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  @media(max-width: 560px) { .hero-card { padding: 2rem 1.4rem; } }
   .hero-bg-photo {
     /* <img> is a replaced element: inset:0 alone leaves height at the
        image's own intrinsic size instead of stretching it, so width
@@ -1562,6 +1577,7 @@
 <!-- HERO -->
 <section id="hero">
   <img class="hero-bg-photo" src="assets/gallery/top-04.jpg" alt="">
+  <div class="hero-card">
   <p class="hero-eyebrow" data-es="LOS INVITAMOS A CELEBRAR CON NOSOTROS" data-en="YOU ARE INVITED TO CELEBRATE WITH US">LOS INVITAMOS A CELEBRAR CON NOSOTROS</p>
   <div class="hero-ornament"></div>
   <h1 class="hero-names">
@@ -1598,6 +1614,7 @@
   <div class="hero-game-block" id="hero-game-block">
     <p class="hero-game-hint" data-es="Hemos creado un juego para nuestros invitados. Juega aquí" data-en="We made a game for our guests. Play here">Hemos creado un juego para nuestros invitados. Juega aquí</p>
     <a href="game.html" class="btn btn-game" id="btn-jugar"><span data-es="¡JUGAR!" data-en="PLAY!">¡JUGAR!</span></a>
+  </div>
   </div>
 </section>
 
