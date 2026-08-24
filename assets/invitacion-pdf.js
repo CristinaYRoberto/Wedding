@@ -283,10 +283,10 @@ window.InvitacionPDF = (function () {
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
     rule(doc, 33, 26, GOLD);
 
-    let y = 48;
+    let y = 42;
     y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 15;
+    y += 8;
 
     const rules = [
       'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
@@ -300,12 +300,12 @@ window.InvitacionPDF = (function () {
         if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
         doc.text(ln, M + 6, y); y += 4.5;
       });
-      y += 3.2;
+      y += 1.6;
     });
 
-    y += 16;
+    y += 7;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
-    y += 9;
+    y += 5.5;
 
     /* Narrower than the text column now, and centred, so it reads as a
        framed swatch rather than a full-width banner. */
@@ -314,13 +314,13 @@ window.InvitacionPDF = (function () {
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(bx, y, bw, bh, 'S');
-    y += bh + 9;
+    y += bh + 5;
 
     ['Evitar Blanco', 'Evitar Gris', 'Evitar Dorado', 'Evitar Negro'].forEach((label, i) => {
       setF(doc, 'Cinzel', 6, MUTED);
       doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 14;
+    y += 8;
 
     paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
               y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
