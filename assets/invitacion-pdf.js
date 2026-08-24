@@ -276,7 +276,7 @@ window.InvitacionPDF = (function () {
     bgTexture(doc, a);
 
     doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.11 }));
+    doc.setGState(new doc.GState({ opacity: 0.22 }));
     doc.addImage(a.veil.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
     doc.restoreGraphicsState();
 
