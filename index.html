@@ -1534,21 +1534,29 @@
   }
 
   /* ── PAPER TEXTURE ──
-     A faint scrollwork grain across every light (cream/warm-white/sage)
-     section, tying the whole site together like textured stationery.
-     background-blend-mode:multiply keeps each section's own color intact:
+     A scrollwork grain across the light (cream/warm-white/sage) sections,
+     varied in strength so the whole site doesn't read as one repeated
+     wallpaper: a couple of anchor moments carry it a little more, most
+     sections carry a barely-there version, and a few are left plain for
+     breathing room. Dark (charcoal) sections are left alone entirely.
+     background-blend-mode:multiply keeps each section's own color intact -
      white areas of the texture vanish into it, linework only darkens it
-     a touch. Dark (charcoal) sections are left alone - the same texture
-     multiplied over near-black is invisible anyway. Longhand properties
-     only, and placed last, so they layer onto each section's existing
-     `background: var(--X)` shorthand instead of being reset by it. */
-  #hero, #parents, #padrinos, #story, #events, #video-section,
-  #dresscode, #hoteles, #faq, #gifts {
-    background-image: url('assets/gallery/textura_03_gold.jpg');
-    background-size: 520px;
+     a touch. Longhand properties only, and placed last, so they layer onto
+     each section's existing `background: var(--X)` shorthand instead of
+     being reset by it. */
+  #hero, #padrinos, #dresscode {
+    background-image: url('assets/gallery/textura_03_tier2.jpg');
+    background-size: 560px;
     background-repeat: repeat;
     background-blend-mode: multiply;
   }
+  #story, #events, #faq, #gifts {
+    background-image: url('assets/gallery/textura_03_tier1.jpg');
+    background-size: 560px;
+    background-repeat: repeat;
+    background-blend-mode: multiply;
+  }
+  /* #parents, #video-section, #hoteles stay plain - quiet beats in the rhythm */
 </style>
 </head>
 <body>
