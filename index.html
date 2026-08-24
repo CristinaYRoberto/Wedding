@@ -2038,19 +2038,23 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label" data-es="CORREO ELECTRÓNICO" data-en="EMAIL">CORREO ELECTRÓNICO</label>
-        <input class="form-input" type="email" name="email" required placeholder="tu@correo.com">
+        <label class="form-label" data-es="CORREO ELECTRÓNICO (OPCIONAL)" data-en="EMAIL (OPTIONAL)">CORREO ELECTRÓNICO (OPCIONAL)</label>
+        <input class="form-input" type="email" name="email" placeholder="tu@correo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-es="TELÉFONO (OPCIONAL)" data-en="PHONE (OPTIONAL)">TELÉFONO (OPCIONAL)</label>
+        <input class="form-input" type="tel" name="telefono" placeholder="Tu número de teléfono">
       </div>
       <div class="form-group">
         <label class="form-label" data-es="ASISTENCIA" data-en="ATTENDING">ASISTENCIA</label>
         <div class="radio-group">
           <label class="radio-option">
             <input type="radio" name="asistencia" value="si" required>
-            <span data-es="Confirmo Asistencia" data-en="I'll Be There">Confirmo Asistencia</span>
+            <span data-es="Confirmo asistencia" data-en="I'll Be There">Confirmo asistencia</span>
           </label>
           <label class="radio-option">
             <input type="radio" name="asistencia" value="no" required>
-            <span data-es="NO Asistiré" data-en="I Won't Attend">NO Asistiré</span>
+            <span data-es="No asistiré" data-en="I Won't Attend">No asistiré</span>
           </label>
         </div>
       </div>
@@ -2460,7 +2464,8 @@ async function submitRSVP(e) {
     try {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         from_name:  `${data.nombre} ${data.apellido}`,
-        email:      data.email,
+        email:      data.email || '—',
+        telefono:   data.telefono || '—',
         asistencia: data.asistencia === 'si' ? 'Sí asistirá' : 'No asistirá',
         personas:   data.personas,
         dieta:      data.dieta || 'Ninguna',
