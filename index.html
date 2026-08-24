@@ -831,28 +831,32 @@
   }
   .dresscode-list li { margin-bottom: .7rem; }
   .dresscode-list li::marker { color: var(--gold); }
-  /* Sits beside the shoes illustration rather than stacked under it, so
-     it reads as one wide row instead of adding more vertical height. */
+  /* The illustration floats inside the same text column as the rules
+     list, so the note reads as the list's own closing line - text
+     wrapping around it - instead of a separate boxed slide stacked
+     underneath. mix-blend-mode folds the artwork's flat grey backdrop
+     into the section's own cream, so no hard rectangle shows. */
   .tennis-note {
-    display: flex;
-    align-items: center;
-    gap: 1.6rem;
-    margin-top: 1.6rem;
+    margin-top: .3rem;
+    overflow: hidden;
   }
   .tennis-note img {
-    width: 150px;
+    float: left;
+    width: 128px;
     height: auto;
-    flex-shrink: 0;
+    margin: .2rem 1.3rem .6rem 0;
+    mix-blend-mode: multiply;
   }
   .tennis-note p {
     font-weight: 700;
-    font-size: 1.15rem;
-    line-height: 1.5;
+    font-size: 1.1rem;
+    line-height: 1.65;
     color: var(--charcoal);
     margin: 0;
   }
   @media(max-width: 600px) {
-    .tennis-note { flex-direction: column; text-align: center; }
+    .tennis-note img { float: none; display: block; margin: 0 auto .8rem; }
+    .tennis-note p { text-align: center; }
   }
   .avoid-block {
     border: 1px solid rgba(180,83,75,.35);
