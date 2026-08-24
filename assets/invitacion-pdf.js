@@ -121,7 +121,7 @@ window.InvitacionPDF = (function () {
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
-      loadPhoto('assets/UI/outfit_tennis_V2.png', 1085 / 874, 500, 0.5),
+      loadPhoto('assets/UI/outfit_tennis.png', 1085 / 1450, 500, 0.5),
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
@@ -311,7 +311,7 @@ window.InvitacionPDF = (function () {
        Cinzel stands in for bold here, since only its semibold weight is
        embedded (no separate Lato-bold font is loaded). */
     y += 4;
-    const timgW = 30, timgH = timgW / a.tennis.aspect;
+    const timgW = 23, timgH = timgW / a.tennis.aspect;
     doc.addImage(a.tennis.data, 'JPEG', M, y, timgW, timgH, undefined, 'FAST');
     const tx = M + timgW + 5, tmaxW = (W - M) - tx - 2;
     setF(doc, 'Cinzel', 7.2, CHARCOAL);
