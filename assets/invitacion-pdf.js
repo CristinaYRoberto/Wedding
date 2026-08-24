@@ -83,9 +83,33 @@ window.InvitacionPDF = (function () {
 
   const BAND_ASPECT = W / 46;
 
+  /* Tiles a small texture swatch into one full-page-sized image, since
+     jsPDF has no repeating-background primitive - a single addImage call
+     of this is far cheaper than tiling addImage calls per page. */
+  function loadTiledTexture(src, pageAspect, outW, tilePx) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = outW;
+        c.height = Math.round(outW / pageAspect);
+        const ctx = c.getContext('2d');
+        const tileW = tilePx, tileH = tilePx * (img.naturalHeight / img.naturalWidth);
+        for (let y = 0; y < c.height; y += tileH) {
+          for (let x = 0; x < c.width; x += tileW) {
+            ctx.drawImage(img, x, y, tileW, tileH);
+          }
+        }
+        res({ data: c.toDataURL('image/jpeg', 0.85) });
+      };
+      img.onerror = () => rej(new Error('No se pudo cargar la textura ' + src));
+      img.src = src;
+    });
+  }
+
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telas, veil, twoA, twoB, closing] = await Promise.all([
+    const [band, telas, veil, twoA, twoB, closing, texture] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
@@ -97,9 +121,22 @@ window.InvitacionPDF = (function () {
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
+      /* Same faint scrollwork as the site, for the pages that have no
+         photo of their own to sit on. */
+      loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
-    _assets = { band, telas, veil, twoA, twoB, closing };
+    _assets = { band, telas, veil, twoA, twoB, closing, texture };
     return _assets;
+  }
+
+  /* Pages 1, 3 and 4 have no full-page photo background - this lays the
+     same faint texture the site uses under their content. Page 2 already
+     carries a.veil for that job, so it skips this. */
+  function bgTexture(doc, a) {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.5 }));
+    doc.addImage(a.texture.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
+    doc.restoreGraphicsState();
   }
 
   /* ── Drawing helpers ──────────────────────────────────────────────── */
@@ -174,6 +211,7 @@ window.InvitacionPDF = (function () {
      button under the footer before. */
   function pageOne(doc, a, familia, pases) {
     page(doc, true);
+    bgTexture(doc, a);
 
     const bandH = W / BAND_ASPECT;                       /* 46mm */
     doc.addImage(a.band.data, 'JPEG', 0, 0, W, bandH, undefined, 'FAST');
@@ -245,10 +283,10 @@ window.InvitacionPDF = (function () {
     centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
     rule(doc, 33, 26, GOLD);
 
-    let y = 41;
+    let y = 48;
     y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 9;
+    y += 15;
 
     const rules = [
       'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
@@ -262,30 +300,27 @@ window.InvitacionPDF = (function () {
         if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
         doc.text(ln, M + 6, y); y += 4.5;
       });
-      y += 1.6;
+      y += 3.2;
     });
 
-    y += 5;
-    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', y, 7.5, CHARCOAL, 0.8);
-    y += 10;
-
+    y += 16;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
-    y += 5.5;
+    y += 9;
 
-    /* The strip is short at this photo's own aspect (~3.3:1), so it can
-       run the full text-column width without dominating the page. */
-    const bw = W - 2 * M, bx = M, bh = bw / a.telas.aspect;
+    /* Narrower than the text column now, and centred, so it reads as a
+       framed swatch rather than a full-width banner. */
+    const bw = (W - 2 * M) * 0.86, bx = M + ((W - 2 * M) - bw) / 2, bh = bw / a.telas.aspect;
     doc.addImage(a.telas.data, 'JPEG', bx, y, bw, bh, undefined, 'FAST');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(bx, y, bw, bh, 'S');
-    y += bh + 5;
+    y += bh + 9;
 
     ['Evitar Blanco', 'Evitar Gris', 'Evitar Dorado', 'Evitar Negro'].forEach((label, i) => {
       setF(doc, 'Cinzel', 6, MUTED);
       doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
     });
-    y += 8;
+    y += 14;
 
     paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
               y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
@@ -296,6 +331,7 @@ window.InvitacionPDF = (function () {
   /* ── Page 3 — gifts, hotels, two portraits ────────────────────────── */
   function pageThree(doc, a) {
     page(doc);
+    bgTexture(doc, a);
 
     tracked(doc, 'REGALOS', 18, 7.5, GOLD, 1.1);
     paragraph(doc, 'Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
@@ -341,6 +377,7 @@ window.InvitacionPDF = (function () {
   /* ── Page 4 — one photo, and the one way to reply ─────────────────── */
   function pageFour(doc, a) {
     page(doc);
+    bgTexture(doc, a);
 
     const iw = W - 2 * M, ih = iw / 1.4;
     doc.addImage(a.closing.data, 'JPEG', M, 18, iw, ih, undefined, 'FAST');
