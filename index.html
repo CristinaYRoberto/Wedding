@@ -831,6 +831,29 @@
   }
   .dresscode-list li { margin-bottom: .7rem; }
   .dresscode-list li::marker { color: var(--gold); }
+  /* Sits beside the shoes illustration rather than stacked under it, so
+     it reads as one wide row instead of adding more vertical height. */
+  .tennis-note {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    margin-top: 1.6rem;
+  }
+  .tennis-note img {
+    width: 150px;
+    height: auto;
+    flex-shrink: 0;
+  }
+  .tennis-note p {
+    font-weight: 700;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: var(--charcoal);
+    margin: 0;
+  }
+  @media(max-width: 600px) {
+    .tennis-note { flex-direction: column; text-align: center; }
+  }
   .avoid-block {
     border: 1px solid rgba(180,83,75,.35);
     background: rgba(180,83,75,.05);
@@ -1876,6 +1899,10 @@
           <li data-es="Corbata o pañuelos de cualquier color menos blancos." data-en="Tie or pocket square in any colour except white.">Corbata o pañuelos de cualquier color menos blancos.</li>
           <li data-es="Vestido largo o cóctel para nuestras invitadas." data-en="A floor-length or cocktail dress for our lady guests.">Vestido largo o cóctel para nuestras invitadas.</li>
         </ul>
+        <div class="tennis-note">
+          <img src="assets/UI/outfit_tennis_V2.png" loading="lazy" alt="">
+          <p data-es="Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche." data-en="So you can enjoy the night to the fullest, we invite you to also bring your favourite sneakers and dance all night.">Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.</p>
+        </div>
       </div>
 
       <!-- Heading, reason and photo grouped so the warning reads against the

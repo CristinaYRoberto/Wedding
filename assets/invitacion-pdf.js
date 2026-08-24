@@ -109,7 +109,7 @@ window.InvitacionPDF = (function () {
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telas, veil, twoA, twoB, closing, texture] = await Promise.all([
+    const [band, telas, veil, twoA, twoB, closing, tennis, texture] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
@@ -121,11 +121,12 @@ window.InvitacionPDF = (function () {
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
+      loadPhoto('assets/UI/outfit_tennis_V2.png', 1085 / 874, 500, 0.5),
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
-    _assets = { band, telas, veil, twoA, twoB, closing, texture };
+    _assets = { band, telas, veil, twoA, twoB, closing, tennis, texture };
     return _assets;
   }
 
@@ -306,7 +307,23 @@ window.InvitacionPDF = (function () {
       y += 1.2;
     });
 
-    y += 5;
+    /* Shoes illustration beside the note rather than stacked above it -
+       Cinzel stands in for bold here, since only its semibold weight is
+       embedded (no separate Lato-bold font is loaded). */
+    y += 4;
+    const timgW = 30, timgH = timgW / a.tennis.aspect;
+    doc.addImage(a.tennis.data, 'JPEG', M, y, timgW, timgH, undefined, 'FAST');
+    const tx = M + timgW + 5, tmaxW = (W - M) - tx - 2;
+    setF(doc, 'Cinzel', 7.2, CHARCOAL);
+    const tlines = doc.splitTextToSize(
+      'Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.',
+      tmaxW);
+    const tlineH = 3.7, tblockH = tlines.length * tlineH;
+    const tY = y + (timgH - tblockH) / 2 + tlineH * 0.75;
+    tlines.forEach((ln, i) => doc.text(ln, tx, tY + i * tlineH));
+    y += timgH + 5;
+
+    y += 3;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
     y += 5;
 
