@@ -509,14 +509,15 @@
   /* ── PADRINOS ── */
   #padrinos { background: var(--light-sage); }
   .padrinos-grid {
-    columns: 3;
-    column-gap: 2rem;
+    columns: 4;
+    column-gap: 1.6rem;
     text-align: left;
   }
   .padrinos-grid > div {
     break-inside: avoid;
     margin-bottom: 1.5rem;
   }
+  @media(max-width: 1100px) { .padrinos-grid { columns: 3; } }
   @media(max-width: 820px) { .padrinos-grid { columns: 2; } }
   @media(max-width: 520px) { .padrinos-grid { columns: 1; } }
   .padrino-role {
