@@ -1363,13 +1363,6 @@
     line-height: 1.6;
     color: var(--muted);
   }
-  .gift-card-note-example {
-    margin-top: .35rem;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 1.02rem;
-    color: var(--dark-gold);
-  }
 
   /* ── MENU MODAL ── */
   #menu { background: var(--charcoal); }
@@ -2038,7 +2031,7 @@
 
       <div class="tennis-note">
         <img src="assets/UI/outfit_tennis.png" loading="lazy" alt="">
-        <p data-es="Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche." data-en="So you can enjoy the night to the fullest, we invite you to also bring your favourite sneakers and dance all night.">Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.</p>
+        <p data-es="¡Lleva también tus tenis preferidos por si te cansas, estés más cómodo y bailes toda la noche!" data-en="Bring your favourite sneakers too — in case your feet get tired, so you are comfier and can dance all night!">¡Lleva también tus tenis preferidos por si te cansas, estés más cómodo y bailes toda la noche!</p>
       </div>
 
       <!-- Heading, reason and photo grouped so the warning reads against the
@@ -2100,11 +2093,8 @@
           JOSE ROBERTO MORENO RUIZ<br>
           <span style="white-space:nowrap" data-es="CLABE: 072760013297837244" data-en="CLABE: 072760013297837244">CLABE: 072760013297837244</span>
         </div>
-        <p class="gift-card-note" data-es="Sugerencia: en el concepto de la transferencia incluye tu nombre y &quot;regalo boda&quot;." data-en="Tip: in the transfer reference, include your name and &quot;wedding gift&quot;.">
-          Sugerencia: en el concepto de la transferencia incluye tu nombre y "regalo boda".
-        </p>
-        <p class="gift-card-note-example" data-es="Por ejemplo: &quot;Pancho Villa Regalo Boda&quot;" data-en="For example: &quot;Pancho Villa Wedding Gift&quot;">
-          Por ejemplo: "Pancho Villa Regalo Boda"
+        <p class="gift-card-note" data-es="Sugerencia: En el caso de transferencia, no olvides poner &quot;Nombre-RegaloBoda&quot;" data-en="Tip: for a bank transfer, remember to enter &quot;Name-WeddingGift&quot; as the reference">
+          Sugerencia: En el caso de transferencia, no olvides poner "Nombre-RegaloBoda"
         </p>
       </div>
 
@@ -2209,20 +2199,20 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" data-es="NOMBRE" data-en="FIRST NAME">NOMBRE</label>
-          <input class="form-input" type="text" name="nombre" required placeholder="Tu nombre">
+          <input class="form-input" type="text" name="nombre" required placeholder="Tu nombre" data-ph-es="Tu nombre" data-ph-en="Your first name">
         </div>
         <div class="form-group">
           <label class="form-label" data-es="APELLIDO" data-en="LAST NAME">APELLIDO</label>
-          <input class="form-input" type="text" name="apellido" required placeholder="Tu apellido">
+          <input class="form-input" type="text" name="apellido" required placeholder="Tu apellido" data-ph-es="Tu apellido" data-ph-en="Your last name">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label" data-es="CORREO ELECTRÓNICO (OPCIONAL)" data-en="EMAIL (OPTIONAL)">CORREO ELECTRÓNICO (OPCIONAL)</label>
-        <input class="form-input" type="email" name="email" placeholder="tu@correo.com">
+        <input class="form-input" type="email" name="email" placeholder="tu@correo.com" data-ph-es="tu@correo.com" data-ph-en="you@email.com">
       </div>
       <div class="form-group">
         <label class="form-label" data-es="TELÉFONO (OPCIONAL)" data-en="PHONE (OPTIONAL)">TELÉFONO (OPCIONAL)</label>
-        <input class="form-input" type="tel" name="telefono" placeholder="Tu número de teléfono">
+        <input class="form-input" type="tel" name="telefono" placeholder="Tu número de teléfono" data-ph-es="Tu número de teléfono" data-ph-en="Your phone number">
       </div>
       <div class="form-group">
         <label class="form-label" data-es="ASISTENCIA" data-en="ATTENDING">ASISTENCIA</label>
@@ -2240,7 +2230,7 @@
       </div>
       <div class="form-group">
         <label class="form-label" data-es="MENSAJE PARA LOS NOVIOS (OPCIONAL)" data-en="MESSAGE FOR THE COUPLE (OPTIONAL)">MENSAJE PARA LOS NOVIOS (OPCIONAL)</label>
-        <textarea class="form-textarea" name="mensaje" placeholder="Un deseo, una anécdota..."></textarea>
+        <textarea class="form-textarea" name="mensaje" placeholder="Un deseo, una anécdota..." data-ph-es="Un deseo, una anécdota..." data-ph-en="A wish, a story..."></textarea>
       </div>
       <button type="submit" class="btn btn-primary" style="align-self:center; margin-top:1rem" data-es="ENVIAR CONFIRMACIÓN" data-en="SEND RSVP">ENVIAR CONFIRMACIÓN</button>
       <p class="rsvp-note" id="rsvp-status"></p>
@@ -2342,11 +2332,11 @@
     <p class="wa-modal-title" data-es="Escribe tu nombre para confirmar" data-en="Enter your name to confirm">Escribe tu nombre para confirmar</p>
     <div class="form-group">
       <label class="form-label" data-es="NOMBRE COMPLETO (CON APELLIDOS)" data-en="FULL NAME (WITH LAST NAMES)">NOMBRE COMPLETO (CON APELLIDOS)</label>
-      <input class="form-input" type="text" id="wa-modal-name" placeholder="Nombre Apellido Apellido">
+      <input class="form-input" type="text" id="wa-modal-name" placeholder="Nombre Apellido Apellido" data-ph-es="Nombre Apellido Apellido" data-ph-en="First name Last name">
     </div>
     <div class="form-group">
       <label class="form-label" data-es="CORREO" data-en="EMAIL">CORREO</label>
-      <input class="form-input" type="email" id="wa-modal-email" placeholder="tu@correo.com">
+      <input class="form-input" type="email" id="wa-modal-email" placeholder="tu@correo.com" data-ph-es="tu@correo.com" data-ph-en="you@email.com">
     </div>
     <p class="wa-modal-error" id="wa-modal-error"></p>
     <div class="wa-modal-actions">
@@ -2566,6 +2556,12 @@ function setLang(lang) {
     if (el.tagName === 'INPUT' || el.tagName === 'OPTION') el.textContent = text;
     else if (el.tagName === 'BUTTON' || el.tagName === 'LABEL') el.textContent = text;
     else el.innerHTML = text;
+  });
+  /* Placeholders live in an attribute, so the loop above cannot reach
+     them - they would stay in Spanish for an English reader. */
+  document.querySelectorAll('[data-ph-es]').forEach(el => {
+    const ph = el.getAttribute('data-ph-' + lang);
+    if (ph) el.placeholder = ph;
   });
   buildFAQ();
   document.documentElement.lang = lang;
