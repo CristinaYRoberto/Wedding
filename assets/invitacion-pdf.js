@@ -443,8 +443,8 @@ window.InvitacionPDF = (function () {
 
     let y = 38;
     const bankH = 15, bankW = W - 2 * M;
-    [['BBVA', 'Cristina Borquez Bernal', '4152314000799307'],
-     ['Santander', 'José Roberto Moreno Ruiz', '014760200064187105']].forEach(b => {
+    [['BBVA', 'Cristina Borquez Bernal', '012180015298657265'],
+     ['Banorte', 'José Roberto Moreno Ruiz', '072760013297837244']].forEach(b => {
       doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
       doc.rect(M, y, bankW, bankH, 'F');
       doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
