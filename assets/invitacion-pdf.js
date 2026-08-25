@@ -394,7 +394,7 @@ window.InvitacionPDF = (function () {
     doc.addImage(a.tennis.data, 'PNG', M + tPad, y + tPad, timgW, timgH, undefined, 'FAST');
     setF(doc, 'Cinzel', 5.4, CHARCOAL);
     const tTextX = M + tPad + timgW + 3, tTextW = (W - M - tPad) - tTextX;
-    const tlines = doc.splitTextToSize('Lleva también tus tenis favoritos y baila toda la noche.', tTextW);
+    const tlines = doc.splitTextToSize('¡Lleva también tus tenis preferidos por si te cansas, estés más cómodo y bailes toda la noche!', tTextW);
     const tlineH = 3.1, tY = y + (tCardH - tlines.length * tlineH) / 2 + 2.3;
     tlines.forEach((ln, i) => doc.text(ln, tTextX, tY + i * tlineH));
     y += tCardH + 3.5;
@@ -469,12 +469,10 @@ window.InvitacionPDF = (function () {
        Straight quotes only: the embedded font subsets drop curly ones
        and truncate the string outright at a guillemet. */
     y += 2;
-    y = paragraph(doc, 'Sugerencia: en el concepto de la transferencia incluye tu nombre y "regalo boda".',
+    y = paragraph(doc, 'Sugerencia: En el caso de transferencia, no olvides poner "Nombre-RegaloBoda"',
                   y, 'Lato', 7, MUTED, W - 2 * M - 10, 3.9);
-    y += 4.4;
-    centred(doc, 'Por ejemplo: "Pancho Villa Regalo Boda"', y, 'CormorantI', 9, DARKGOLD);
 
-    y += 7;
+    y += 8;
     tracked(doc, 'EFECTIVO', y, 7, GOLD, 1);
     y += 5.5;
     y = paragraph(doc, 'Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.',
@@ -520,10 +518,10 @@ window.InvitacionPDF = (function () {
     y += 9;
     y = button(doc, 'IR A LA PÁGINA Y CONFIRMAR', y, SITE + '#rsvp', CHARCOAL, CREAM);
 
-    y += 8;
-    setF(doc, 'CormorantI', 7.8, MUTED);
-    doc.text('¿Se te complica? Escríbenos y te ayudamos:', W / 2, y, { align: 'center' });
-    y += 5.5;
+    y += 7;
+    y = paragraph(doc, '¿Se complica? Escríbenos a cualquiera de estos números o clic en el número para enviarte a WhatsApp directamente y te apoyamos.',
+                  y, 'CormorantI', 7.8, MUTED, W - 2 * M - 6, 4.2);
+    y += 6.5;
     /* Contact, not a second way to confirm: replies still come through
        the form so they all land in one list. */
     [['Roberto · 662 146 1622', WA_ROBERTO], ['Cristina · 662 341 9038', WA_CRISTINA]]
