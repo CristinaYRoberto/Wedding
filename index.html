@@ -2383,10 +2383,19 @@
 
       <p class="admin-title" style="font-size:.95rem; margin:1.6rem 0 .5rem">POR LOTE — SUBIR CSV</p>
       <p class="admin-csv-help">
-        Dos columnas: nombre completo y número de pases. Si la primera fila es
-        un encabezado se ignora. Genera un PDF por invitado y los entrega en un ZIP.
+        Cuatro columnas: <strong>Nombre</strong>, <strong>Pases</strong>,
+        <strong>Entregada</strong> y <strong>De</strong>. Si la primera fila es
+        un encabezado se ignora.<br>
+        <strong>Entregada:</strong> una «x» salta esa fila. Si la dejas vacía, la
+        invitación se genera de nuevo y reemplaza a la anterior.<br>
+        <strong>De:</strong> «Cristina» o «Jose» — decide en qué carpeta cae.<br>
+        El ZIP trae dentro las carpetas <em>InvitacionesCristina</em> e
+        <em>InvitacionesJose</em>: descomprímelo dentro de
+        <em>…\BODA CRIS &amp; ROBERT\INVITACIONES</em> y cada una queda en su ruta.
+        Las filas sin «De» quedan en la raíz del ZIP.
       </p>
       <div class="admin-actions">
+        <button class="admin-btn" onclick="pdfPlantilla()">↓ PLANTILLA CSV</button>
         <label class="admin-btn" style="cursor:pointer">
           ⇧ ELEGIR CSV
           <input type="file" id="gen-csv" accept=".csv,text/csv" style="display:none" onchange="pdfCsvElegido(event)">
@@ -2734,9 +2743,26 @@ function pdfCsvElegido(ev) {
       btn.disabled = true;
       return;
     }
-    const muestra = _csvRows.slice(0, 3).map(r => r.familia + (r.pases ? ' (' + r.pases + ')' : '')).join(' · ');
-    status.textContent = _csvRows.length + ' invitados leídos. Ejemplo: ' + muestra;
-    btn.disabled = false;
+    const porHacer = _csvRows.filter(r => !r.entregada);
+    const entregadas = _csvRows.length - porHacer.length;
+    const sinDuenio = porHacer.filter(r => !r.duenio).length;
+    const deC = porHacer.filter(r => r.duenio === 'cristina').length;
+    const deJ = porHacer.filter(r => r.duenio === 'jose').length;
+
+    let msg = _csvRows.length + ' filas leídas · ' + porHacer.length + ' por generar';
+    if (entregadas) msg += ' · ' + entregadas + ' ya entregada' + (entregadas === 1 ? '' : 's') + ' (se saltan)';
+    msg += '. Cristina: ' + deC + ' · Jose: ' + deJ;
+    if (sinDuenio) msg += ' · ' + sinDuenio + ' sin columna «De» (irán a la raíz del ZIP)';
+    status.textContent = msg;
+    btn.disabled = porHacer.length === 0;
+    if (!porHacer.length) status.textContent = msg + '. No hay nada que generar.';
+  }, 'gen-lote-status');
+}
+
+function pdfPlantilla() {
+  conPdf(async status => {
+    window.InvitacionPDF.plantillaCSV();
+    status.textContent = 'Plantilla descargada: Plantilla_Invitaciones.csv';
   }, 'gen-lote-status');
 }
 
@@ -2746,11 +2772,17 @@ function pdfLote() {
   conPdf(async status => {
     btn.disabled = true;
     const t0 = Date.now();
-    await window.InvitacionPDF.batch(_csvRows, (done, total, label) => {
+    const res = await window.InvitacionPDF.batch(_csvRows, (done, total, label) => {
       status.textContent = done + ' de ' + total + ' — ' + label;
     });
-    status.textContent = _csvRows.length + ' invitaciones listas en ' +
-      Math.round((Date.now() - t0) / 1000) + ' s. Revisa tus descargas.';
+    let msg = res.generated + ' invitacion' + (res.generated === 1 ? '' : 'es') +
+      ' en ' + Math.round((Date.now() - t0) / 1000) + ' s' +
+      ' (Cristina: ' + res.counts.cristina + ' · Jose: ' + res.counts.jose;
+    if (res.counts.sinAsignar) msg += ' · sin carpeta: ' + res.counts.sinAsignar;
+    msg += ').';
+    if (res.skipped) msg += ' ' + res.skipped + ' ya entregada' + (res.skipped === 1 ? '' : 's') + ', saltada' + (res.skipped === 1 ? '' : 's') + '.';
+    msg += ' Revisa tus descargas.';
+    status.textContent = msg;
     btn.disabled = false;
   }, 'gen-lote-status');
 }

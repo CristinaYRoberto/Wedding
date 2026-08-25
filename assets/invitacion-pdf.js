@@ -599,34 +599,91 @@ window.InvitacionPDF = (function () {
       if (!name) return;
       if (i === 0 && /nombre|name|invitad|familia/i.test(name)) return;
       const n = parseInt((r[1] || '').trim(), 10);
-      out.push({ familia: name, pases: isNaN(n) || n < 1 ? null : n });
+      out.push({
+        familia: name,
+        pases: isNaN(n) || n < 1 ? null : n,
+        entregada: isEntregada(r[2]),
+        duenio: parseDuenio(r[3]),
+      });
     });
     return out;
   }
 
+  /* Column 3 — "Entregada". Deliberately an explicit whitelist: anything
+     else (a note, a date, "pendiente") leaves the invitation to be made,
+     which is the safe way to be wrong. */
+  function isEntregada(cell) {
+    return /^(x|si|sí|s|yes|y|true|1|ok)$/i.test(String(cell || '').trim());
+  }
+
+  /* Column 4 — whose guest it is, which picks the folder inside the ZIP. */
+  const FOLDERS = { cristina: 'InvitacionesCristina', jose: 'InvitacionesJose' };
+  function parseDuenio(cell) {
+    const v = String(cell || '').trim()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    if (!v) return null;
+    if (v.indexOf('cris') === 0) return 'cristina';
+    if (v.indexOf('jose') === 0 || v.indexOf('rob') === 0 || v === 'j') return 'jose';
+    return null;
+  }
+
+  /* A browser cannot write to G:\... , so the ZIP carries the folder
+     structure instead: unzip it into the INVITACIONES folder and the
+     two subfolders land where they belong. Rows without an owner go to
+     the root so they are impossible to miss. */
   async function batch(rows, onProgress) {
     const { JSZip } = await ensureLibs();
     await ensureAssets();
     const zip = new JSZip();
     const used = Object.create(null);
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+
+    const pending = rows.filter(r => !r.entregada);
+    const skipped = rows.length - pending.length;
+    const counts = { cristina: 0, jose: 0, sinAsignar: 0 };
+
+    for (let i = 0; i < pending.length; i++) {
+      const r = pending[i];
       const doc = await buildDoc(r.familia, r.pases);
+      const folder = FOLDERS[r.duenio] || '';
+      if (r.duenio) counts[r.duenio]++; else counts.sinAsignar++;
       let fn = 'Invitacion_' + safeName(r.familia);
-      if (used[fn]) { used[fn]++; fn += '_' + used[fn]; } else { used[fn] = 1; }
-      zip.file(fn + '.pdf', doc.output('arraybuffer'));
-      if (onProgress) onProgress(i + 1, rows.length, r.familia);
+      const key = folder + '/' + fn;
+      if (used[key]) { used[key]++; fn += '_' + used[key]; } else { used[key] = 1; }
+      zip.file((folder ? folder + '/' : '') + fn + '.pdf', doc.output('arraybuffer'));
+      if (onProgress) onProgress(i + 1, pending.length, r.familia);
       if (i % 5 === 4) await new Promise(res => setTimeout(res, 0));
     }
+
+    if (!pending.length) return { generated: 0, skipped: skipped, counts: counts };
+
     const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' },
-      meta => { if (onProgress) onProgress(rows.length, rows.length, 'Comprimiendo ' + Math.round(meta.percent) + '%'); });
+      meta => { if (onProgress) onProgress(pending.length, pending.length, 'Comprimiendo ' + Math.round(meta.percent) + '%'); });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'Invitaciones_Boda_CR.zip';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 30000);
-    return rows.length;
+    return { generated: pending.length, skipped: skipped, counts: counts };
   }
 
-  return { one: one, preview: preview, batch: batch, parseCSV: parseCSV };
+  /* The blank sheet to fill in, so the columns are never guessed at. */
+  function plantillaCSV() {
+    const lines = [
+      'Nombre,Pases,Entregada,De',
+      'Familia Moreno Bernal,4,x,Cristina',
+      'Sr. Amos Benjamin Moreno,2,,Cristina',
+      'Familia Torres Casas,3,,Jose',
+      'Srita. Valentina Cañez,1,,Jose',
+    ];
+    const blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'],
+                          { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Plantilla_Invitaciones.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  return { one: one, preview: preview, batch: batch, parseCSV: parseCSV,
+           plantillaCSV: plantillaCSV };
 })();
