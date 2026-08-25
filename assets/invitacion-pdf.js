@@ -90,6 +90,8 @@ window.InvitacionPDF = (function () {
   }
 
   const BAND_ASPECT = W / 46;
+  const DOORBAND_H = 52;
+  const DOORBAND_ASPECT = W / DOORBAND_H;
 
   /* Tiles a small texture swatch into one full-page-sized image, since
      jsPDF has no repeating-background primitive - a single addImage call
@@ -117,7 +119,7 @@ window.InvitacionPDF = (function () {
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, texture] = await Promise.all([
+    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
@@ -137,11 +139,18 @@ window.InvitacionPDF = (function () {
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
       loadPhoto('assets/UI/outfit_tennis.png', 1085 / 1450, 500, 0.5, 1, 0.5, true),
+      /* Dress-code page backgrounds - each fills the whole sheet, cropped
+         to A5 so the couple sits in the lower half, below the content.
+         focusX centres the crop window on where the couple actually
+         stands in each frame (they are off-centre in the landscape ones). */
+      loadPhoto('assets/gallery/gallery-13.jpg', W / H, 950, 0.5),
+      loadPhoto('assets/gallery/gallery-07.jpg', W / H, 950, 0.5, 1, 0.29),
+      loadPhoto('assets/gallery/gallery-06.jpg', W / H, 950, 0.5, 1, 0.05),
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
-    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, texture };
+    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture };
     return _assets;
   }
 
@@ -187,10 +196,11 @@ window.InvitacionPDF = (function () {
     doc.text(String(text), cx === undefined ? W / 2 : cx, y, { align: 'center' });
   }
 
-  function rule(doc, y, width, colour) {
+  function rule(doc, y, width, colour, cx) {
+    cx = cx === undefined ? W / 2 : cx;
     doc.setDrawColor(colour[0], colour[1], colour[2]);
     doc.setLineWidth(0.3);
-    doc.line((W - width) / 2, y, (W + width) / 2, y);
+    doc.line(cx - width / 2, y, cx + width / 2, y);
   }
 
   function button(doc, label, y, url, fill, textColour) {
@@ -203,10 +213,11 @@ window.InvitacionPDF = (function () {
     return y + h;
   }
 
-  function paragraph(doc, text, y, family, size, colour, maxW, lead) {
+  function paragraph(doc, text, y, family, size, colour, maxW, lead, cx) {
+    cx = cx === undefined ? W / 2 : cx;
     setF(doc, family, size, colour);
     const lines = doc.splitTextToSize(String(text), maxW);
-    lines.forEach((ln, i) => doc.text(ln, W / 2, y + i * lead, { align: 'center' }));
+    lines.forEach((ln, i) => doc.text(ln, cx, y + i * lead, { align: 'center' }));
     return y + (lines.length - 1) * lead;
   }
 
@@ -216,8 +227,8 @@ window.InvitacionPDF = (function () {
     doc.rect(0, 0, W, H, 'F');
   }
 
-  function footer(doc, n) {
-    setF(doc, 'Cinzel', 6, GOLD);
+  function footer(doc, n, colour) {
+    setF(doc, 'Cinzel', 6, colour || GOLD);
     doc.text('C  &  R    ·    03 · 10 · 2026    ·    ' + n, W / 2, H - 5.5, { align: 'center' });
   }
 
@@ -285,115 +296,122 @@ window.InvitacionPDF = (function () {
   }
 
   /* ── Page 2 — dress code ──────────────────────────────────────────
-     The cathedral sits as a full-page background again, cropped and
-     zoomed so the couple's faces land in the empty band above the
-     title rather than under the rules or the fabric photo, and faint
-     enough that it reads as texture rather than competing with either. */
-  function pageTwo(doc, a) {
+     The photo fills the whole sheet on every variant; the content is
+     deliberately small and packed into the top third so the couple, who
+     always sit in the lower half of these frames, are never covered.
+     A cream panel sits under the text only where the text actually is,
+     fading out before it reaches them, so the type stays readable
+     without flattening the photograph. */
+  const PAGE2_BG = { door: 'bgDoor', path: 'bgPath', street: 'bgStreet' };
+
+  function pageTwo(doc, a, variant) {
+    const bg = a[PAGE2_BG[variant] || 'bgDoor'];
     page(doc);
-    bgTexture(doc, a);
+    doc.addImage(bg.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
 
+    /* Cream wash over the text zone, then a short stepped fade so it
+       dissolves into the photo instead of ending on a hard edge
+       (jsPDF has no gradient primitive of its own). */
+    const washH = 95, fadeH = 14, washOpacity = 0.78;
     doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.22 }));
-    doc.addImage(a.veil.data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
+    doc.setGState(new doc.GState({ opacity: washOpacity }));
+    doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
+    doc.rect(0, 0, W, washH, 'F');
     doc.restoreGraphicsState();
+    const steps = 14;
+    for (let i = 0; i < steps; i++) {
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: washOpacity * (1 - (i + 1) / steps) }));
+      doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
+      doc.rect(0, washH + i * (fadeH / steps), W, fadeH / steps + 0.3, 'F');
+      doc.restoreGraphicsState();
+    }
 
-    tracked(doc, 'DRESS CODE', 18, 7.5, GOLD, 1.1);
-    centred(doc, 'Vestimenta Formal', 27, 'Cormorant', 21, CHARCOAL);
-    rule(doc, 33, 26, GOLD);
+    tracked(doc, 'DRESS CODE', 12, 5.4, GOLD, 0.9);
+    centred(doc, 'Vestimenta Formal', 18.5, 'Cormorant', 12.5, CHARCOAL);
+    rule(doc, 22, 16, GOLD);
 
-    let y = 39;
-    y = paragraph(doc, 'Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración.',
-                  y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
-    y += 6;
+    let y = 26.5;
+    y = paragraph(doc, 'Gracias por seguir este dress code para cuidar juntos el estilo de la celebración.',
+                  y, 'Lato', 5.6, MUTED, W - 2 * M - 4, 3);
+    y += 3.5;
 
-    /* Two matching cards (Caballeros / Damas) instead of one flat list,
-       and the tennis note and avoid-colors block below share the same
-       bordered-card language, so the page reads as one family of cards
-       rather than a list followed by ad-hoc boxes. */
-    y += 4;
-    const cardGap = 4, cardW = (W - 2 * M - cardGap) / 2;
+    /* Two slim cards, sized to their text rather than to the page. */
+    const cardGap = 3, cardW = (W - 2 * M - cardGap) / 2;
     const cardDefs = [
       { title: 'CABALLEROS', x: M, items: [
-        'Traje sastre clásico. Sugerencias de color: negro, gris, azul marino.',
+        'Traje sastre clásico. Color: negro, gris, azul marino.',
         'Corbata o pañuelo de cualquier color menos blanco.',
       ] },
-      { title: 'DAMAS', x: M + cardW + cardGap, items: [
-        'Vestido largo o cóctel.',
-      ] },
+      { title: 'DAMAS', x: M + cardW + cardGap, items: [ 'Vestido largo o cóctel.' ] },
     ];
     const cardTop = y;
     let cardH = 0;
     cardDefs.forEach(c => {
-      let cy = 12;
-      setF(doc, 'Lato', 7, CHARCOAL);
-      c.items.forEach(item => {
-        cy += doc.splitTextToSize(item, cardW - 8).length * 4.2 + 1.6;
-      });
-      cardH = Math.max(cardH, cy + 3);
+      let cy = 8;
+      setF(doc, 'Lato', 5.6, CHARCOAL);
+      c.items.forEach(item => { cy += doc.splitTextToSize(item, cardW - 7).length * 3.2 + 1; });
+      cardH = Math.max(cardH, cy + 1.6);
     });
     cardDefs.forEach(c => {
       doc.setFillColor(LIGHTGOLD[0], LIGHTGOLD[1], LIGHTGOLD[2]);
       doc.rect(c.x, cardTop, cardW, cardH, 'F');
       doc.setDrawColor(GOLD_BORDER[0], GOLD_BORDER[1], GOLD_BORDER[2]);
-      doc.setLineWidth(0.3);
+      doc.setLineWidth(0.25);
       doc.rect(c.x, cardTop, cardW, cardH, 'S');
-      tracked(doc, c.title, cardTop + 7, 6.6, CHARCOAL, 0.6, c.x + cardW / 2);
-      let cy = cardTop + 12;
+      tracked(doc, c.title, cardTop + 5, 5.2, CHARCOAL, 0.5, c.x + cardW / 2);
+      let cy = cardTop + 8.4;
       c.items.forEach(item => {
-        const lines = doc.splitTextToSize(item, cardW - 8);
+        const lines = doc.splitTextToSize(item, cardW - 7);
         lines.forEach((ln, i) => {
-          setF(doc, 'Lato', 7, CHARCOAL);
-          if (i === 0) { setF(doc, 'Cinzel', 6, GOLD); doc.text('·', c.x + 4, cy); setF(doc, 'Lato', 7, CHARCOAL); }
-          doc.text(ln, c.x + 7, cy);
-          cy += 4.2;
+          setF(doc, 'Lato', 5.6, CHARCOAL);
+          if (i === 0) { setF(doc, 'Cinzel', 4.8, GOLD); doc.text('·', c.x + 3, cy); setF(doc, 'Lato', 5.6, CHARCOAL); }
+          doc.text(ln, c.x + 5.5, cy);
+          cy += 3.2;
         });
-        cy += 1.6;
+        cy += 1;
       });
     });
-    y = cardTop + cardH + 5;
+    y = cardTop + cardH + 3;
 
-    /* Shoes note as its own card - Cinzel stands in for bold here,
-       since only its semibold weight is embedded (no Lato-bold). */
-    const tPad = 4, timgW = 20, timgH = timgW / a.tennis.aspect;
-    const tTextX = M + tPad + timgW + 4, tTextW = (W - M - tPad) - tTextX;
-    setF(doc, 'Cinzel', 6.8, CHARCOAL);
-    const tlines = doc.splitTextToSize(
-      'Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.',
-      tTextW);
-    const tlineH = 3.5, tblockH = tlines.length * tlineH;
-    const tCardH = Math.max(timgH, tblockH) + 2 * tPad;
+    /* Shoes note: one line of type and a small figure, kept short so the
+       card stays a single band rather than a block. */
+    const tPad = 1.8, timgW = 8, timgH = timgW / a.tennis.aspect;
+    const tCardH = timgH + 2 * tPad;
     doc.setFillColor(LIGHTGOLD[0], LIGHTGOLD[1], LIGHTGOLD[2]);
     doc.rect(M, y, W - 2 * M, tCardH, 'F');
     doc.setDrawColor(GOLD_BORDER[0], GOLD_BORDER[1], GOLD_BORDER[2]);
-    doc.setLineWidth(0.3);
+    doc.setLineWidth(0.25);
     doc.rect(M, y, W - 2 * M, tCardH, 'S');
-    doc.addImage(a.tennis.data, 'PNG', M + tPad, y + (tCardH - timgH) / 2, timgW, timgH, undefined, 'FAST');
-    const tY = y + (tCardH - tblockH) / 2 + tlineH * 0.78;
+    doc.addImage(a.tennis.data, 'PNG', M + tPad, y + tPad, timgW, timgH, undefined, 'FAST');
+    setF(doc, 'Cinzel', 5.4, CHARCOAL);
+    const tTextX = M + tPad + timgW + 3, tTextW = (W - M - tPad) - tTextX;
+    const tlines = doc.splitTextToSize('Lleva también tus tenis favoritos y baila toda la noche.', tTextW);
+    const tlineH = 3.1, tY = y + (tCardH - tlines.length * tlineH) / 2 + 2.3;
     tlines.forEach((ln, i) => doc.text(ln, tTextX, tY + i * tlineH));
-    y += tCardH + 6;
+    y += tCardH + 3.5;
 
-    tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
-    y += 5;
-    y = paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
-                  y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
-    y += 6;
+    tracked(doc, 'POR FAVOR EVITA ESTOS TONOS', y, 5.2, AVOID, 0.35);
+    y += 3.4;
+    y = paragraph(doc, 'Reservados para los novios y la decoración.',
+                  y, 'CormorantI', 7, AVOID, W - 2 * M - 10, 3.2);
+    y += 3.4;
 
-    /* Four separate framed swatches (each a quarter-crop of the same
-       strip) instead of one continuous banner. */
-    const swGap = 3, swW = (W - 2 * M - 3 * swGap) / 4;
+    /* Wide-but-short swatches: at full square they would push the row
+       down over the couple, and the shade is all these need to show. */
+    const swGap = 2.5, swInset = 16;
+    const swW = (W - 2 * (M + swInset) - 3 * swGap) / 4, swH = swW * 0.5;
     [[a.telasW, 'Evitar Blanco'], [a.telasG, 'Evitar Gris'], [a.telasD, 'Evitar Dorado'], [a.telasN, 'Evitar Negro']]
       .forEach((s, i) => {
-        const sx = M + i * (swW + swGap);
-        doc.addImage(s[0].data, 'JPEG', sx, y, swW, swW, undefined, 'FAST');
+        const sx = M + swInset + i * (swW + swGap);
+        doc.addImage(s[0].data, 'JPEG', sx, y, swW, swH, undefined, 'FAST');
         doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.setLineWidth(0.3);
-        doc.rect(sx, y, swW, swW, 'S');
-        setF(doc, 'Cinzel', 5.6, MUTED);
-        doc.text(s[1], sx + swW / 2, y + swW + 4, { align: 'center' });
+        doc.setLineWidth(0.25);
+        doc.rect(sx, y, swW, swH, 'S');
+        setF(doc, 'Cinzel', 4.4, MUTED);
+        doc.text(s[1], sx + swW / 2, y + swH + 2.8, { align: 'center' });
       });
-
-    footer(doc, '2 / 4');
+    footer(doc, '2 / 4', CREAM);
   }
 
   /* ── Page 3 — gifts, hotels, two portraits ────────────────────────── */
@@ -490,7 +508,7 @@ window.InvitacionPDF = (function () {
   }
 
   /* ── Public API ───────────────────────────────────────────────────── */
-  async function buildDoc(familia, pases) {
+  async function buildDoc(familia, pases, pageTwoVariant) {
     const { jsPDF } = await ensureLibs();
     const a = await ensureAssets();
     const doc = new jsPDF({ unit: 'mm', format: [W, H], compress: true });
@@ -501,7 +519,7 @@ window.InvitacionPDF = (function () {
       author: 'Cristina & Roberto',
     });
     pageOne(doc, a, familia, pases);
-    pageTwo(doc, a);
+    pageTwo(doc, a, pageTwoVariant);
     pageThree(doc, a);
     pageFour(doc, a);
     return doc;
@@ -518,8 +536,8 @@ window.InvitacionPDF = (function () {
     doc.save('Invitacion_' + safeName(familia) + '.pdf');
   }
 
-  async function preview(familia, pases) {
-    const doc = await buildDoc(familia, pases);
+  async function preview(familia, pases, pageTwoVariant) {
+    const doc = await buildDoc(familia, pases, pageTwoVariant);
     window.open(doc.output('bloburl'), '_blank', 'noopener');
   }
 
