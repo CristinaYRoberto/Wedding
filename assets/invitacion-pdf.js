@@ -575,8 +575,9 @@ window.InvitacionPDF = (function () {
     window.open(doc.output('bloburl'), '_blank', 'noopener');
   }
 
-  /* Minimal CSV reader: quoted fields, comma or semicolon. */
-  function parseCSV(text) {
+  /* Minimal CSV reader: quoted fields, comma or semicolon. Returns the raw
+     cells so every generator can name its own columns. */
+  function parseRows(text) {
     const rows = [];
     let row = [], field = '', q = false;
     const head = text.split('\n')[0];
@@ -593,7 +594,11 @@ window.InvitacionPDF = (function () {
       else if (c !== '\r') field += c;
     }
     if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
 
+  function parseCSV(text) {
+    const rows = parseRows(text);
     const out = [];
     rows.forEach((r, i) => {
       const name = (r[0] || '').trim();
@@ -685,6 +690,20 @@ window.InvitacionPDF = (function () {
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
+  /* Everything the other one-page designs (padrinos-pdf.js) draw with, so
+     the palette, the fonts and the cropping live in exactly one place. */
+  const kit = {
+    W: W, H: H, M: M,
+    GOLD: GOLD, DARKGOLD: DARKGOLD, CHARCOAL: CHARCOAL, MUTED: MUTED,
+    CREAM: CREAM, SAGE: SAGE, AVOID: AVOID, WHITE: WHITE,
+    LIGHTGOLD: LIGHTGOLD, GOLD_BORDER: GOLD_BORDER,
+    SITE: SITE, WA_ROBERTO: WA_ROBERTO, WA_CRISTINA: WA_CRISTINA,
+    ensureLibs: ensureLibs, loadPhoto: loadPhoto, loadTiledTexture: loadTiledTexture,
+    registerFonts: registerFonts, setF: setF, tracked: tracked, centred: centred,
+    rule: rule, button: button, paragraph: paragraph, page: page,
+    safeName: safeName, parseRows: parseRows,
+  };
+
   return { one: one, preview: preview, batch: batch, parseCSV: parseCSV,
-           plantillaCSV: plantillaCSV };
+           plantillaCSV: plantillaCSV, kit: kit };
 })();

@@ -1648,6 +1648,31 @@
   }
   .admin-btn:hover { background: var(--gold); color: #fff; }
   .admin-invite-gen { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(184,154,106,.25); }
+  .admin-tabs {
+    display: flex; flex-wrap: wrap; gap: .5rem;
+    margin-bottom: 1.4rem;
+    border-bottom: 1px solid rgba(184,154,106,.25);
+  }
+  .admin-tab {
+    background: transparent;
+    border: 1px solid rgba(184,154,106,.3);
+    border-bottom: none;
+    color: rgba(255,255,255,.55);
+    font-family: 'Cinzel', serif;
+    font-size: .68rem; letter-spacing: .12em;
+    padding: .6rem .9rem;
+    cursor: pointer;
+    margin-bottom: -1px;
+  }
+  .admin-tab:hover { color: var(--gold); }
+  .admin-tab.is-on {
+    color: #fff;
+    background: rgba(184,154,106,.22);
+    border-color: var(--gold);
+  }
+  .admin-pane { display: none; }
+  .admin-pane.is-on { display: block; }
+  .admin-invite-input option { background: #1a1a1a; color: #fff; }
   .admin-invite-row { display: flex; gap: .8rem; margin-bottom: 1rem; flex-wrap: wrap; }
   .admin-invite-input {
     flex: 1; min-width: 180px;
@@ -2378,7 +2403,15 @@
     </div>
 
     <div class="admin-invite-gen">
-      <p class="admin-title" style="font-size: 1rem; margin-bottom:1rem">GENERADOR DE INVITACIONES</p>
+      <p class="admin-title" style="font-size: 1rem; margin-bottom:1rem">GENERADOR DE DOCUMENTOS</p>
+      <div class="admin-tabs">
+        <button class="admin-tab is-on" data-pane="pane-invitacion" onclick="adminTab(this)">INVITACIÓN</button>
+        <button class="admin-tab" data-pane="pane-peticion" onclick="adminTab(this)">PETICIÓN</button>
+        <button class="admin-tab" data-pane="pane-gracias" onclick="adminTab(this)">AGRADECIMIENTO</button>
+        <button class="admin-tab" data-pane="pane-ausencia" onclick="adminTab(this)">TE EXTRAÑAREMOS</button>
+      </div>
+
+      <div class="admin-pane is-on" id="pane-invitacion">
       <div class="admin-invite-row">
         <input type="text" id="gen-familia" class="admin-invite-input" placeholder="Nombre de familia / invitado">
         <input type="number" id="gen-pases" class="admin-invite-input" placeholder="N° de pases" min="1" style="max-width:140px">
@@ -2413,6 +2446,96 @@
         <button class="admin-btn" id="gen-lote-btn" onclick="pdfLote()" disabled>⚙ GENERAR TODOS</button>
       </div>
       <p class="admin-loading" id="gen-lote-status" style="margin-top:.6rem"></p>
+      </div><!-- /pane-invitacion -->
+
+      <!-- ── PETICIÓN: pide el cargo a una persona o pareja ── -->
+      <div class="admin-pane" id="pane-peticion">
+        <p class="admin-csv-help">
+          Una hoja por padrino o pareja, preguntando si aceptan el cargo.
+          Los títulos y los nombres se leen de la sección
+          <strong>«Nuestros padrinos de ceremonia»</strong> de esta misma página:
+          si ahí cambia un nombre, aquí cambia solo.
+        </p>
+        <div class="admin-invite-row">
+          <select id="pet-rol-sel" class="admin-invite-input" onchange="petElegirRol()">
+            <option value="">— Elige un cargo de la lista —</option>
+          </select>
+        </div>
+        <div class="admin-invite-row">
+          <input type="text" id="pet-rol" class="admin-invite-input" placeholder="Título — p. ej. PADRINOS DE VELACIÓN">
+          <input type="text" id="pet-nombres" class="admin-invite-input" placeholder="Nombres separados por coma">
+        </div>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="petPreview()">👁 VER PDF</button>
+          <button class="admin-btn" onclick="petUno()">↓ DESCARGAR PDF</button>
+          <button class="admin-btn" onclick="petTodos()">⚙ GENERAR TODAS (ZIP)</button>
+        </div>
+        <p class="admin-loading" id="pet-status" style="margin-top:.6rem"></p>
+
+        <p class="admin-title" style="font-size:.95rem; margin:1.6rem 0 .5rem">POR LOTE — SUBIR CSV</p>
+        <p class="admin-csv-help">
+          Una fila por hoja: <strong>Rol</strong> y después todos los nombres que
+          van en ella (una madrina sola lleva una sola columna de nombre).
+          La plantilla ya viene llena con los cargos del sitio.
+        </p>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="petPlantilla()">↓ PLANTILLA CSV</button>
+          <label class="admin-btn" style="cursor:pointer">
+            ⇧ ELEGIR CSV
+            <input type="file" id="pet-csv" accept=".csv,text/csv" style="display:none" onchange="petCsvElegido(event)">
+          </label>
+          <button class="admin-btn" id="pet-lote-btn" onclick="petLote()" disabled>⚙ GENERAR TODOS</button>
+        </div>
+        <p class="admin-loading" id="pet-lote-status" style="margin-top:.6rem"></p>
+      </div><!-- /pane-peticion -->
+
+      <!-- ── AGRADECIMIENTO: una sola hoja con todos los nombres ── -->
+      <div class="admin-pane" id="pane-gracias">
+        <p class="admin-csv-help">
+          Una hoja única de agradecimiento con <em>todos</em> los padrinos y
+          madrinas — los de ceremonia y los honoríficos — tomados de la sección
+          «Padrinos» de esta página. No lleva nombre de destinatario: es la
+          misma hoja para todos, se imprime y se reparte.
+        </p>
+        <p class="admin-csv-help" id="gra-conteo"></p>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="graPreview()">👁 VER PDF</button>
+          <button class="admin-btn" onclick="graUno()">↓ DESCARGAR PDF</button>
+        </div>
+        <p class="admin-loading" id="gra-status" style="margin-top:.6rem"></p>
+      </div><!-- /pane-gracias -->
+
+      <!-- ── AUSENCIA: para quien ya dijo que no puede venir ── -->
+      <div class="admin-pane" id="pane-ausencia">
+        <p class="admin-csv-help">
+          Una hoja por invitado que ya avisó que no podrá acompañarnos:
+          lo extrañaremos, gracias por ser parte, y si quiere otorgarnos un
+          detalle, aquí están los datos.
+        </p>
+        <div class="admin-invite-row">
+          <input type="text" id="aus-nombre" class="admin-invite-input" placeholder="Nombre de familia / invitado">
+        </div>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="ausPreview()">👁 VER PDF</button>
+          <button class="admin-btn" onclick="ausUno()">↓ DESCARGAR PDF</button>
+        </div>
+        <p class="admin-loading" id="aus-status" style="margin-top:.6rem"></p>
+
+        <p class="admin-title" style="font-size:.95rem; margin:1.6rem 0 .5rem">POR LOTE — SUBIR CSV</p>
+        <p class="admin-csv-help">
+          Una columna: <strong>Nombre</strong>, una fila por hoja. Si la primera
+          fila es un encabezado se ignora.
+        </p>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="ausPlantilla()">↓ PLANTILLA CSV</button>
+          <label class="admin-btn" style="cursor:pointer">
+            ⇧ ELEGIR CSV
+            <input type="file" id="aus-csv" accept=".csv,text/csv" style="display:none" onchange="ausCsvElegido(event)">
+          </label>
+          <button class="admin-btn" id="aus-lote-btn" onclick="ausLote()" disabled>⚙ GENERAR TODOS</button>
+        </div>
+        <p class="admin-loading" id="aus-lote-status" style="margin-top:.6rem"></p>
+      </div><!-- /pane-ausencia -->
     </div>
   </div>
 </div>
@@ -2715,7 +2838,7 @@ async function conPdf(fn, statusId) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/invitacion-pdf.js?v=2';
+        s.src = 'assets/invitacion-pdf.js?v=3';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador'));
         document.head.appendChild(s);
       });
@@ -2801,6 +2924,192 @@ function pdfLote() {
     status.textContent = msg;
     btn.disabled = false;
   }, 'gen-lote-status');
+}
+
+/* ── PADRINOS: PETICIÓN · AGRADECIMIENTO · TE EXTRAÑAREMOS ──
+   Three one-page designs, all drawn by assets/padrinos-pdf.js, which
+   needs the invitation generator loaded first: the palette, the fonts
+   and the cropping all live there. */
+let _petRows = null, _ausRows = null;
+
+function adminTab(btn) {
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('is-on', b === btn));
+  document.querySelectorAll('.admin-pane').forEach(p => p.classList.toggle('is-on', p.id === btn.dataset.pane));
+  /* The role list and the head-count come from the generator, so they
+     are filled the first time their own tab is opened. */
+  if (btn.dataset.pane === 'pane-peticion') petLlenarRoles();
+  if (btn.dataset.pane === 'pane-gracias')  graConteo();
+}
+
+function conPadrinos(fn, statusId) {
+  return conPdf(async status => {
+    if (!window.PadrinosPDF) {
+      status.textContent = 'Cargando el generador…';
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'assets/padrinos-pdf.js?v=1';
+        s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
+        document.head.appendChild(s);
+      });
+    }
+    await fn(status);
+  }, statusId);
+}
+
+/* — Petición — */
+function petLlenarRoles() {
+  const sel = document.getElementById('pet-rol-sel');
+  if (sel.dataset.listo) return;
+  conPadrinos(async status => {
+    window.PadrinosPDF.roles().forEach((g, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = g.rol + ' — ' + g.nombres.join(', ');
+      sel.appendChild(o);
+    });
+    sel.dataset.listo = '1';
+    status.textContent = '';
+  }, 'pet-status');
+}
+
+function petElegirRol() {
+  const i = document.getElementById('pet-rol-sel').value;
+  if (i === '' || !window.PadrinosPDF) return;
+  const g = window.PadrinosPDF.roles()[i];
+  document.getElementById('pet-rol').value = g.rol;
+  document.getElementById('pet-nombres').value = g.nombres.join(', ');
+}
+
+function petCampos() {
+  const rol = document.getElementById('pet-rol').value.trim();
+  const nombres = document.getElementById('pet-nombres').value.split(',')
+    .map(s => s.trim()).filter(Boolean);
+  return { rol: rol, nombres: nombres };
+}
+
+function petHoja(accion) {
+  const c = petCampos();
+  if (!c.rol || !c.nombres.length) {
+    document.getElementById('pet-status').textContent = 'Escribe el título y al menos un nombre.';
+    return;
+  }
+  conPadrinos(async status => {
+    status.textContent = 'Generando…';
+    await window.PadrinosPDF[accion]('peticion', c);
+    status.textContent = accion === 'preview' ? 'PDF abierto en otra pestaña.' : 'PDF descargado.';
+  }, 'pet-status');
+}
+function petPreview() { petHoja('preview'); }
+function petUno()     { petHoja('one'); }
+
+/* Every role on the site in one go — the usual case, so it does not
+   need a CSV round-trip. */
+function petTodos() {
+  conPadrinos(async status => {
+    const items = window.PadrinosPDF.roles();
+    const n = await window.PadrinosPDF.batch('peticion', items, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' — ' + label;
+    });
+    status.textContent = n + ' hojas generadas. Revisa tus descargas.';
+  }, 'pet-status');
+}
+
+function petPlantilla() {
+  conPadrinos(async status => {
+    window.PadrinosPDF.plantillaPeticion();
+    status.textContent = 'Plantilla descargada: Plantilla_Peticion_Padrinos.csv';
+  }, 'pet-lote-status');
+}
+
+function petCsvElegido(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('pet-lote-btn');
+  conPadrinos(async status => {
+    _petRows = window.PadrinosPDF.parsePeticion(await file.text());
+    status.textContent = _petRows.length + ' hoja' + (_petRows.length === 1 ? '' : 's') + ' por generar.';
+    btn.disabled = !_petRows.length;
+  }, 'pet-lote-status');
+}
+
+function petLote() {
+  if (!_petRows || !_petRows.length) return;
+  const btn = document.getElementById('pet-lote-btn');
+  conPadrinos(async status => {
+    btn.disabled = true;
+    const n = await window.PadrinosPDF.batch('peticion', _petRows, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' — ' + label;
+    });
+    status.textContent = n + ' hojas generadas. Revisa tus descargas.';
+    btn.disabled = false;
+  }, 'pet-lote-status');
+}
+
+/* — Agradecimiento — */
+function graConteo() {
+  conPadrinos(async status => {
+    const P = window.PadrinosPDF;
+    const grupos = P.roles();
+    const cer = grupos.reduce((n, g) => n + g.nombres.length, 0);
+    document.getElementById('gra-conteo').textContent =
+      'La hoja llevará ' + cer + ' nombres de ceremonia en ' + grupos.length +
+      ' cargos, y ' + P.honorificos().length + ' honoríficos.';
+    status.textContent = '';
+  }, 'gra-status');
+}
+
+function graHoja(accion) {
+  conPadrinos(async status => {
+    status.textContent = 'Generando…';
+    await window.PadrinosPDF[accion]('gracias', {});
+    status.textContent = accion === 'preview' ? 'PDF abierto en otra pestaña.' : 'PDF descargado.';
+  }, 'gra-status');
+}
+function graPreview() { graHoja('preview'); }
+function graUno()     { graHoja('one'); }
+
+/* — Te extrañaremos — */
+function ausHoja(accion) {
+  const nombre = document.getElementById('aus-nombre').value.trim();
+  if (!nombre) { document.getElementById('aus-status').textContent = 'Escribe un nombre primero.'; return; }
+  conPadrinos(async status => {
+    status.textContent = 'Generando…';
+    await window.PadrinosPDF[accion]('ausencia', { nombre: nombre });
+    status.textContent = accion === 'preview' ? 'PDF abierto en otra pestaña.' : 'PDF descargado.';
+  }, 'aus-status');
+}
+function ausPreview() { ausHoja('preview'); }
+function ausUno()     { ausHoja('one'); }
+
+function ausPlantilla() {
+  conPadrinos(async status => {
+    window.PadrinosPDF.plantillaAusencia();
+    status.textContent = 'Plantilla descargada: Plantilla_Te_Extranaremos.csv';
+  }, 'aus-lote-status');
+}
+
+function ausCsvElegido(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('aus-lote-btn');
+  conPadrinos(async status => {
+    _ausRows = window.PadrinosPDF.parseAusencia(await file.text());
+    status.textContent = _ausRows.length + ' hoja' + (_ausRows.length === 1 ? '' : 's') + ' por generar.';
+    btn.disabled = !_ausRows.length;
+  }, 'aus-lote-status');
+}
+
+function ausLote() {
+  if (!_ausRows || !_ausRows.length) return;
+  const btn = document.getElementById('aus-lote-btn');
+  conPadrinos(async status => {
+    btn.disabled = true;
+    const n = await window.PadrinosPDF.batch('ausencia', _ausRows, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' — ' + label;
+    });
+    status.textContent = n + ' hojas generadas. Revisa tus descargas.';
+    btn.disabled = false;
+  }, 'aus-lote-status');
 }
 
 async function copiarEnlaceInvitacion() {
