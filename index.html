@@ -822,41 +822,74 @@
     color: var(--muted);
     line-height: 1.8;
   }
-  .dresscode-list {
-    margin: 1.4rem 0 0 1.1rem;
-    padding: 0;
-    font-size: 1.1rem;
-    color: var(--muted);
-    line-height: 1.8;
+  /* Two matching cards - same border/padding language as the avoid and
+     tennis cards below, so the whole section reads as one family of
+     cards instead of a list followed by ad-hoc boxes. */
+  .dresscode-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
-  .dresscode-list li { margin-bottom: .7rem; }
-  .dresscode-list li::marker { color: var(--gold); }
-  /* The illustration floats inside the same text column as the rules
-     list, so the note reads as the list's own closing line - text
-     wrapping around it - instead of a separate boxed slide stacked
-     underneath. The PNG has real alpha transparency around the couple,
-     so no blend-mode trick is needed (and mix-blend-mode actually
-     produced a white halo over the transparent pixels here). */
+  .dc-card {
+    border: 1px solid rgba(184,154,106,.3);
+    background: var(--warm-white);
+    padding: 1.6rem;
+    text-align: center;
+  }
+  .dc-icon {
+    width: 30px;
+    height: 30px;
+    stroke: var(--gold);
+    stroke-width: 1.5;
+    fill: none;
+    margin-bottom: .6rem;
+  }
+  .dc-card-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .15em;
+    color: var(--charcoal);
+    margin-bottom: .8rem;
+  }
+  .dc-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+    font-size: .98rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .dc-card li { margin-bottom: .5rem; padding-left: 1rem; position: relative; }
+  .dc-card li::before { content: '·'; position: absolute; left: 0; color: var(--gold); }
+  @media(max-width: 600px) { .dresscode-cards { grid-template-columns: 1fr; } }
+
+  /* Its own card now, matching the same border/padding as .dc-card and
+     .avoid-block, rather than floating loose in a text column - one
+     consistent card language across the whole section. */
   .tennis-note {
-    margin-top: .3rem;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    border: 1px solid rgba(184,154,106,.3);
+    background: rgba(184,154,106,.08);
+    padding: 1.4rem 1.6rem;
   }
   .tennis-note img {
-    float: left;
-    width: 108px;
+    width: 96px;
     height: auto;
-    margin: .2rem 1.3rem .6rem 0;
+    flex-shrink: 0;
   }
   .tennis-note p {
     font-weight: 700;
-    font-size: 1.1rem;
-    line-height: 1.65;
+    font-size: 1.05rem;
+    line-height: 1.6;
     color: var(--charcoal);
     margin: 0;
   }
   @media(max-width: 600px) {
-    .tennis-note img { float: none; display: block; margin: 0 auto .8rem; }
-    .tennis-note p { text-align: center; }
+    .tennis-note { flex-direction: column; text-align: center; }
   }
   .avoid-block {
     border: 1px solid rgba(180,83,75,.35);
@@ -872,33 +905,37 @@
     color: var(--avoid);
     margin-bottom: .5rem;
   }
-  .avoid-fabrics img {
-    display: block;
-    width: 100%;
-    height: auto;
-    /* Holds the slot open while the photo loads, so the page does not
-       jump once it arrives. */
-    aspect-ratio: 1600 / 482;
-    border: 1px solid rgba(184,154,106,.35);
-  }
-  /* Four equal columns, matching the four panels in the photo, so each label
-     stays under its own fabric at any width. */
-  .avoid-fabrics figcaption {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    margin-top: .7rem;
-    font-family: 'Cinzel', serif;
-    font-weight: 500;
-    font-size: .85rem;
-    letter-spacing: .05em;
-    color: var(--muted);
-    text-align: center;
-  }
   .avoid-note {
     margin-bottom: 1.2rem;
     font-size: .95rem;
     color: var(--muted);
     line-height: 1.7;
+  }
+  /* Four separate framed cards rather than one strip - each shows the
+     same photo, cropped to its own quarter via background-position. */
+  .avoid-fabrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .8rem;
+  }
+  .avoid-swatch-img {
+    aspect-ratio: 1 / 1;
+    background-image: url('assets/gallery/dress-code_v2.jpg');
+    background-size: 400% 100%;
+    border: 1px solid rgba(184,154,106,.35);
+  }
+  .avoid-swatch span {
+    display: block;
+    margin-top: .6rem;
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    color: var(--muted);
+    text-align: center;
+  }
+  @media(max-width: 560px) {
+    .avoid-fabrics { grid-template-columns: 1fr 1fr; gap: 1rem 1.2rem; }
   }
 
   /* ── HOTELES ── */
@@ -1898,15 +1935,29 @@
         <p class="dresscode-desc" data-es="Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración:" data-en="We want you to feel comfortable and never in doubt about what to wear. Thank you for following this dress code and helping us keep the style of the celebration:">
           Queremos que se sientan cómodos y sin dudas sobre qué usar. Les agradecemos mucho seguir este dress code para cuidar juntos el estilo de la celebración:
         </p>
-        <ul class="dresscode-list">
-          <li data-es="Traje sastre para caballero, clásico. Sugerencias de color: negro, gris, azul marino." data-en="A classic tailored suit for gentlemen. Suggested colours: black, grey, navy.">Traje sastre para caballero, clásico. Sugerencias de color: negro, gris, azul marino.</li>
-          <li data-es="Corbata o pañuelos de cualquier color menos blancos." data-en="Tie or pocket square in any colour except white.">Corbata o pañuelos de cualquier color menos blancos.</li>
-          <li data-es="Vestido largo o cóctel para nuestras invitadas." data-en="A floor-length or cocktail dress for our lady guests.">Vestido largo o cóctel para nuestras invitadas.</li>
-        </ul>
-        <div class="tennis-note">
-          <img src="assets/UI/outfit_tennis.png" loading="lazy" alt="">
-          <p data-es="Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche." data-en="So you can enjoy the night to the fullest, we invite you to also bring your favourite sneakers and dance all night.">Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.</p>
+      </div>
+
+      <div class="dresscode-cards">
+        <div class="dc-card">
+          <svg class="dc-icon" viewBox="0 0 48 48"><path d="M5 15 L21 24 L5 33 Z"/><path d="M43 15 L27 24 L43 33 Z"/><circle cx="24" cy="24" r="2.6"/></svg>
+          <p class="dc-card-title" data-es="CABALLEROS" data-en="GENTLEMEN">CABALLEROS</p>
+          <ul>
+            <li data-es="Traje sastre clásico. Sugerencias de color: negro, gris, azul marino." data-en="A classic tailored suit. Suggested colours: black, grey, navy.">Traje sastre clásico. Sugerencias de color: negro, gris, azul marino.</li>
+            <li data-es="Corbata o pañuelo de cualquier color menos blanco." data-en="Tie or pocket square in any colour except white.">Corbata o pañuelo de cualquier color menos blanco.</li>
+          </ul>
         </div>
+        <div class="dc-card">
+          <svg class="dc-icon" viewBox="0 0 48 48"><path d="M9 8 L24 25 L39 8 Z"/><line x1="24" y1="25" x2="24" y2="41"/><line x1="15" y1="41" x2="33" y2="41"/></svg>
+          <p class="dc-card-title" data-es="DAMAS" data-en="LADIES">DAMAS</p>
+          <ul>
+            <li data-es="Vestido largo o cóctel." data-en="A floor-length or cocktail dress.">Vestido largo o cóctel.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tennis-note">
+        <img src="assets/UI/outfit_tennis.png" loading="lazy" alt="">
+        <p data-es="Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche." data-en="So you can enjoy the night to the fullest, we invite you to also bring your favourite sneakers and dance all night.">Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.</p>
       </div>
 
       <!-- Heading, reason and photo grouped so the warning reads against the
@@ -1916,17 +1967,27 @@
         <p class="avoid-note" data-es="Reservados para los novios y la decoración. Te pedimos elegir otro color." data-en="Reserved for the couple and the décor. Please choose another colour.">
           Reservados para los novios y la decoración. Te pedimos elegir otro color.
         </p>
-        <figure class="avoid-fabrics">
-          <!-- The caption below names the four shades, so the image itself is
-               decorative as far as a screen reader is concerned. -->
-          <img src="assets/gallery/dress-code_v2.jpg" loading="lazy" alt="">
-          <figcaption>
+        <!-- Each swatch is the same photo, cropped to one quarter via
+             background-position, so it reads as four separate framed
+             cards instead of one continuous strip. -->
+        <div class="avoid-fabrics">
+          <div class="avoid-swatch">
+            <div class="avoid-swatch-img" style="background-position:0% 50%"></div>
             <span data-es="Evitar Blanco" data-en="Avoid White">Evitar Blanco</span>
+          </div>
+          <div class="avoid-swatch">
+            <div class="avoid-swatch-img" style="background-position:33.33% 50%"></div>
             <span data-es="Evitar Gris" data-en="Avoid Grey">Evitar Gris</span>
+          </div>
+          <div class="avoid-swatch">
+            <div class="avoid-swatch-img" style="background-position:66.66% 50%"></div>
             <span data-es="Evitar Dorado" data-en="Avoid Gold">Evitar Dorado</span>
+          </div>
+          <div class="avoid-swatch">
+            <div class="avoid-swatch-img" style="background-position:100% 50%"></div>
             <span data-es="Evitar Negro" data-en="Avoid Black">Evitar Negro</span>
-          </figcaption>
-        </figure>
+          </div>
+        </div>
       </div>
     </div>
   </div>

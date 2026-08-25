@@ -27,6 +27,8 @@ window.InvitacionPDF = (function () {
   const SAGE     = [232, 237, 228];
   const AVOID    = [180,  83,  75];
   const WHITE    = [255, 255, 255];
+  const LIGHTGOLD = [248, 242, 229];
+  const GOLD_BORDER = [214, 195, 158];
 
   const W = 148, H = 210, M = 13;          /* A5 in mm, with margin */
 
@@ -109,11 +111,18 @@ window.InvitacionPDF = (function () {
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telas, veil, twoA, twoB, closing, tennis, texture] = await Promise.all([
+    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, texture] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
-      loadPhoto('assets/gallery/dress-code_v2.jpg', 1600 / 482, 1000, 0.5),
+      /* Four separate quarter-crops of the same strip (one per shade),
+         framed as their own cards instead of one continuous banner -
+         matches the site's four individual swatch cards. focusX 0/⅓/⅔/1
+         walks the crop window across the strip left to right. */
+      loadPhoto('assets/gallery/dress-code_v2.jpg', 400 / 482, 340, 0.5, 1, 0),
+      loadPhoto('assets/gallery/dress-code_v2.jpg', 400 / 482, 340, 0.5, 1, 1 / 3),
+      loadPhoto('assets/gallery/dress-code_v2.jpg', 400 / 482, 340, 0.5, 1, 2 / 3),
+      loadPhoto('assets/gallery/dress-code_v2.jpg', 400 / 482, 340, 0.5, 1, 1),
       /* Full-page background for the dress code: zoomed and positioned so
          the couple's faces sit in the page's own empty margin at the top,
          clear of the rules text and the fabric photo below them. */
@@ -126,7 +135,7 @@ window.InvitacionPDF = (function () {
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
-    _assets = { band, telas, veil, twoA, twoB, closing, tennis, texture };
+    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, texture };
     return _assets;
   }
 
@@ -292,58 +301,91 @@ window.InvitacionPDF = (function () {
                   y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
     y += 6;
 
-    const rules = [
-      'Traje sastre clásico para caballero. Sugerencias de color: negro, gris, azul marino.',
-      'Corbata o pañuelo de cualquier color menos blanco.',
-      'Vestido largo o cóctel para nuestras invitadas.',
-    ];
-    rules.forEach(r => {
-      setF(doc, 'Lato', 7.8, CHARCOAL);
-      const lines = doc.splitTextToSize(r, W - 2 * M - 8);
-      lines.forEach((ln, i) => {
-        if (i === 0) { setF(doc, 'Cinzel', 7, GOLD); doc.text('·', M + 2, y); setF(doc, 'Lato', 7.8, CHARCOAL); }
-        doc.text(ln, M + 6, y); y += 4.5;
-      });
-      y += 1.2;
-    });
-
-    /* Shoes illustration beside the note rather than stacked above it -
-       Cinzel stands in for bold here, since only its semibold weight is
-       embedded (no separate Lato-bold font is loaded). */
+    /* Two matching cards (Caballeros / Damas) instead of one flat list,
+       and the tennis note and avoid-colors block below share the same
+       bordered-card language, so the page reads as one family of cards
+       rather than a list followed by ad-hoc boxes. */
     y += 4;
-    const timgW = 23, timgH = timgW / a.tennis.aspect;
-    doc.addImage(a.tennis.data, 'JPEG', M, y, timgW, timgH, undefined, 'FAST');
-    const tx = M + timgW + 5, tmaxW = (W - M) - tx - 2;
-    setF(doc, 'Cinzel', 7.2, CHARCOAL);
+    const cardGap = 4, cardW = (W - 2 * M - cardGap) / 2;
+    const cardDefs = [
+      { title: 'CABALLEROS', x: M, items: [
+        'Traje sastre clásico. Sugerencias de color: negro, gris, azul marino.',
+        'Corbata o pañuelo de cualquier color menos blanco.',
+      ] },
+      { title: 'DAMAS', x: M + cardW + cardGap, items: [
+        'Vestido largo o cóctel.',
+      ] },
+    ];
+    const cardTop = y;
+    let cardH = 0;
+    cardDefs.forEach(c => {
+      let cy = 12;
+      setF(doc, 'Lato', 7, CHARCOAL);
+      c.items.forEach(item => {
+        cy += doc.splitTextToSize(item, cardW - 8).length * 4.2 + 1.6;
+      });
+      cardH = Math.max(cardH, cy + 3);
+    });
+    cardDefs.forEach(c => {
+      doc.setFillColor(LIGHTGOLD[0], LIGHTGOLD[1], LIGHTGOLD[2]);
+      doc.rect(c.x, cardTop, cardW, cardH, 'F');
+      doc.setDrawColor(GOLD_BORDER[0], GOLD_BORDER[1], GOLD_BORDER[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(c.x, cardTop, cardW, cardH, 'S');
+      tracked(doc, c.title, cardTop + 7, 6.6, CHARCOAL, 0.6, c.x + cardW / 2);
+      let cy = cardTop + 12;
+      c.items.forEach(item => {
+        const lines = doc.splitTextToSize(item, cardW - 8);
+        lines.forEach((ln, i) => {
+          setF(doc, 'Lato', 7, CHARCOAL);
+          if (i === 0) { setF(doc, 'Cinzel', 6, GOLD); doc.text('·', c.x + 4, cy); setF(doc, 'Lato', 7, CHARCOAL); }
+          doc.text(ln, c.x + 7, cy);
+          cy += 4.2;
+        });
+        cy += 1.6;
+      });
+    });
+    y = cardTop + cardH + 5;
+
+    /* Shoes note as its own card - Cinzel stands in for bold here,
+       since only its semibold weight is embedded (no Lato-bold). */
+    const tPad = 4, timgW = 20, timgH = timgW / a.tennis.aspect;
+    const tTextX = M + tPad + timgW + 4, tTextW = (W - M - tPad) - tTextX;
+    setF(doc, 'Cinzel', 6.8, CHARCOAL);
     const tlines = doc.splitTextToSize(
       'Para que disfrutes al máximo, te invitamos a que también lleves tus tenis favoritos y bailar toda la noche.',
-      tmaxW);
-    const tlineH = 3.7, tblockH = tlines.length * tlineH;
-    const tY = y + (timgH - tblockH) / 2 + tlineH * 0.75;
-    tlines.forEach((ln, i) => doc.text(ln, tx, tY + i * tlineH));
-    y += timgH + 5;
+      tTextW);
+    const tlineH = 3.5, tblockH = tlines.length * tlineH;
+    const tCardH = Math.max(timgH, tblockH) + 2 * tPad;
+    doc.setFillColor(LIGHTGOLD[0], LIGHTGOLD[1], LIGHTGOLD[2]);
+    doc.rect(M, y, W - 2 * M, tCardH, 'F');
+    doc.setDrawColor(GOLD_BORDER[0], GOLD_BORDER[1], GOLD_BORDER[2]);
+    doc.setLineWidth(0.3);
+    doc.rect(M, y, W - 2 * M, tCardH, 'S');
+    doc.addImage(a.tennis.data, 'JPEG', M + tPad, y + (tCardH - timgH) / 2, timgW, timgH, undefined, 'FAST');
+    const tY = y + (tCardH - tblockH) / 2 + tlineH * 0.78;
+    tlines.forEach((ln, i) => doc.text(ln, tTextX, tY + i * tlineH));
+    y += tCardH + 6;
 
-    y += 3;
     tracked(doc, 'POR FAVOR EVITA ESTOS TONOS EN TU VESTIDO', y, 6.8, AVOID, 0.4);
     y += 5;
+    y = paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
+                  y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
+    y += 6;
 
-    /* Wide enough to feel substantial while still reading as a framed
-       swatch rather than a full-bleed banner. */
-    const bw = (W - 2 * M) * 0.94, bx = M + ((W - 2 * M) - bw) / 2, bh = bw / a.telas.aspect;
-    doc.addImage(a.telas.data, 'JPEG', bx, y, bw, bh, undefined, 'FAST');
-    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.3);
-    doc.rect(bx, y, bw, bh, 'S');
-    y += bh + 4.5;
-
-    ['Evitar Blanco', 'Evitar Gris', 'Evitar Dorado', 'Evitar Negro'].forEach((label, i) => {
-      setF(doc, 'Cinzel', 6, MUTED);
-      doc.text(label, bx + bw * (i + 0.5) / 4, y, { align: 'center' });
-    });
-    y += 6.5;
-
-    paragraph(doc, 'Reservados para los novios y la decoración. Te pedimos elegir otro color.',
-              y, 'CormorantI', 9.5, AVOID, W - 2 * M - 10, 4.6);
+    /* Four separate framed swatches (each a quarter-crop of the same
+       strip) instead of one continuous banner. */
+    const swGap = 3, swW = (W - 2 * M - 3 * swGap) / 4;
+    [[a.telasW, 'Evitar Blanco'], [a.telasG, 'Evitar Gris'], [a.telasD, 'Evitar Dorado'], [a.telasN, 'Evitar Negro']]
+      .forEach((s, i) => {
+        const sx = M + i * (swW + swGap);
+        doc.addImage(s[0].data, 'JPEG', sx, y, swW, swW, undefined, 'FAST');
+        doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+        doc.setLineWidth(0.3);
+        doc.rect(sx, y, swW, swW, 'S');
+        setF(doc, 'Cinzel', 5.6, MUTED);
+        doc.text(s[1], sx + swW / 2, y + swW + 4, { align: 'center' });
+      });
 
     footer(doc, '2 / 4');
   }
