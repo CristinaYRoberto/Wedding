@@ -461,7 +461,17 @@ window.InvitacionPDF = (function () {
       y += bankH + 2.5;
     });
 
-    y += 4;
+    /* Without a reference the couple cannot tell whose transfer is
+       whose, so the suggested wording sits with the accounts.
+       Straight quotes only: the embedded font subsets drop curly ones
+       and truncate the string outright at a guillemet. */
+    y += 2;
+    y = paragraph(doc, 'Sugerencia: en el concepto de la transferencia incluye tu nombre y "regalo boda".',
+                  y, 'Lato', 7, MUTED, W - 2 * M - 10, 3.9);
+    y += 4.4;
+    centred(doc, 'Por ejemplo: "Pancho Villa Regalo Boda"', y, 'CormorantI', 9, DARKGOLD);
+
+    y += 7;
     tracked(doc, 'EFECTIVO', y, 7, GOLD, 1);
     y += 5.5;
     y = paragraph(doc, 'Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.',
