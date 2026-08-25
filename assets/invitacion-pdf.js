@@ -56,7 +56,7 @@ window.InvitacionPDF = (function () {
      jsPDF stretches whatever it is handed, so the cropping has to
      happen here or faces come out squashed. focusY biases the crop
      window vertically: 0 keeps the top, 1 the bottom. */
-  function loadPhoto(src, aspect, outW, focusY, zoom, focusX) {
+  function loadPhoto(src, aspect, outW, focusY, zoom, focusX, keepAlpha) {
     zoom = zoom || 1;
     focusX = focusX === undefined ? 0.5 : focusX;
     return new Promise((res, rej) => {
@@ -76,7 +76,13 @@ window.InvitacionPDF = (function () {
         c.width  = Math.min(outW, cw);
         c.height = Math.round(c.width / aspect);
         c.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, c.width, c.height);
-        res({ data: c.toDataURL('image/jpeg', 0.72), aspect: aspect });
+        /* JPEG has no alpha channel - exporting a transparent PNG (like the
+           tennis illustration) through it flattens the transparent
+           background to solid black. keepAlpha exports PNG instead so the
+           real transparency survives and composites onto the card behind it. */
+        res(keepAlpha
+          ? { data: c.toDataURL('image/png'), aspect: aspect }
+          : { data: c.toDataURL('image/jpeg', 0.72), aspect: aspect });
       };
       img.onerror = () => rej(new Error('No se pudo cargar la foto ' + src));
       img.src = src;
@@ -130,7 +136,7 @@ window.InvitacionPDF = (function () {
       loadPhoto('assets/gallery/gallery-09.jpg', 1, 460, 0.32),
       loadPhoto('assets/gallery/gallery-03.jpg', 1, 460, 0.42),
       loadPhoto('assets/gallery/gallery-12.jpg', 1.4, 900, 0.42),
-      loadPhoto('assets/UI/outfit_tennis.png', 1085 / 1450, 500, 0.5),
+      loadPhoto('assets/UI/outfit_tennis.png', 1085 / 1450, 500, 0.5, 1, 0.5, true),
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
@@ -362,7 +368,7 @@ window.InvitacionPDF = (function () {
     doc.setDrawColor(GOLD_BORDER[0], GOLD_BORDER[1], GOLD_BORDER[2]);
     doc.setLineWidth(0.3);
     doc.rect(M, y, W - 2 * M, tCardH, 'S');
-    doc.addImage(a.tennis.data, 'JPEG', M + tPad, y + (tCardH - timgH) / 2, timgW, timgH, undefined, 'FAST');
+    doc.addImage(a.tennis.data, 'PNG', M + tPad, y + (tCardH - timgH) / 2, timgW, timgH, undefined, 'FAST');
     const tY = y + (tCardH - tblockH) / 2 + tlineH * 0.78;
     tlines.forEach((ln, i) => doc.text(ln, tTextX, tY + i * tlineH));
     y += tCardH + 6;
