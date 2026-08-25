@@ -264,33 +264,38 @@ window.InvitacionPDF = (function () {
       doc.text(pases + (pases === 1 ? ' ACOMPAÑANTE' : ' ACOMPAÑANTES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
-    const ey = 141, colL = W / 4, colR = 3 * W / 4;
-    function event(cx, label, time, place, url) {
-      tracked(doc, label, ey, 6.2, GOLD, 0.7, cx);
-      centred(doc, time, ey + 10, 'Cinzel', 11, DARKGOLD, cx);
+    /* Both columns share one baseline for the map link: the addresses
+       wrap to different line counts, and letting each column place its
+       own link left the two sitting at visibly different heights. */
+    const ey = 138, colL = W / 4, colR = 3 * W / 4;
+    setF(doc, 'Lato', 7, MUTED);
+    const events = [
+      { cx: colL, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA,
+        lines: doc.splitTextToSize('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', 56) },
+      { cx: colR, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA,
+        lines: doc.splitTextToSize('Salón Las Cascadas, Los Molinos 97, Las Minitas', 56) },
+    ];
+    const linkY = ey + 18 + Math.max.apply(null, events.map(e => e.lines.length)) * 3.6 + 1.5;
+    events.forEach(e => {
+      tracked(doc, e.label, ey, 6.2, GOLD, 0.7, e.cx);
+      centred(doc, e.time, ey + 10, 'Cinzel', 11, DARKGOLD, e.cx);
       setF(doc, 'Lato', 7, MUTED);
-      const lines = doc.splitTextToSize(place, 56);
-      lines.forEach((ln, i) => doc.text(ln, cx, ey + 18 + i * 3.6, { align: 'center' }));
-      const by = ey + 18 + lines.length * 3.6 + 1.5;
+      e.lines.forEach((ln, i) => doc.text(ln, e.cx, ey + 18 + i * 3.6, { align: 'center' }));
       setF(doc, 'Cinzel', 6, GOLD);
-      doc.text('VER EN MAPA', cx, by, { align: 'center' });
+      doc.text('VER EN MAPA', e.cx, linkY, { align: 'center' });
       const tw = doc.getTextWidth('VER EN MAPA');
-      doc.link(cx - tw / 2, by - 3, tw, 4.5, { url: url });
-    }
-    event(colL, 'CEREMONIA', '12:00 PM',
-          'Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', MAPS_MISA);
-    event(colR, 'RECEPCIÓN', '7:00 PM',
-          'Salón Las Cascadas, Los Molinos 97, Las Minitas', MAPS_FIESTA);
+      doc.link(e.cx - tw / 2, linkY - 3, tw, 4.5, { url: e.url });
+    });
 
     /* The one rule the couple wants read before the day itself */
-    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 175.5, 8, CHARCOAL, 0.9);
+    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 174, 8, CHARCOAL, 0.9);
 
-    button(doc, 'CONFIRMAR ASISTENCIA', 182, SITE + '#rsvp', CHARCOAL, CREAM);
+    button(doc, 'CONFIRMAR ASISTENCIA', 180, SITE + '#rsvp', CHARCOAL, CREAM);
     setF(doc, 'CormorantI', 8, MUTED);
-    doc.text('Se confirma en la página, antes del 1 de septiembre de 2026',
-             W / 2, 196.5, { align: 'center' });
+    doc.text('Se confirma en la página antes del 1 de septiembre de 2026',
+             W / 2, 195, { align: 'center' });
     doc.text('En caso de no asistencia, también nos gustaría conocerlo a la brevedad. Gracias.',
-             W / 2, 200.5, { align: 'center' });
+             W / 2, 199.2, { align: 'center' });
 
     footer(doc, '1 / 4');
   }
@@ -411,6 +416,19 @@ window.InvitacionPDF = (function () {
         setF(doc, 'Cinzel', 4.4, MUTED);
         doc.text(s[1], sx + swW / 2, y + swH + 2.8, { align: 'center' });
       });
+
+    /* The footer would otherwise sit straight over the couple's feet.
+       A short warm-dark gradient anchors the bottom edge and gives the
+       cream type something to read against. */
+    const scrimH = 20, sSteps = 12;
+    for (let i = 0; i < sSteps; i++) {
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.5 * ((i + 1) / sSteps) }));
+      doc.setFillColor(38, 28, 24);
+      doc.rect(0, H - scrimH + i * (scrimH / sSteps), W, scrimH / sSteps + 0.3, 'F');
+      doc.restoreGraphicsState();
+    }
+
     footer(doc, '2 / 4', CREAM);
   }
 
@@ -420,7 +438,7 @@ window.InvitacionPDF = (function () {
     bgTexture(doc, a);
 
     tracked(doc, 'REGALOS', 18, 7.5, GOLD, 1.1);
-    paragraph(doc, 'Su presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
+    paragraph(doc, 'Tu presencia es el regalo más valioso para nosotros. Si es tu deseo otorgarnos un detalle, lo recibimos con mucho cariño.',
               25, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
 
     let y = 38;
@@ -429,20 +447,25 @@ window.InvitacionPDF = (function () {
      ['Santander', 'José Roberto Moreno Ruiz', '014760200064187105']].forEach(b => {
       doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
       doc.rect(M, y, bankW, bankH, 'F');
+      doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(M, y, bankW, bankH, 'S');
       setF(doc, 'Cinzel', 6.4, DARKGOLD);
       doc.text('BANCO · ' + b[0], W / 2, y + 5, { align: 'center' });
       setF(doc, 'Lato', 7.4, CHARCOAL);
       doc.text(b[1], W / 2, y + 9.4, { align: 'center' });
-      doc.text('CLABE ' + b[2], W / 2, y + 13.2, { align: 'center' });
+      /* A CLABE is 18 digits; a 16-digit number is a card, and calling
+         it a CLABE is what makes a transfer bounce. */
+      const digits = b[2].replace(/\D/g, '');
+      doc.text((digits.length === 18 ? 'CLABE ' : 'TARJETA ') + b[2], W / 2, y + 13.2, { align: 'center' });
       y += bankH + 2.5;
     });
 
-    y += 1.5;
-    setF(doc, 'Cinzel', 6.4, DARKGOLD);
-    doc.text('EFECTIVO', W / 2, y, { align: 'center' });
     y += 4;
+    tracked(doc, 'EFECTIVO', y, 7, GOLD, 1);
+    y += 5.5;
     y = paragraph(doc, 'Contaremos con un buzón discreto en la recepción para quienes prefieran entregar su obsequio en persona durante la celebración.',
-                  y, 'Lato', 7.4, CHARCOAL, W - 2 * M - 12, 4.2);
+                  y, 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
 
     /* The hotel list now lives on the site as a popup, since a printed
        page can't hold one and stay current — point there instead of
