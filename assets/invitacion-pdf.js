@@ -288,14 +288,17 @@ window.InvitacionPDF = (function () {
     });
 
     /* The one rule the couple wants read before the day itself */
-    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 174, 8, CHARCOAL, 0.9);
+    tracked(doc, 'ESTRICTAMENTE NO NIÑOS', 179, 8, CHARCOAL, 0.9);
 
-    button(doc, 'CONFIRMAR ASISTENCIA', 180, SITE + '#rsvp', CHARCOAL, CREAM);
+    /* No confirm button here on purpose: a guest who taps it from the
+       first page never reads the dress code, the gifts or the hotels.
+       The only button lives on the last page, so replying comes after
+       reading. This keeps the deadline visible without the shortcut. */
     setF(doc, 'CormorantI', 8, MUTED);
     doc.text('Se confirma en la página antes del 1 de septiembre de 2026',
-             W / 2, 195, { align: 'center' });
+             W / 2, 190, { align: 'center' });
     doc.text('En caso de no asistencia, también nos gustaría conocerlo a la brevedad. Gracias.',
-             W / 2, 199.2, { align: 'center' });
+             W / 2, 194.2, { align: 'center' });
 
     footer(doc, '1 / 4');
   }
