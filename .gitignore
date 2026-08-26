@@ -1,0 +1,7 @@
+# Scratch output from the Playwright MCP browser used to verify the PDF
+# designs: page dumps, console logs, and whatever a test run downloaded.
+.playwright-mcp/
+
+# Renders and batch output produced while checking a sheet by eye.
+*.zip
+Plantilla_*.csv
