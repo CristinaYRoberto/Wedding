@@ -44,9 +44,13 @@ window.PadrinosPDF = (function () {
          of them sit left of centre and low in this frame, so the window
          is zoomed in and walked down and left to find them. */
       K.loadPhoto('assets/gallery/gallery-02.jpg', W / GRACIAS_BAND_H, 1100, 0.78, 1.4, 0.29),
-      /* Full sheet behind the "we will miss you" note: the couple sits
-         in the upper half, above where the cream wash begins. */
-      K.loadPhoto('assets/gallery/gallery-08.jpg', W / H, 950, 0.1, 1.15, 0.45),
+      /* Full sheet behind the "we will miss you" note. Framed tight and
+         walked down the source so the couple climbs into the top of the
+         sheet: at the old crop their heads sat at 76mm with the wash at
+         116mm, leaving barely a hand's width of them in the clear. Now
+         they start at 20mm and run to 165mm, so the sheet shows most of
+         them instead of a wall of hedge. */
+      K.loadPhoto('assets/gallery/gallery-08.jpg', W / H, 1000, 0.9, 1.3, 0.15),
       K.loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
     _assets = { bandPeticion, bandGracias, bgAusencia, texture };
@@ -289,7 +293,7 @@ window.PadrinosPDF = (function () {
        strips overlap the cream composites twice and prints as a hard
        pale ridge, which is exactly the banding a long fade shows. A
        0.02mm bleed is enough to close the seam without stacking. */
-    const washTop = 116, fadeH = 26, op = 0.96, steps = 34;
+    const washTop = 126, fadeH = 28, op = 0.96, steps = 36;
     doc.saveGraphicsState();
     doc.setGState(new doc.GState({ opacity: op }));
     doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
@@ -306,36 +310,36 @@ window.PadrinosPDF = (function () {
       doc.restoreGraphicsState();
     }
 
-    K.tracked(doc, 'TE VAMOS A EXTRAÑAR', 122, 8, GOLD, 1.1);
-    K.rule(doc, 127, 26, GOLD);
+    K.tracked(doc, 'TE VAMOS A EXTRAÑAR', 134, 8, GOLD, 1.1);
+    K.rule(doc, 139, 26, GOLD);
 
-    const boxY = 132, boxH = 15;
+    const boxY = 143.5, boxH = 14;
     doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
     doc.rect(M, boxY, W - 2 * M, boxH, 'F');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(M, boxY, W - 2 * M, boxH, 'S');
-    K.tracked(doc, 'PARA', boxY + 5, 6, GOLD, 1);
+    K.tracked(doc, 'PARA', boxY + 4.8, 6, GOLD, 1);
     K.setF(doc, 'CormorantI', 14, CHARCOAL);
-    doc.text(String(nombre || 'Nuestro invitado'), W / 2, boxY + 11.6, { align: 'center' });
+    doc.text(String(nombre || 'Nuestro invitado'), W / 2, boxY + 11, { align: 'center' });
 
     K.paragraph(doc, 'Ya sabemos que ese día no vas a poder acompañarnos, y lo entendemos con todo el cariño. Aun así te vamos a extrañar, y queríamos decírtelo: gracias por ser parte de nuestras vidas.',
-                155, 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
+                165, 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
 
-    K.tracked(doc, 'SI QUIERES OTORGARNOS UN DETALLE', 174, 5.8, DARKGOLD, 0.7);
+    K.tracked(doc, 'SI QUIERES OTORGARNOS UN DETALLE', 177, 5.8, DARKGOLD, 0.7);
     K.paragraph(doc, 'Lo recibimos con mucho cariño. Nada de esto cambia lo agradecidos que estamos contigo.',
-                179, 'CormorantI', 7.6, MUTED, W - 2 * M - 10, 3.8);
+                181.5, 'CormorantI', 7.6, MUTED, W - 2 * M - 10, 3.8);
 
     /* Straight quotes and plain digits only: the embedded font subsets
        drop the curly ones and truncate the line where they appear. */
     K.setF(doc, 'Lato', 6, CHARCOAL);
-    doc.text('BBVA · Cristina Borquez Bernal · CLABE 012180015298657265', W / 2, 189, { align: 'center' });
-    doc.text('Banorte · José Roberto Moreno Ruiz · TARJETA 072760013297837244', W / 2, 192.6, { align: 'center' });
+    doc.text('BBVA · Cristina Borquez Bernal · CLABE 012180015298657265', W / 2, 188.6, { align: 'center' });
+    doc.text('Banorte · José Roberto Moreno Ruiz · TARJETA 072760013297837244', W / 2, 192.2, { align: 'center' });
 
     K.setF(doc, 'Cinzel', 5.6, GOLD);
-    doc.text('VER LA PÁGINA', W / 2, 198.6, { align: 'center' });
+    doc.text('VER LA PÁGINA', W / 2, 198.4, { align: 'center' });
     const tw = doc.getTextWidth('VER LA PÁGINA');
-    doc.link(W / 2 - tw / 2, 195.6, tw, 4.5, { url: SITE });
+    doc.link(W / 2 - tw / 2, 195.4, tw, 4.5, { url: SITE });
 
     signature(doc, 204);
   }
