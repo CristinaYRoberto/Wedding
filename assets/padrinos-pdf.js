@@ -5,8 +5,12 @@
    design is a single page with its own layout and its own photograph:
 
      · peticion      — asks one person or couple to take a role
-     · agradecimiento— thanks every sponsor, ceremony and honorary
+     · gracias       — thanks one sponsor, or one couple, by role
      · ausencia      — for the guests who already said they cannot come
+
+   The first two are the same sheet turned over: the asking one is
+   framed with the photograph at the foot, the thank-you one is
+   unframed with the photograph bleeding off the head.
 
    The palette, the fonts, the cropping and the CSV reader all come from
    InvitacionPDF.kit, so there is one copy of each and the three designs
@@ -128,18 +132,13 @@ window.PadrinosPDF = (function () {
     return out;
   }
 
-  function honorificos() {
-    return Array.from(document.querySelectorAll('#padrinos .honorificos-grid .padrino-name'))
-      .map(es);
-  }
-
   const HONORIFICO = 'PADRINOS Y MADRINAS HONORÍFICOS';
 
   /* One entry per cell of the honorary grid, so a couple sharing a cell
-     shares a sheet. The site pairs couples deliberately but fills the
-     leftover names two-per-cell as well, so the pairing here is a
-     starting point: the CSV template comes out of this and the odd pair
-     that is not a couple gets split there by hand. */
+     shares a sheet and everyone else gets their own. The grid is built
+     that way on purpose - one cell per household, not two names per
+     cell to even out the columns - so this reads the real pairing and
+     needs no list of its own. */
   function honorificoGrupos() {
     return Array.from(document.querySelectorAll('#padrinos .honorificos-grid > div'))
       .map(cell => ({
@@ -243,11 +242,17 @@ window.PadrinosPDF = (function () {
     const rolTxt = String(rol || '').toUpperCase();
     const honorifico = /HONOR/.test(rolTxt);
 
+    const lista = (Array.isArray(nombres) ? nombres : String(nombres || '').split('\n'))
+      .map(s => String(s).trim()).filter(Boolean);
+    /* Most of the honorary sheets go to one person, not a couple, so the
+       body has to agree in number: "tu lugar", not "su lugar". */
+    const dos = lista.length > 1;
+
     K.tracked(doc, 'GRACIAS', 74, 13, GOLD, 2.6);
     K.rule(doc, 80.5, 30, GOLD);
 
     K.paragraph(doc, honorifico
-        ? 'Gracias por el cariño y el apoyo que nos han dado en este camino.'
+        ? 'Gracias por el cariño y el apoyo que nos ' + (dos ? 'han' : 'has') + ' dado en este camino.'
         : 'Gracias por decir que sí, y por estar de pie junto a nosotros ese día.',
       92, 'CormorantI', 10, MUTED, W - 2 * M - 6, 4.8);
 
@@ -263,8 +268,6 @@ window.PadrinosPDF = (function () {
       K.rule(doc, 114, 24, GOLD_BORDER);
     }
 
-    const lista = (Array.isArray(nombres) ? nombres : String(nombres || '').split('\n'))
-      .map(s => String(s).trim()).filter(Boolean);
     let y = 126;
     (lista.length ? lista : ['Nuestros padrinos']).forEach(n => {
       K.centred(doc, n, y, 'Cormorant', 16, CHARCOAL);
@@ -272,8 +275,12 @@ window.PadrinosPDF = (function () {
     });
 
     K.paragraph(doc, honorifico
-        ? 'No llevan un cargo en la ceremonia, pero su lugar en nuestra historia pesa igual. Gracias por acompañarnos hasta aquí y por seguir con nosotros.'
-        : 'El lugar que ocupan en la ceremonia es el que ya tenían en nuestras vidas. Gracias por aceptarlo y por hacerlo suyo ese día.',
+        ? (dos
+            ? 'No llevan un cargo en la ceremonia, pero su lugar en nuestra historia pesa igual. Gracias por acompañarnos hasta aquí y por seguir con nosotros.'
+            : 'No llevas un cargo en la ceremonia, pero tu lugar en nuestra historia pesa igual. Gracias por acompañarnos hasta aquí y por seguir con nosotros.')
+        : (dos
+            ? 'El lugar que ocupan en la ceremonia es el que ya tenían en nuestras vidas. Gracias por aceptarlo y por hacerlo suyo ese día.'
+            : 'El lugar que ocupas en la ceremonia es el que ya tenías en nuestras vidas. Gracias por aceptarlo y por hacerlo tuyo ese día.'),
       Math.max(y + 12, 152), 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
 
     K.rule(doc, 174, 20, GOLD);
@@ -485,8 +492,7 @@ window.PadrinosPDF = (function () {
   }
 
   return {
-    roles: roles, honorificos: honorificos, honorificoGrupos: honorificoGrupos,
-    gruposGracias: gruposGracias,
+    roles: roles, honorificoGrupos: honorificoGrupos, gruposGracias: gruposGracias,
     preview: preview, one: one, batch: batch,
     parseGrupos: parseGrupos, parseAusencia: parseAusencia,
     plantillaPeticion: plantillaPeticion, plantillaGracias: plantillaGracias,

@@ -577,8 +577,12 @@
   .honorificos-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: .2rem 2rem;
+    /* Row gap wider than the line height on purpose: it is what makes a
+       couple read as a couple. Their two names sit a line apart inside
+       one cell, while the next household starts after the gap. */
+    gap: .85rem 2rem;
     text-align: left;
+    align-items: start;
   }
   .honorificos-grid .padrino-name { font-size: .96rem; line-height: 1.35; }
   /* Closing thanks: centred and italic so it reads as a note from the
@@ -1691,6 +1695,15 @@
     padding: 2rem;
     font-size: 1rem;
   }
+  /* An error printed at 30% white on a dark panel reads as nothing at
+     all — the same as a button that did nothing. Errors get their own
+     weight and colour so a failed generation is impossible to miss. */
+  .admin-loading.admin-error {
+    font-family: 'Lato', sans-serif;
+    font-style: normal;
+    color: #e58f84;
+    font-size: .92rem;
+  }
 
   /* ── PAPER TEXTURE ──
      A scrollwork grain across the light (cream/warm-white/sage) sections,
@@ -1889,31 +1902,46 @@
         <p class="honorificos-title" data-es="PADRINOS Y MADRINAS HONORÍFICOS" data-en="HONORARY SPONSORS">PADRINOS Y MADRINAS HONORÍFICOS</p>
         <p class="honorificos-subtitle" data-es="Agradecemos especialmente su compañía y apoyo" data-en="With special thanks for their company and support">Agradecemos especialmente su compañía y apoyo</p>
       </div>
-      <!-- Names only, no honorifics. 42 names in 21 pairs fills 7 rows of
-           3 exactly, so every column carries the same weight. Couples are
-           kept in the same cell; the rest are paired in list order. -->
+      <!-- Names only, no honorifics. One cell per household: a couple shares
+           a cell, everyone else has their own. That is not just layout — the
+           thank-you sheets in assets/padrinos-pdf.js read the pairing off
+           these cells, so a couple gets one sheet between them and a single
+           sponsor gets their own. Couples first, then the singles, with the
+           seventh couple moved to the very end: seven does not divide by
+           three, so one row has to mix a two-line cell with one-line ones,
+           and that row is least visible last. Columns come out 11/11/12.
+           7 couples + 20 individuals = 34 names. Didier Figueroa,
+           Marysol Moreno, Martin Moreno and Carolina Navarro are not
+           here on purpose: they already carry a ceremony role above,
+           and listing them twice would send them two thank-you sheets. -->
       <div class="honorificos-grid">
         <div><p class="padrino-name">Santos López</p><p class="padrino-name">Dolores Altamirano</p></div>
-        <div><p class="padrino-name">Edgar Silva</p><p class="padrino-name">Daniela Burruel</p></div>
-        <div><p class="padrino-name">Daniel Borquez</p><p class="padrino-name">Marla M. Moreno</p></div>
         <div><p class="padrino-name">Alfonso Ibarra</p><p class="padrino-name">Irene Ibarra</p></div>
-        <div><p class="padrino-name">Elsa Álvarez</p><p class="padrino-name">Sarah Pacheco</p></div>
-        <div><p class="padrino-name">José Altamirano</p><p class="padrino-name">Silvia Borquez</p></div>
         <div><p class="padrino-name">Ignacio Torres Casas</p><p class="padrino-name">Elda Marquesita Borquez</p></div>
-        <div><p class="padrino-name">Didier Figueroa</p><p class="padrino-name">Marysol Moreno</p></div>
-        <div><p class="padrino-name">Martin Moreno</p><p class="padrino-name">Carolina Navarro</p></div>
-        <div><p class="padrino-name">Manuel Dávila</p><p class="padrino-name">Antonio Bernal</p></div>
-        <div><p class="padrino-name">Cristina Bernal</p><p class="padrino-name">Luisa Bernal</p></div>
-        <div><p class="padrino-name">Rosario Bernal</p><p class="padrino-name">Maria de los Ángeles Bernal</p></div>
-        <div><p class="padrino-name">Refugio Bernal</p><p class="padrino-name">Francisco Bernal</p></div>
-        <div><p class="padrino-name">Nicolás Bernal</p><p class="padrino-name">Reyes Bernal</p></div>
-        <div><p class="padrino-name">Norma Figueroa</p><p class="padrino-name">Yazmín Moreno</p></div>
-        <div><p class="padrino-name">Ariel Moreno</p><p class="padrino-name">César Espinoza</p></div>
-        <div><p class="padrino-name">Carlos Ávalos</p><p class="padrino-name">Grecia Bernal</p></div>
-        <div><p class="padrino-name">Carolina Bustamante</p><p class="padrino-name">Lilia Rangel</p></div>
-        <div><p class="padrino-name">Enrique Ávila</p><p class="padrino-name">Dariel Cruz</p></div>
+        <div><p class="padrino-name">Edgar Silva</p><p class="padrino-name">Daniela Burruel</p></div>
         <div><p class="padrino-name">Omar Azael Moreno</p><p class="padrino-name">Elizabeth Acosta</p></div>
-        <div><p class="padrino-name">Jorge A. Vázquez</p><p class="padrino-name">Christian Esquivel</p></div>
+        <div><p class="padrino-name">Daniel Borquez</p><p class="padrino-name">Marla M. Moreno</p></div>
+        <div><p class="padrino-name">Elsa Álvarez</p></div>
+        <div><p class="padrino-name">Sarah Pacheco</p></div>
+        <div><p class="padrino-name">Manuel Dávila</p></div>
+        <div><p class="padrino-name">Antonio Bernal</p></div>
+        <div><p class="padrino-name">Cristina Bernal</p></div>
+        <div><p class="padrino-name">Luisa Bernal</p></div>
+        <div><p class="padrino-name">Rosario Bernal</p></div>
+        <div><p class="padrino-name">Maria de los Ángeles Bernal</p></div>
+        <div><p class="padrino-name">Refugio Bernal</p></div>
+        <div><p class="padrino-name">Francisco Bernal</p></div>
+        <div><p class="padrino-name">Nicolás Bernal</p></div>
+        <div><p class="padrino-name">Reyes Bernal</p></div>
+        <div><p class="padrino-name">Norma Figueroa</p></div>
+        <div><p class="padrino-name">César Espinoza</p></div>
+        <div><p class="padrino-name">Carlos Ávalos</p></div>
+        <div><p class="padrino-name">Grecia Bernal</p></div>
+        <div><p class="padrino-name">Carolina Bustamante</p></div>
+        <div><p class="padrino-name">Lilia Rangel</p></div>
+        <div><p class="padrino-name">Enrique Ávila</p></div>
+        <div><p class="padrino-name">Dariel Cruz</p></div>
+        <div><p class="padrino-name">José Altamirano</p><p class="padrino-name">Silvia Borquez</p></div>
       </div>
       <p class="honorificos-nota" data-es="Muchas gracias a todos los que han sido parte de esta historia y a quienes también nos han apoyado durante esta aventura. Gracias a todos los que mencionamos y a quien nos hace falta mencionar, de verdad, gracias." data-en="Our heartfelt thanks to everyone who has been part of this story and to all who have supported us along this adventure. Thank you to everyone we have named, and to anyone we may have missed — truly, thank you.">
         Muchas gracias a todos los que han sido parte de esta historia y a quienes también nos han apoyado durante esta aventura. Gracias a todos los que mencionamos y a quien nos hace falta mencionar, de verdad, gracias.
@@ -2861,6 +2889,7 @@ function pdfCampos() {
 
 async function conPdf(fn, statusId) {
   const status = document.getElementById(statusId);
+  status.classList.remove('admin-error');
   try {
     if (!window.InvitacionPDF) {
       status.textContent = 'Cargando el generador…';
@@ -2873,7 +2902,9 @@ async function conPdf(fn, statusId) {
     }
     await fn(status);
   } catch (e) {
+    status.classList.add('admin-error');
     status.textContent = 'Error: ' + e.message;
+    console.error(e);
   }
 }
 
@@ -2975,7 +3006,7 @@ function conPadrinos(fn, statusId) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/padrinos-pdf.js?v=1';
+        s.src = 'assets/padrinos-pdf.js?v=3';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
         document.head.appendChild(s);
       });
