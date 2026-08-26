@@ -2475,11 +2475,13 @@
       <!-- ── PETICIÓN: pide el cargo a una persona o pareja ── -->
       <div class="admin-pane" id="pane-peticion">
         <p class="admin-csv-help">
-          Una hoja por padrino o pareja, preguntando si aceptan el cargo.
-          Los títulos y los nombres se leen de la sección
-          <strong>«Nuestros padrinos de ceremonia»</strong> de esta misma página:
-          si ahí cambia un nombre, aquí cambia solo.
+          Una hoja por padrino o pareja, preguntando si aceptan. Cubre los
+          dos grupos: los cargos de ceremonia y los honoríficos. Las parejas
+          van juntas en una hoja y los demás llevan la suya. Todo se lee de la
+          sección <strong>«Padrinos»</strong> de esta misma página, así que si
+          ahí cambia un nombre, aquí cambia solo.
         </p>
+        <p class="admin-csv-help" id="pet-conteo"></p>
         <div class="admin-invite-row">
           <select id="pet-rol-sel" class="admin-invite-input" onchange="petElegirRol()">
             <option value="">— Elige un cargo de la lista —</option>
@@ -2500,7 +2502,7 @@
         <p class="admin-csv-help">
           Una fila por hoja: <strong>Rol</strong> y después todos los nombres que
           van en ella (una madrina sola lleva una sola columna de nombre).
-          La plantilla ya viene llena con los cargos del sitio.
+          La plantilla ya viene llena con ceremonia y honoríficos.
         </p>
         <div class="admin-actions">
           <button class="admin-btn" onclick="petPlantilla()">↓ PLANTILLA CSV</button>
@@ -3027,7 +3029,7 @@ function conPadrinos(fn, statusId, win) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/padrinos-pdf.js?v=8';
+        s.src = 'assets/padrinos-pdf.js?v=9';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
         document.head.appendChild(s);
       });
@@ -3041,7 +3043,11 @@ function petLlenarRoles() {
   const sel = document.getElementById('pet-rol-sel');
   if (sel.dataset.listo) return;
   conPadrinos(async status => {
-    window.PadrinosPDF.roles().forEach((g, i) => {
+    const g = window.PadrinosPDF.grupos();
+    document.getElementById('pet-conteo').textContent =
+      g.length + ' hojas: ' + window.PadrinosPDF.roles().length + ' de ceremonia y ' +
+      window.PadrinosPDF.honorificoGrupos().length + ' honoríficas.';
+    window.PadrinosPDF.grupos().forEach((g, i) => {
       const o = document.createElement('option');
       o.value = i;
       o.textContent = g.rol + ' — ' + g.nombres.join(', ');
@@ -3055,7 +3061,7 @@ function petLlenarRoles() {
 function petElegirRol() {
   const i = document.getElementById('pet-rol-sel').value;
   if (i === '' || !window.PadrinosPDF) return;
-  const g = window.PadrinosPDF.roles()[i];
+  const g = window.PadrinosPDF.grupos()[i];
   document.getElementById('pet-rol').value = g.rol;
   document.getElementById('pet-nombres').value = g.nombres.join(', ');
 }
@@ -3088,7 +3094,7 @@ function petUno()     { petHoja('one'); }
    need a CSV round-trip. */
 function petTodos() {
   conPadrinos(async status => {
-    const items = window.PadrinosPDF.roles();
+    const items = window.PadrinosPDF.grupos();
     const n = await window.PadrinosPDF.batch('peticion', items, (done, total, label) => {
       status.textContent = done + ' de ' + total + ' — ' + label;
     });
@@ -3131,7 +3137,7 @@ function petLote() {
 function graConteo() {
   conPadrinos(async status => {
     const P = window.PadrinosPDF;
-    const g = P.gruposGracias();
+    const g = P.grupos();
     const nombres = g.reduce((n, x) => n + x.nombres.length, 0);
     document.getElementById('gra-conteo').textContent =
       g.length + ' hojas para ' + nombres + ' padrinos y madrinas (' +
@@ -3144,7 +3150,7 @@ function graConteo() {
 function graLlenar() {
   const sel = document.getElementById('gra-rol-sel');
   if (sel.dataset.listo) return;
-  window.PadrinosPDF.gruposGracias().forEach((g, i) => {
+  window.PadrinosPDF.grupos().forEach((g, i) => {
     const o = document.createElement('option');
     o.value = i;
     o.textContent = g.rol + ' \u2014 ' + g.nombres.join(', ');
@@ -3156,7 +3162,7 @@ function graLlenar() {
 function graElegir() {
   const i = document.getElementById('gra-rol-sel').value;
   if (i === '' || !window.PadrinosPDF) return;
-  const g = window.PadrinosPDF.gruposGracias()[i];
+  const g = window.PadrinosPDF.grupos()[i];
   document.getElementById('gra-rol').value = g.rol;
   document.getElementById('gra-nombres').value = g.nombres.join(', ');
 }
@@ -3188,7 +3194,7 @@ function graUno()     { graHoja('one'); }
 
 function graTodos() {
   conPadrinos(async status => {
-    const items = window.PadrinosPDF.gruposGracias();
+    const items = window.PadrinosPDF.grupos();
     const n = await window.PadrinosPDF.batch('gracias', items, (done, total, label) => {
       status.textContent = done + ' de ' + total + ' \u2014 ' + label;
     });

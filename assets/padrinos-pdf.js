@@ -157,15 +157,32 @@ window.PadrinosPDF = (function () {
     K.rule(doc, 27, 22, GOLD);
 
     const rolTxt = String(rol || 'PADRINOS').toUpperCase();
+    const honorifico = /HONOR/.test(rolTxt);
 
-    /* "de ser nuestra MADRINA DE RAMO", not "nuestros" - the sheet goes
-       to one person as often as to a couple, and the role itself says
-       which. The title is the authority, since a couple can perfectly
-       well be asked to be one thing. */
-    const plural = /S\b|S$/.test(rolTxt.split(' ')[0]);
-    const fem = /^MADRINA/.test(rolTxt);
-    const posesivo = 'de ser ' + (fem ? (plural ? 'nuestras' : 'nuestra')
-                                      : (plural ? 'nuestros' : 'nuestro'));
+    /* The invited names, one per line, in the same italic the
+       invitation uses for the guest's own name. */
+    const lista = (Array.isArray(nombres) ? nombres : String(nombres || '').split('\n'))
+      .map(s => String(s).trim()).filter(Boolean);
+    const dos = lista.length > 1;
+
+    /* Ceremony: "de ser nuestra MADRINA DE RAMO", not "nuestros" - the
+       sheet goes to one person as often as to a couple, and the role
+       itself says which, since a couple can be asked to be one thing.
+
+       Honorary: a partitive instead, "de estar entre nuestros PADRINOS
+       Y MADRINAS HONORÍFICOS". That role is a category rather than a
+       job, so it cannot be bent to the singular, and these names carry
+       no Sr./Sra. to tell gender from - the partitive reads right for
+       one person and for a couple without needing either. */
+    let posesivo;
+    if (honorifico) {
+      posesivo = 'de estar entre nuestros';
+    } else {
+      const plural = /S\b|S$/.test(rolTxt.split(' ')[0]);
+      const fem = /^MADRINA/.test(rolTxt);
+      posesivo = 'de ser ' + (fem ? (plural ? 'nuestras' : 'nuestra')
+                                  : (plural ? 'nuestros' : 'nuestro'));
+    }
 
     K.centred(doc, '¿Nos harías el honor', 45, 'CormorantI', 19, CHARCOAL);
     K.centred(doc, posesivo, 55.5, 'CormorantI', 19, CHARCOAL);
@@ -185,18 +202,20 @@ window.PadrinosPDF = (function () {
 
     K.rule(doc, 76, 26, GOLD);
 
-    /* The invited names, one per line, in the same italic the
-       invitation uses for the guest's own name. */
-    const lista = (Array.isArray(nombres) ? nombres : String(nombres || '').split('\n'))
-      .map(s => String(s).trim()).filter(Boolean);
     let y = 87;
     (lista.length ? lista : ['Nuestros padrinos']).forEach(n => {
       K.centred(doc, n, y, 'Cormorant', 15, CHARCOAL);
       y += 8;
     });
 
-    K.paragraph(doc, 'Para nosotros no es un trámite ni un adorno: es pedirle a quienes más queremos que estén de pie junto a nosotros ese día. Nos haría muy felices que ' + (lista.length > 1 ? 'aceptaran' : 'aceptaras') + '.',
-                Math.max(y + 4, 105), 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
+    /* The honorary sheet cannot promise a place in the ceremony, so it
+       says what the title actually is instead of borrowing the wording
+       of a job nobody will be doing that day. */
+    K.paragraph(doc, (honorifico
+        ? 'No es un cargo en la ceremonia: es cómo queremos nombrar a quienes han estado con nosotros todo este camino. Nos haría muy felices que '
+        : 'Para nosotros no es un trámite ni un adorno: es pedirle a quienes más queremos que estén de pie junto a nosotros ese día. Nos haría muy felices que ')
+        + (dos ? 'aceptaran' : 'aceptaras') + '.',
+      Math.max(y + 4, 105), 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
 
     const bandY = 120, bandH = 66, bandX = 6 + 1.6 + 1.4;
     doc.addImage(a.bandPeticion.data, 'JPEG', bandX, bandY, W - 2 * bandX, bandH, undefined, 'FAST');
@@ -473,18 +492,19 @@ window.PadrinosPDF = (function () {
   }
 
   function plantillaPeticion() {
-    plantillaGrupos('Plantilla_Peticion_Padrinos.csv', roles());
+    plantillaGrupos('Plantilla_Peticion_Padrinos.csv', grupos());
   }
 
-  /* The thank-you list is the ceremony sheets plus one per honorary
-     cell, one sheet per couple throughout - the two Bible couples share
-     a role but not a sheet, same as on the site itself. */
-  function gruposGracias() {
+  /* Everyone who gets a sheet, asking or thanking: the ceremony cards
+     plus one per honorary cell, one sheet per household throughout. The
+     two lists were identical, so they are one function - a name added
+     to the site turns up in both flows or in neither. */
+  function grupos() {
     return roles().concat(honorificoGrupos());
   }
 
   function plantillaGracias() {
-    plantillaGrupos('Plantilla_Gracias_Padrinos.csv', gruposGracias());
+    plantillaGrupos('Plantilla_Gracias_Padrinos.csv', grupos());
   }
 
   function plantillaAusencia() {
@@ -493,7 +513,7 @@ window.PadrinosPDF = (function () {
   }
 
   return {
-    roles: roles, honorificoGrupos: honorificoGrupos, gruposGracias: gruposGracias,
+    roles: roles, honorificoGrupos: honorificoGrupos, grupos: grupos,
     preview: preview, one: one, batch: batch,
     parseGrupos: parseGrupos, parseAusencia: parseAusencia,
     plantillaPeticion: plantillaPeticion, plantillaGracias: plantillaGracias,
