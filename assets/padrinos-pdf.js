@@ -94,9 +94,9 @@ window.PadrinosPDF = (function () {
   /* ── The names, read off the live page ────────────────────────────
      One .padrino-card is one couple (or one single sponsor): its
      .padrino-role names the group and its .padrino-name lines are who
-     is in it. The two Bible couples are two separate cards with the
-     same role text, so each gets its own asking sheet; the thank-you
-     side merges same-role cards back together (see gruposGracias).
+     is in it. The two Bible cards share a role text but are two
+     couples, so they stay two entries throughout - one asking sheet
+     and one thank-you sheet each.
 
      data-es first, not textContent: the language toggle rewrites the
      roles in place, so a sheet generated while the site is in English
@@ -454,15 +454,10 @@ window.PadrinosPDF = (function () {
   }
 
   /* The thank-you list is the ceremony sheets plus one per honorary
-     cell — the Bible couples merged back, since a couple gets one sheet
-     between them and only the asking sheets go out separately. */
+     cell, one sheet per couple throughout - the two Bible couples share
+     a role but not a sheet, same as on the site itself. */
   function gruposGracias() {
-    return roles().reduce((acc, g) => {
-      const prev = acc[acc.length - 1];
-      if (prev && prev.rol === g.rol) prev.nombres = prev.nombres.concat(g.nombres);
-      else acc.push({ rol: g.rol, nombres: g.nombres.slice() });
-      return acc;
-    }, []).concat(honorificoGrupos());
+    return roles().concat(honorificoGrupos());
   }
 
   function plantillaGracias() {

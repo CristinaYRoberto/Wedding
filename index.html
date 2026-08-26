@@ -3002,7 +3002,7 @@ function conPadrinos(fn, statusId) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/padrinos-pdf.js?v=4';
+        s.src = 'assets/padrinos-pdf.js?v=5';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
         document.head.appendChild(s);
       });
