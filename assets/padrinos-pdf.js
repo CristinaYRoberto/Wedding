@@ -28,22 +28,24 @@ window.PadrinosPDF = (function () {
      Deliberately none of the frames the invitation already uses, so a
      guest holding both sheets is not looking at the same picture twice. */
   const PETICION_BAND_ASPECT = (W - 12) / 66;
+  const GRACIAS_BAND_H = 58;
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [bandPeticion, retrato, bgAusencia, texture] = await Promise.all([
+    const [bandPeticion, bandGracias, bgAusencia, texture] = await Promise.all([
       /* Wide band across the foot of the asking sheet. The heads sit in
          the top third of this frame, so the crop window starts high. */
       K.loadPhoto('assets/gallery/gallery-14.jpg', PETICION_BAND_ASPECT, 1100, 0.2),
-      /* Small square portrait for the thank-you sheet - it is the only
-         photo on that page, so it is cropped tight on the two of them. */
-      K.loadPhoto('assets/gallery/gallery-05.jpg', 1, 420, 0.42, 1.7, 0.42),
+      /* Full-bleed band across the head of the thank-you sheet. The two
+         of them sit left of centre and low in this frame, so the window
+         is zoomed in and walked down and left to find them. */
+      K.loadPhoto('assets/gallery/gallery-02.jpg', W / GRACIAS_BAND_H, 1100, 0.78, 1.4, 0.29),
       /* Full sheet behind the "we will miss you" note: the couple sits
          in the upper half, above where the cream wash begins. */
       K.loadPhoto('assets/gallery/gallery-08.jpg', W / H, 950, 0.1, 1.15, 0.45),
       K.loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
     ]);
-    _assets = { bandPeticion, retrato, bgAusencia, texture };
+    _assets = { bandPeticion, bandGracias, bgAusencia, texture };
     return _assets;
   }
 
@@ -86,11 +88,13 @@ window.PadrinosPDF = (function () {
   }
 
   /* ── The names, read off the live page ────────────────────────────
-     #padrinos holds them in document order: a .padrino-role opens a
-     group and every .padrino-name after it belongs to that group, on
-     through the .padrino-card-divider blocks (the second Bible couple
-     has no role of its own and joins the group above it, exactly as
-     the site renders it).
+     One entry per couple, not per card. A .padrino-role opens a group
+     and the .padrino-name lines under it belong to it; a
+     .padrino-card-divider always opens a NEW group, inheriting the
+     role above it when it carries none of its own. That is how the two
+     Bible couples are told apart: the site draws them in one card with
+     a rule between, but they are two couples and each gets its own
+     asking sheet. The thank-you sheet puts them back together.
 
      data-es first, not textContent: the language toggle rewrites the
      roles in place, so a sheet generated while the site is in English
@@ -103,19 +107,46 @@ window.PadrinosPDF = (function () {
 
   function roles() {
     const out = [];
-    document.querySelectorAll('#padrinos .padrinos-main p').forEach(p => {
-      if (p.classList.contains('padrino-role')) {
-        out.push({ rol: es(p), nombres: [] });
-      } else if (p.classList.contains('padrino-name') && out.length) {
-        out[out.length - 1].nombres.push(es(p));
-      }
-    });
+    const walk = (el, heredado) => {
+      let rol = heredado, grupo = null;
+      Array.from(el.children).forEach(ch => {
+        if (ch.classList.contains('padrino-role')) {
+          rol = es(ch);
+          grupo = { rol: rol, nombres: [] };
+          out.push(grupo);
+        } else if (ch.classList.contains('padrino-name')) {
+          if (!grupo) { grupo = { rol: rol, nombres: [] }; out.push(grupo); }
+          grupo.nombres.push(es(ch));
+        } else if (ch.classList.contains('padrino-card-divider')) {
+          walk(ch, rol);
+          grupo = null;
+        }
+      });
+    };
+    document.querySelectorAll('#padrinos .padrinos-main .padrino-card')
+      .forEach(card => walk(card, ''));
     return out;
   }
 
   function honorificos() {
     return Array.from(document.querySelectorAll('#padrinos .honorificos-grid .padrino-name'))
       .map(es);
+  }
+
+  const HONORIFICO = 'PADRINOS Y MADRINAS HONORÍFICOS';
+
+  /* One entry per cell of the honorary grid, so a couple sharing a cell
+     shares a sheet. The site pairs couples deliberately but fills the
+     leftover names two-per-cell as well, so the pairing here is a
+     starting point: the CSV template comes out of this and the odd pair
+     that is not a couple gets split there by hand. */
+  function honorificoGrupos() {
+    return Array.from(document.querySelectorAll('#padrinos .honorificos-grid > div'))
+      .map(cell => ({
+        rol: HONORIFICO,
+        nombres: Array.from(cell.querySelectorAll('.padrino-name')).map(es),
+      }))
+      .filter(g => g.nombres.length);
   }
 
   function newDoc(title, subject) {
@@ -154,13 +185,17 @@ window.PadrinosPDF = (function () {
     K.centred(doc, posesivo, 55.5, 'CormorantI', 19, CHARCOAL);
 
     /* The role is the whole point of the sheet, so it is the largest
-       tracked line on it - stepped down only if it will not fit. */
+       tracked line on it - stepped down only if it will not fit. It
+       also carries the closing "?": the question opened three lines
+       above ("¿Nos harías el honor…") and the role is where it ends,
+       so the mark belongs here and not after the names. */
+    const pregunta = rolTxt + '?';
     let size = 11, spacing = 1.2;
     for (; size > 6; size -= 0.5) {
       K.setF(doc, 'Cinzel', size, DARKGOLD);
-      if (doc.getTextWidth(rolTxt) + spacing * rolTxt.length < W - 2 * M - 6) break;
+      if (doc.getTextWidth(pregunta) + spacing * pregunta.length < W - 2 * M - 6) break;
     }
-    K.tracked(doc, rolTxt, 70, size, DARKGOLD, spacing);
+    K.tracked(doc, pregunta, 70, size, DARKGOLD, spacing);
 
     K.rule(doc, 76, 26, GOLD);
 
@@ -187,81 +222,64 @@ window.PadrinosPDF = (function () {
     contactos(doc, 199.5);
   }
 
-  /* ══ 2 · AGRADECIMIENTO ════════════════════════════════════════════
-     One sheet that has to hold every name, so the type is small and the
-     lists are measured rather than placed by eye: the ceremony groups
-     are dealt into two columns by running height (not four-and-four),
-     and the honorary names are laid out in four columns whose leading
-     is squeezed until the block ends above the closing line. */
-  function drawGracias(doc, a) {
+  /* ══ 2 · AGRADECIMIENTO ════════════════════════════════
+     One sheet per sponsor — a couple shares theirs — naming the role
+     they took. The layout is the asking sheet turned upside down: the
+     photograph is a full-bleed band at the head instead of a framed
+     one at the foot, and there is no gold frame, so the two sheets are
+     recognisably a pair without being the same page twice.
+
+     The honorary sponsors have no role in the ceremony, so their sheet
+     carries the category title and a body of its own. */
+  function drawGracias(doc, a, nombres, rol) {
     K.page(doc, true);
     bgTexture(doc, a);
-    frame(doc);
 
-    const ph = 30, px = (W - ph) / 2, py = 13;
-    doc.addImage(a.retrato.data, 'JPEG', px, py, ph, ph, undefined, 'FAST');
+    doc.addImage(a.bandGracias.data, 'JPEG', 0, 0, W, GRACIAS_BAND_H, undefined, 'FAST');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.35);
-    doc.rect(px, py, ph, ph, 'S');
+    doc.setLineWidth(0.4);
+    doc.line(0, GRACIAS_BAND_H, W, GRACIAS_BAND_H);
 
-    K.tracked(doc, 'GRACIAS', 53, 11, GOLD, 2.2);
-    K.rule(doc, 58.5, 26, GOLD);
-    K.paragraph(doc, 'A cada uno de ustedes: gracias por decir que sí, por su cariño y por acompañarnos en el día más importante de nuestra historia.',
-                65, 'CormorantI', 9, MUTED, W - 2 * M - 6, 4.4);
+    const rolTxt = String(rol || '').toUpperCase();
+    const honorifico = /HONOR/.test(rolTxt);
 
-    /* — Ceremony groups, balanced across two columns —
-         Each group goes to whichever column is shorter so far. Splitting
-         four-and-four instead leaves a hole under the left column, since
-         the Bible group carries two couples and is twice the height. */
-    const grupos = roles();
-    const alto = g => 4.6 + g.nombres.length * 3.3 + 2.6;
-    const colA = [], colB = [];
-    let hA = 0, hB = 0;
-    grupos.forEach(g => {
-      if (hA <= hB) { colA.push(g); hA += alto(g); } else { colB.push(g); hB += alto(g); }
+    K.tracked(doc, 'GRACIAS', 74, 13, GOLD, 2.6);
+    K.rule(doc, 80.5, 30, GOLD);
+
+    K.paragraph(doc, honorifico
+        ? 'Gracias por el cariño y el apoyo que nos han dado en este camino.'
+        : 'Gracias por decir que sí, y por estar de pie junto a nosotros ese día.',
+      92, 'CormorantI', 10, MUTED, W - 2 * M - 6, 4.8);
+
+    /* Same measure-then-shrink as the asking sheet: the honorary title
+       is the longest line either design has to set. */
+    if (rolTxt) {
+      let size = 10, spacing = 1;
+      for (; size > 5.5; size -= 0.4) {
+        K.setF(doc, 'Cinzel', size, DARKGOLD);
+        if (doc.getTextWidth(rolTxt) + spacing * rolTxt.length < W - 2 * M - 4) break;
+      }
+      K.tracked(doc, rolTxt, 108, size, DARKGOLD, spacing);
+      K.rule(doc, 114, 24, GOLD_BORDER);
+    }
+
+    const lista = (Array.isArray(nombres) ? nombres : String(nombres || '').split('\n'))
+      .map(s => String(s).trim()).filter(Boolean);
+    let y = 126;
+    (lista.length ? lista : ['Nuestros padrinos']).forEach(n => {
+      K.centred(doc, n, y, 'Cormorant', 16, CHARCOAL);
+      y += 8.5;
     });
 
-    K.tracked(doc, 'PADRINOS DE CEREMONIA', 79, 5.8, DARKGOLD, 0.9);
-    K.rule(doc, 82, 20, GOLD_BORDER);
+    K.paragraph(doc, honorifico
+        ? 'No llevan un cargo en la ceremonia, pero su lugar en nuestra historia pesa igual. Gracias por acompañarnos hasta aquí y por seguir con nosotros.'
+        : 'El lugar que ocupan en la ceremonia es el que ya tenían en nuestras vidas. Gracias por aceptarlo y por hacerlo suyo ese día.',
+      Math.max(y + 12, 152), 'Lato', 7.6, MUTED, W - 2 * M - 8, 4.4);
 
-    let bottom = 88;
-    [colA, colB].forEach((col, i) => {
-      const cx = W / 4 + (W / 2) * i;
-      let y = 88;
-      col.forEach(g => {
-        K.tracked(doc, g.rol, y, 5, GOLD, 0.5, cx);
-        y += 4.6;
-        K.setF(doc, 'Lato', 6.6, CHARCOAL);
-        g.nombres.forEach(n => { doc.text(n, cx, y, { align: 'center' }); y += 3.3; });
-        y += 2.6;
-      });
-      bottom = Math.max(bottom, y);
-    });
-
-    /* — Honorary names — */
-    let y = bottom + 4;
-    K.tracked(doc, 'PADRINOS Y MADRINAS HONORÍFICOS', y, 5.6, GOLD, 0.8);
-    K.rule(doc, y + 3, 26, GOLD_BORDER);
-    y += 9;
-
-    /* Three columns, filled top-to-bottom. The site lists these in
-       couples, two consecutive names at a time, so the column has to
-       hold an even number of rows or every column break splits a pair. */
-    const nombres = honorificos();
-    const cols = 3;
-    let filas = Math.ceil(nombres.length / cols);
-    if (filas % 2) filas++;
-    const CIERRE_Y = 196;                       /* the closing line's baseline */
-    const lead = Math.min(3.2, (CIERRE_Y - 6 - y) / Math.max(filas, 1));
-    const colW = (W - 2 * (M - 4)) / cols;
-    K.setF(doc, 'Lato', 5.2, CHARCOAL);
-    nombres.forEach((n, i) => {
-      const c = Math.floor(i / filas), r = i % filas;
-      doc.text(n, (M - 4) + colW * (c + 0.5), y + r * lead, { align: 'center', maxWidth: colW - 1.5 });
-    });
-
-    K.centred(doc, 'Con todo nuestro cariño,', CIERRE_Y, 'CormorantI', 9, MUTED);
-    K.centred(doc, 'Cristina  &  Roberto', CIERRE_Y + 6.5, 'CormorantI', 12, CHARCOAL);
+    K.rule(doc, 174, 20, GOLD);
+    K.centred(doc, 'Con todo nuestro cariño,', 184, 'CormorantI', 9.5, MUTED);
+    K.centred(doc, 'Cristina  &  Roberto', 194, 'CormorantI', 14, CHARCOAL);
+    K.tracked(doc, '03 · OCTUBRE · 2026', 203, 6, GOLD, 0.9);
   }
 
   /* ══ 3 · AUSENCIA ══════════════════════════════════════════════════
@@ -342,9 +360,9 @@ window.PadrinosPDF = (function () {
     },
     gracias: {
       title: 'Gracias · Boda de Cristina y Roberto',
-      file: 'Gracias_Padrinos',
-      draw: (doc, a) => drawGracias(doc, a),
-      name: () => 'Padrinos_y_Madrinas',
+      file: 'Gracias',
+      draw: (doc, a, d) => drawGracias(doc, a, d.nombres, d.rol),
+      name: d => (d.rol || 'padrinos') + '_' + (Array.isArray(d.nombres) ? d.nombres[0] : d.nombres),
     },
     ausencia: {
       title: 'Te extrañaremos · Boda de Cristina y Roberto',
@@ -403,10 +421,12 @@ window.PadrinosPDF = (function () {
   }
 
   /* ── CSV in ───────────────────────────────────────────────────────
-     Peticion: Rol,Nombre 1,Nombre 2…  (everything after the role is a
-     name, so a single madrina and a couple use the same file).
+     Peticion and agradecimiento share a shape: Rol,Nombre 1,Nombre 2…
+     Everything after the role is a name, so a single madrina and a
+     couple use the same file, and a pair the site guessed wrong is
+     split by putting it on two rows.
      Ausencia: one name per row. */
-  function parsePeticion(text) {
+  function parseGrupos(text) {
     return K.parseRows(text).map(r => ({
       rol: (r[0] || '').trim(),
       nombres: r.slice(1).map(s => s.trim()).filter(Boolean),
@@ -431,12 +451,32 @@ window.PadrinosPDF = (function () {
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
-  /* The petición template is pre-filled from the site itself, so the
-     usual batch is "download, delete the rows already asked, generate". */
-  function plantillaPeticion() {
-    descargarCSV('Plantilla_Peticion_Padrinos.csv',
-      ['Rol,Nombre 1,Nombre 2'].concat(roles().map(g =>
+  /* Both templates are pre-filled from the site itself, so the usual
+     batch is "download, fix the rows that need fixing, generate". */
+  function plantillaGrupos(archivo, grupos) {
+    descargarCSV(archivo,
+      ['Rol,Nombre 1,Nombre 2'].concat(grupos.map(g =>
         [g.rol].concat(g.nombres).map(s => '"' + s.replace(/"/g, '""') + '"').join(','))));
+  }
+
+  function plantillaPeticion() {
+    plantillaGrupos('Plantilla_Peticion_Padrinos.csv', roles());
+  }
+
+  /* The thank-you list is the ceremony sheets plus one per honorary
+     cell — the Bible couples merged back, since a couple gets one sheet
+     between them and only the asking sheets go out separately. */
+  function gruposGracias() {
+    return roles().reduce((acc, g) => {
+      const prev = acc[acc.length - 1];
+      if (prev && prev.rol === g.rol) prev.nombres = prev.nombres.concat(g.nombres);
+      else acc.push({ rol: g.rol, nombres: g.nombres.slice() });
+      return acc;
+    }, []).concat(honorificoGrupos());
+  }
+
+  function plantillaGracias() {
+    plantillaGrupos('Plantilla_Gracias_Padrinos.csv', gruposGracias());
   }
 
   function plantillaAusencia() {
@@ -445,9 +485,11 @@ window.PadrinosPDF = (function () {
   }
 
   return {
-    roles: roles, honorificos: honorificos,
+    roles: roles, honorificos: honorificos, honorificoGrupos: honorificoGrupos,
+    gruposGracias: gruposGracias,
     preview: preview, one: one, batch: batch,
-    parsePeticion: parsePeticion, parseAusencia: parseAusencia,
-    plantillaPeticion: plantillaPeticion, plantillaAusencia: plantillaAusencia,
+    parseGrupos: parseGrupos, parseAusencia: parseAusencia,
+    plantillaPeticion: plantillaPeticion, plantillaGracias: plantillaGracias,
+    plantillaAusencia: plantillaAusencia,
   };
 })();

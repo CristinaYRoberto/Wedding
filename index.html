@@ -2492,17 +2492,45 @@
       <!-- ── AGRADECIMIENTO: una sola hoja con todos los nombres ── -->
       <div class="admin-pane" id="pane-gracias">
         <p class="admin-csv-help">
-          Una hoja única de agradecimiento con <em>todos</em> los padrinos y
-          madrinas — los de ceremonia y los honoríficos — tomados de la sección
-          «Padrinos» de esta página. No lleva nombre de destinatario: es la
-          misma hoja para todos, se imprime y se reparte.
+          Una hoja de agradecimiento <strong>por cada padrino o madrina</strong>,
+          con el cargo que le tocó. Las parejas van juntas en la misma hoja.
+          La lista sale de la sección «Padrinos» de esta página: los de
+          ceremonia con su cargo, y los honoríficos como vienen emparejados
+          en la cuadrícula. Si alguna pareja de honoríficos no es pareja de
+          verdad, sácala del CSV en dos filas.
         </p>
         <p class="admin-csv-help" id="gra-conteo"></p>
+        <div class="admin-invite-row">
+          <select id="gra-rol-sel" class="admin-invite-input" onchange="graElegir()">
+            <option value="">— Elige a quién agradecer —</option>
+          </select>
+        </div>
+        <div class="admin-invite-row">
+          <input type="text" id="gra-rol" class="admin-invite-input" placeholder="Cargo — p. ej. PADRINOS DE VELACIÓN">
+          <input type="text" id="gra-nombres" class="admin-invite-input" placeholder="Nombres separados por coma">
+        </div>
         <div class="admin-actions">
           <button class="admin-btn" onclick="graPreview()">👁 VER PDF</button>
           <button class="admin-btn" onclick="graUno()">↓ DESCARGAR PDF</button>
+          <button class="admin-btn" onclick="graTodos()">⚙ GENERAR TODAS (ZIP)</button>
         </div>
         <p class="admin-loading" id="gra-status" style="margin-top:.6rem"></p>
+
+        <p class="admin-title" style="font-size:.95rem; margin:1.6rem 0 .5rem">POR LOTE — SUBIR CSV</p>
+        <p class="admin-csv-help">
+          Mismo formato que la petición: <strong>Rol</strong> y después los
+          nombres que van en esa hoja. La plantilla ya viene llena con
+          ceremonia y honoríficos.
+        </p>
+        <div class="admin-actions">
+          <button class="admin-btn" onclick="graPlantilla()">↓ PLANTILLA CSV</button>
+          <label class="admin-btn" style="cursor:pointer">
+            ⇧ ELEGIR CSV
+            <input type="file" id="gra-csv" accept=".csv,text/csv" style="display:none" onchange="graCsvElegido(event)">
+          </label>
+          <button class="admin-btn" id="gra-lote-btn" onclick="graLote()" disabled>⚙ GENERAR TODOS</button>
+        </div>
+        <p class="admin-loading" id="gra-lote-status" style="margin-top:.6rem"></p>
       </div><!-- /pane-gracias -->
 
       <!-- ── AUSENCIA: para quien ya dijo que no puede venir ── -->
@@ -2930,7 +2958,7 @@ function pdfLote() {
    Three one-page designs, all drawn by assets/padrinos-pdf.js, which
    needs the invitation generator loaded first: the palette, the fonts
    and the cropping all live there. */
-let _petRows = null, _ausRows = null;
+let _petRows = null, _graRows = null, _ausRows = null;
 
 function adminTab(btn) {
   document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('is-on', b === btn));
@@ -3026,7 +3054,7 @@ function petCsvElegido(ev) {
   if (!file) return;
   const btn = document.getElementById('pet-lote-btn');
   conPadrinos(async status => {
-    _petRows = window.PadrinosPDF.parsePeticion(await file.text());
+    _petRows = window.PadrinosPDF.parseGrupos(await file.text());
     status.textContent = _petRows.length + ' hoja' + (_petRows.length === 1 ? '' : 's') + ' por generar.';
     btn.disabled = !_petRows.length;
   }, 'pet-lote-status');
@@ -3049,24 +3077,99 @@ function petLote() {
 function graConteo() {
   conPadrinos(async status => {
     const P = window.PadrinosPDF;
-    const grupos = P.roles();
-    const cer = grupos.reduce((n, g) => n + g.nombres.length, 0);
+    const g = P.gruposGracias();
+    const nombres = g.reduce((n, x) => n + x.nombres.length, 0);
     document.getElementById('gra-conteo').textContent =
-      'La hoja llevará ' + cer + ' nombres de ceremonia en ' + grupos.length +
-      ' cargos, y ' + P.honorificos().length + ' honoríficos.';
+      g.length + ' hojas para ' + nombres + ' padrinos y madrinas (' +
+      P.honorificoGrupos().length + ' de ellas honor\u00edficas).';
+    graLlenar();
     status.textContent = '';
   }, 'gra-status');
 }
 
+function graLlenar() {
+  const sel = document.getElementById('gra-rol-sel');
+  if (sel.dataset.listo) return;
+  window.PadrinosPDF.gruposGracias().forEach((g, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = g.rol + ' \u2014 ' + g.nombres.join(', ');
+    sel.appendChild(o);
+  });
+  sel.dataset.listo = '1';
+}
+
+function graElegir() {
+  const i = document.getElementById('gra-rol-sel').value;
+  if (i === '' || !window.PadrinosPDF) return;
+  const g = window.PadrinosPDF.gruposGracias()[i];
+  document.getElementById('gra-rol').value = g.rol;
+  document.getElementById('gra-nombres').value = g.nombres.join(', ');
+}
+
+function graCampos() {
+  return {
+    rol: document.getElementById('gra-rol').value.trim(),
+    nombres: document.getElementById('gra-nombres').value.split(',')
+      .map(s => s.trim()).filter(Boolean),
+  };
+}
+
 function graHoja(accion) {
+  const c = graCampos();
+  if (!c.nombres.length) {
+    document.getElementById('gra-status').textContent = 'Escribe al menos un nombre.';
+    return;
+  }
   conPadrinos(async status => {
-    status.textContent = 'Generando…';
-    await window.PadrinosPDF[accion]('gracias', {});
-    status.textContent = accion === 'preview' ? 'PDF abierto en otra pestaña.' : 'PDF descargado.';
+    status.textContent = 'Generando\u2026';
+    await window.PadrinosPDF[accion]('gracias', c);
+    status.textContent = accion === 'preview' ? 'PDF abierto en otra pesta\u00f1a.' : 'PDF descargado.';
   }, 'gra-status');
 }
 function graPreview() { graHoja('preview'); }
 function graUno()     { graHoja('one'); }
+
+function graTodos() {
+  conPadrinos(async status => {
+    const items = window.PadrinosPDF.gruposGracias();
+    const n = await window.PadrinosPDF.batch('gracias', items, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' \u2014 ' + label;
+    });
+    status.textContent = n + ' hojas generadas. Revisa tus descargas.';
+  }, 'gra-status');
+}
+
+function graPlantilla() {
+  conPadrinos(async status => {
+    window.PadrinosPDF.plantillaGracias();
+    status.textContent = 'Plantilla descargada: Plantilla_Gracias_Padrinos.csv';
+  }, 'gra-lote-status');
+}
+
+function graCsvElegido(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('gra-lote-btn');
+  conPadrinos(async status => {
+    _graRows = window.PadrinosPDF.parseGrupos(await file.text());
+    status.textContent = _graRows.length + ' hoja' + (_graRows.length === 1 ? '' : 's') + ' por generar.';
+    btn.disabled = !_graRows.length;
+  }, 'gra-lote-status');
+}
+
+function graLote() {
+  if (!_graRows || !_graRows.length) return;
+  const btn = document.getElementById('gra-lote-btn');
+  conPadrinos(async status => {
+    btn.disabled = true;
+    const n = await window.PadrinosPDF.batch('gracias', _graRows, (done, total, label) => {
+      status.textContent = done + ' de ' + total + ' \u2014 ' + label;
+    });
+    status.textContent = n + ' hojas generadas. Revisa tus descargas.';
+    btn.disabled = false;
+  }, 'gra-lote-status');
+}
 
 /* — Te extrañaremos — */
 function ausHoja(accion) {
