@@ -530,11 +530,6 @@
   }
   /* Separates a second couple (or role) sharing a card, e.g. Biblia's
      two couples, or Ramo/Rosario/Cojines combined into one card. */
-  .padrino-card-divider {
-    border-top: 1px solid rgba(184,154,106,.25);
-    margin-top: .8rem;
-    padding-top: .8rem;
-  }
 
   .padrino-role {
     font-family: 'Cinzel', serif;
@@ -1871,29 +1866,30 @@
         <p class="padrino-role" data-es="PADRINOS DE LAZO" data-en="LASSO SPONSORS">PADRINOS DE LAZO</p>
         <p class="padrino-name">Sr. Didier Figueroa</p>
         <p class="padrino-name">Sra. Marysol Moreno</p>
-        <div class="padrino-card-divider">
-          <p class="padrino-role" data-es="PADRINOS DE COJINES" data-en="CUSHION SPONSORS">PADRINOS DE COJINES</p>
-          <p class="padrino-name">Sr. Alberto Mendoza</p>
-          <p class="padrino-name">Sra. Alejandra Borquez</p>
-        </div>
+      </div>
+      <div class="padrino-card">
+        <p class="padrino-role" data-es="PADRINOS DE COJINES" data-en="CUSHION SPONSORS">PADRINOS DE COJINES</p>
+        <p class="padrino-name">Sr. Alberto Mendoza</p>
+        <p class="padrino-name">Sra. Alejandra Borquez</p>
       </div>
       <div class="padrino-card">
         <p class="padrino-role" data-es="PADRINOS DE BIBLIA" data-en="BIBLE SPONSORS">PADRINOS DE BIBLIA</p>
         <p class="padrino-name">Sr. Abner Canales</p>
         <p class="padrino-name">Sra. Fernanda Borquez</p>
-        <div class="padrino-card-divider">
-          <p class="padrino-name">Sr. José Dávila</p>
-          <p class="padrino-name">Sra. Verónica Bernal</p>
-        </div>
+      </div>
+      <div class="padrino-card">
+        <p class="padrino-role" data-es="PADRINOS DE BIBLIA" data-en="BIBLE SPONSORS">PADRINOS DE BIBLIA</p>
+        <p class="padrino-name">Sr. José Dávila</p>
+        <p class="padrino-name">Sra. Verónica Bernal</p>
       </div>
       <div class="padrino-card">
         <p class="padrino-role" data-es="MADRINA DE RAMO" data-en="BOUQUET SPONSOR">MADRINA DE RAMO</p>
         <p class="padrino-name">Srita. Valentina Cañez</p>
-        <div class="padrino-card-divider">
-          <p class="padrino-role" data-es="PADRINOS DE ROSARIO" data-en="ROSARY SPONSORS">PADRINOS DE ROSARIO</p>
-          <p class="padrino-name">Sr. Alán René Moreno</p>
-          <p class="padrino-name">Sra. Lupita Luna</p>
-        </div>
+      </div>
+      <div class="padrino-card">
+        <p class="padrino-role" data-es="PADRINOS DE ROSARIO" data-en="ROSARY SPONSORS">PADRINOS DE ROSARIO</p>
+        <p class="padrino-name">Sr. Alán René Moreno</p>
+        <p class="padrino-name">Sra. Lupita Luna</p>
       </div>
     </div>
 
@@ -1924,7 +1920,7 @@
         <div><p class="padrino-name">Elsa Álvarez</p></div>
         <div><p class="padrino-name">Sarah Pacheco</p></div>
         <div><p class="padrino-name">Manuel Dávila</p></div>
-        <div><p class="padrino-name">Antonio Bernal</p></div>
+        <div><p class="padrino-name">Antonio Borquez</p></div>
         <div><p class="padrino-name">Cristina Bernal</p></div>
         <div><p class="padrino-name">Luisa Bernal</p></div>
         <div><p class="padrino-name">Rosario Bernal</p></div>
@@ -3006,7 +3002,7 @@ function conPadrinos(fn, statusId) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/padrinos-pdf.js?v=3';
+        s.src = 'assets/padrinos-pdf.js?v=4';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
         document.head.appendChild(s);
       });

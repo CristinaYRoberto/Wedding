@@ -92,13 +92,11 @@ window.PadrinosPDF = (function () {
   }
 
   /* ── The names, read off the live page ────────────────────────────
-     One entry per couple, not per card. A .padrino-role opens a group
-     and the .padrino-name lines under it belong to it; a
-     .padrino-card-divider always opens a NEW group, inheriting the
-     role above it when it carries none of its own. That is how the two
-     Bible couples are told apart: the site draws them in one card with
-     a rule between, but they are two couples and each gets its own
-     asking sheet. The thank-you sheet puts them back together.
+     One .padrino-card is one couple (or one single sponsor): its
+     .padrino-role names the group and its .padrino-name lines are who
+     is in it. The two Bible couples are two separate cards with the
+     same role text, so each gets its own asking sheet; the thank-you
+     side merges same-role cards back together (see gruposGracias).
 
      data-es first, not textContent: the language toggle rewrites the
      roles in place, so a sheet generated while the site is in English
@@ -110,26 +108,11 @@ window.PadrinosPDF = (function () {
   }
 
   function roles() {
-    const out = [];
-    const walk = (el, heredado) => {
-      let rol = heredado, grupo = null;
-      Array.from(el.children).forEach(ch => {
-        if (ch.classList.contains('padrino-role')) {
-          rol = es(ch);
-          grupo = { rol: rol, nombres: [] };
-          out.push(grupo);
-        } else if (ch.classList.contains('padrino-name')) {
-          if (!grupo) { grupo = { rol: rol, nombres: [] }; out.push(grupo); }
-          grupo.nombres.push(es(ch));
-        } else if (ch.classList.contains('padrino-card-divider')) {
-          walk(ch, rol);
-          grupo = null;
-        }
-      });
-    };
-    document.querySelectorAll('#padrinos .padrinos-main .padrino-card')
-      .forEach(card => walk(card, ''));
-    return out;
+    return Array.from(document.querySelectorAll('#padrinos .padrinos-main .padrino-card'))
+      .map(card => ({
+        rol: es(card.querySelector('.padrino-role')),
+        nombres: Array.from(card.querySelectorAll('.padrino-name')).map(es),
+      }));
   }
 
   const HONORIFICO = 'PADRINOS Y MADRINAS HONORÍFICOS';
