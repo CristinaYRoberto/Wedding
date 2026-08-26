@@ -310,25 +310,34 @@ window.PadrinosPDF = (function () {
       doc.restoreGraphicsState();
     }
 
-    K.tracked(doc, 'TE VAMOS A EXTRAÑAR', 134, 8, GOLD, 1.1);
-    K.rule(doc, 139, 26, GOLD);
+    /* Two lines, not one: the whole sentence tracked across at 8pt runs
+       well past the margins, and splitting it puts the weight on the
+       part that does the work. Same caps-over-italic pairing the asking
+       sheet uses. "Extrañar" is what the sheet used to say, and in
+       Mexico that is the word for the dead - this one is for the living
+       who simply cannot make the date. */
+    K.tracked(doc, 'SERÁ PARA LA PRÓXIMA', 133, 8, GOLD, 1.1);
+    K.centred(doc, 'y gracias por estar siempre', 139.5, 'CormorantI', 10, MUTED);
+    K.rule(doc, 143.5, 26, GOLD);
 
-    const boxY = 143.5, boxH = 14;
+    const boxY = 147, boxH = 13.5;
     doc.setFillColor(SAGE[0], SAGE[1], SAGE[2]);
     doc.rect(M, boxY, W - 2 * M, boxH, 'F');
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     doc.rect(M, boxY, W - 2 * M, boxH, 'S');
-    K.tracked(doc, 'PARA', boxY + 4.8, 6, GOLD, 1);
+    K.tracked(doc, 'PARA', boxY + 4.6, 6, GOLD, 1);
     K.setF(doc, 'CormorantI', 14, CHARCOAL);
-    doc.text(String(nombre || 'Nuestro invitado'), W / 2, boxY + 11, { align: 'center' });
+    doc.text(String(nombre || 'Nuestro invitado'), W / 2, boxY + 10.6, { align: 'center' });
 
-    K.paragraph(doc, 'Ya sabemos que ese día no vas a poder acompañarnos, y lo entendemos con todo el cariño. Aun así te vamos a extrañar, y queríamos decírtelo: gracias por ser parte de nuestras vidas.',
-                165, 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
+    /* Kept to two lines at this measure, and deliberately short of a
+       third "gracias" - the heading above already carries that one. */
+    K.paragraph(doc, 'Ya sabemos que ese día no podrás acompañarnos y lo entendemos con todo el cariño. Nos habría encantado tenerte ahí; esto no cambia lo que significas para nosotros.',
+                167, 'Lato', 7.4, MUTED, W - 2 * M - 8, 4.3);
 
-    K.tracked(doc, 'SI QUIERES OTORGARNOS UN DETALLE', 177, 5.8, DARKGOLD, 0.7);
-    K.paragraph(doc, 'Lo recibimos con mucho cariño. Nada de esto cambia lo agradecidos que estamos contigo.',
-                181.5, 'CormorantI', 7.6, MUTED, W - 2 * M - 10, 3.8);
+    K.tracked(doc, 'SI QUIERES OTORGARNOS UN DETALLE', 178, 5.8, DARKGOLD, 0.7);
+    K.paragraph(doc, 'Lo recibimos con mucho cariño, aunque nada de esto sea una obligación.',
+                182.3, 'CormorantI', 7.6, MUTED, W - 2 * M - 10, 3.8);
 
     /* Straight quotes and plain digits only: the embedded font subsets
        drop the curly ones and truncate the line where they appear. */
@@ -359,8 +368,8 @@ window.PadrinosPDF = (function () {
       name: d => (d.rol || 'padrinos') + '_' + (Array.isArray(d.nombres) ? d.nombres[0] : d.nombres),
     },
     ausencia: {
-      title: 'Te extrañaremos · Boda de Cristina y Roberto',
-      file: 'Te_Extranaremos',
+      title: 'Será para la próxima · Boda de Cristina y Roberto',
+      file: 'Sera_Para_La_Proxima',
       draw: (doc, a, d) => drawAusencia(doc, a, d.nombre),
       name: d => d.nombre,
     },
@@ -383,7 +392,7 @@ window.PadrinosPDF = (function () {
 
   /* The tab has to be opened by the click itself. Building a sheet takes
      longer than the browser keeps the click counted as user-initiated -
-     the "te extrañaremos" one is the heaviest of the three - so a tab
+     the "sera para la proxima" one is the heaviest of the three - so a
      opened once the PDF is ready gets eaten by the popup blocker, and
      window.open with noopener returns null either way so there is no
      telling apart a block from a success. Callers open the tab on the
@@ -479,7 +488,7 @@ window.PadrinosPDF = (function () {
   }
 
   function plantillaAusencia() {
-    descargarCSV('Plantilla_Te_Extranaremos.csv',
+    descargarCSV('Plantilla_Sera_Para_La_Proxima.csv',
       ['Nombre', 'Familia Torres Casas', 'Sr. Ignacio Torres']);
   }
 

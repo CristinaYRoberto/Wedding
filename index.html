@@ -2432,7 +2432,7 @@
         <button class="admin-tab is-on" data-pane="pane-invitacion" onclick="adminTab(this)">INVITACIÓN</button>
         <button class="admin-tab" data-pane="pane-peticion" onclick="adminTab(this)">PETICIÓN</button>
         <button class="admin-tab" data-pane="pane-gracias" onclick="adminTab(this)">AGRADECIMIENTO</button>
-        <button class="admin-tab" data-pane="pane-ausencia" onclick="adminTab(this)">TE EXTRAÑAREMOS</button>
+        <button class="admin-tab" data-pane="pane-ausencia" onclick="adminTab(this)">SERÁ PARA LA PRÓXIMA</button>
       </div>
 
       <div class="admin-pane is-on" id="pane-invitacion">
@@ -2561,8 +2561,8 @@
       <div class="admin-pane" id="pane-ausencia">
         <p class="admin-csv-help">
           Una hoja por invitado que ya avisó que no podrá acompañarnos:
-          lo extrañaremos, gracias por ser parte, y si quiere otorgarnos un
-          detalle, aquí están los datos.
+          nos habría encantado tenerlo ahí, gracias por ser parte, y si quiere
+          otorgarnos un detalle, aquí están los datos.
         </p>
         <div class="admin-invite-row">
           <input type="text" id="aus-nombre" class="admin-invite-input" placeholder="Nombre de familia / invitado">
@@ -3006,7 +3006,7 @@ function pdfLote() {
   }, 'gen-lote-status');
 }
 
-/* ── PADRINOS: PETICIÓN · AGRADECIMIENTO · TE EXTRAÑAREMOS ──
+/* ── PADRINOS: PETICIÓN · AGRADECIMIENTO · SERÁ PARA LA PRÓXIMA ──
    Three one-page designs, all drawn by assets/padrinos-pdf.js, which
    needs the invitation generator loaded first: the palette, the fonts
    and the cropping all live there. */
@@ -3027,7 +3027,7 @@ function conPadrinos(fn, statusId, win) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/padrinos-pdf.js?v=7';
+        s.src = 'assets/padrinos-pdf.js?v=8';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador de padrinos'));
         document.head.appendChild(s);
       });
@@ -3227,7 +3227,7 @@ function graLote() {
   }, 'gra-lote-status');
 }
 
-/* — Te extrañaremos — */
+/* — Será para la próxima — */
 function ausHoja(accion) {
   const nombre = document.getElementById('aus-nombre').value.trim();
   if (!nombre) { document.getElementById('aus-status').textContent = 'Escribe un nombre primero.'; return; }
@@ -3245,7 +3245,7 @@ function ausUno()     { ausHoja('one'); }
 function ausPlantilla() {
   conPadrinos(async status => {
     window.PadrinosPDF.plantillaAusencia();
-    status.textContent = 'Plantilla descargada: Plantilla_Te_Extranaremos.csv';
+    status.textContent = 'Plantilla descargada: Plantilla_Sera_Para_La_Proxima.csv';
   }, 'aus-lote-status');
 }
 
