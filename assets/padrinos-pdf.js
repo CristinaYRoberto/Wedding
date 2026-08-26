@@ -377,9 +377,19 @@ window.PadrinosPDF = (function () {
     return d.file + '_' + K.safeName(d.name(data || {})) + '.pdf';
   }
 
-  async function preview(tipo, data) {
+  /* The tab has to be opened by the click itself. Building a sheet takes
+     longer than the browser keeps the click counted as user-initiated -
+     the "te extrañaremos" one is the heaviest of the three - so a tab
+     opened once the PDF is ready gets eaten by the popup blocker, and
+     window.open with noopener returns null either way so there is no
+     telling apart a block from a success. Callers open the tab on the
+     click and pass it in; win is only omitted by callers that are not
+     driven by one. */
+  async function preview(tipo, data, win) {
     const doc = await buildDoc(tipo, data);
-    window.open(doc.output('bloburl'), '_blank', 'noopener');
+    const url = doc.output('bloburl');
+    if (win) { win.location.href = url; return; }
+    window.open(url, '_blank', 'noopener');
   }
 
   async function one(tipo, data) {

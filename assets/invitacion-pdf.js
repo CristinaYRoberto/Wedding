@@ -570,9 +570,14 @@ window.InvitacionPDF = (function () {
     doc.save('Invitacion_' + safeName(familia) + '.pdf');
   }
 
-  async function preview(familia, pases, pageTwoVariant) {
+  /* win is a tab the caller opened on the click itself: four pages take
+     longer to build than the browser keeps that click counted as user
+     initiated, and a tab opened afterwards is blocked as a popup. */
+  async function preview(familia, pases, pageTwoVariant, win) {
     const doc = await buildDoc(familia, pases, pageTwoVariant);
-    window.open(doc.output('bloburl'), '_blank', 'noopener');
+    const url = doc.output('bloburl');
+    if (win) { win.location.href = url; return; }
+    window.open(url, '_blank', 'noopener');
   }
 
   /* Minimal CSV reader: quoted fields, comma or semicolon. Returns the raw
