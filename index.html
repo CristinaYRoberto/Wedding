@@ -11,6 +11,8 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   /*
   ════════════════════════════════════════════════════════════════
   PASO 1 — CONFIGURAR FIREBASE (5 minutos)
@@ -19,16 +21,30 @@
   2. "Agregar proyecto" → nombre: boda-cristina-roberto → continuar
   3. Dashboard → icono Web (</>)  → registrar app → copia firebaseConfig
   4. Menú lateral → Firestore Database → Crear → Modo producción → siguiente → listo
-  5. Firestore → Reglas → reemplaza todo con esto y publica:
+  5. Authentication → Sign-in method → habilita "Correo/contraseña".
+     Luego Users → Add user → crea UNA cuenta para los novios. Esa es la
+     que pide el panel de administración; la contraseña no vive aquí ni
+     en ningún archivo del repositorio.
+
+  6. Firestore → Reglas → reemplaza todo con esto y publica:
 
      rules_version = '2';
      service cloud.firestore {
        match /databases/{database}/documents {
-         match /rsvps/{id}    { allow create: true; allow read: false; }
+         match /rsvps/{id} {
+           allow create: if true;                    // cualquiera confirma
+           allow read:   if request.auth != null;    // sólo la cuenta de arriba
+           allow update, delete: if false;
+         }
        }
      }
 
-  6. Reemplaza los 6 valores de abajo con los de tu proyecto
+     La lectura NO puede quedar abierta: rsvps guarda nombre, correo y
+     teléfono de cada invitado, y el projectId de aquí abajo es público,
+     así que con la lectura abierta cualquiera baja la lista entera desde
+     la API de Firestore sin pasar por el sitio.
+
+  7. Reemplaza los 6 valores de abajo con los de tu proyecto
   ════════════════════════════════════════════════════════════════
   */
   const firebaseConfig = {
@@ -42,6 +58,10 @@
   try {
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
+    window._auth         = getAuth(app);
+    window._fbSignIn     = signInWithEmailAndPassword;
+    window._fbSignOut    = signOut;
+    window._fbOnAuth     = onAuthStateChanged;
     window._db           = db;
     window._fbCollection = collection;
     window._fbAddDoc     = addDoc;
@@ -2458,6 +2478,28 @@
       <p class="admin-title">PANEL DE ADMINISTRACIÓN · C&R 2026</p>
       <button class="admin-close" onclick="closeAdmin()">CERRAR</button>
     </div>
+
+    <!-- Shown until Firebase Auth reports a session. The Firestore rules
+         are what actually protect the data; this is just the way in. -->
+    <div id="admin-login" style="display:none">
+      <p class="admin-csv-help" style="text-align:center; max-width:34rem; margin:1.5rem auto">
+        Entra con la cuenta de administración para ver las confirmaciones
+        y generar los PDFs.
+      </p>
+      <div class="admin-invite-row" style="max-width:34rem; margin:0 auto 1rem">
+        <input type="email" id="admin-email" class="admin-invite-input"
+               placeholder="Correo" autocomplete="username">
+        <input type="password" id="admin-pass" class="admin-invite-input"
+               placeholder="Contraseña" autocomplete="current-password">
+      </div>
+      <div class="admin-actions" style="justify-content:center">
+        <button class="admin-btn" onclick="adminLogin()">ENTRAR</button>
+        <button class="admin-btn" onclick="closeAdmin()">CANCELAR</button>
+      </div>
+      <p class="admin-loading" id="admin-login-status" style="margin-top:.6rem"></p>
+    </div>
+
+    <div id="admin-contenido" style="display:none">
     <div class="admin-stats" id="admin-stats">
       <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-label">CONFIRMACIONES</div></div>
       <div class="stat-box"><div class="stat-num" id="stat-si">—</div><div class="stat-label">ASISTEN</div></div>
@@ -2479,6 +2521,7 @@
     <div class="admin-actions">
       <button class="admin-btn" onclick="exportCSV()">↓ EXPORTAR CSV</button>
       <button class="admin-btn" onclick="loadAdminData()">↺ ACTUALIZAR</button>
+      <button class="admin-btn" onclick="adminLogout()">⏻ CERRAR SESIÓN</button>
       <button class="admin-btn" onclick="closeAdmin()">CERRAR</button>
     </div>
 
@@ -2647,6 +2690,7 @@
         <p class="admin-loading" id="aus-lote-status" style="margin-top:.6rem"></p>
       </div><!-- /pane-ausencia -->
     </div>
+    </div><!-- /admin-contenido -->
   </div>
 </div>
 
@@ -3366,14 +3410,82 @@ document.getElementById('footer-monogram').addEventListener('click', () => {
   if (adminTaps >= 5) { adminTaps = 0; openAdmin(); }
 });
 
+/* Both triggers land here - the URL key and the five taps - so the gate
+   lives in one place. Firebase restores a previous session
+   asynchronously, so what is shown is decided by onAuthStateChanged
+   rather than guessed at on the way in. */
 function openAdmin() {
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
-  loadAdminData();
+  mostrarSegunSesion(window._auth && window._auth.currentUser);
 }
+
+function mostrarSegunSesion(user) {
+  const login = document.getElementById('admin-login');
+  const cont  = document.getElementById('admin-contenido');
+  if (!login || !cont) return;
+  login.style.display = user ? 'none' : 'block';
+  cont.style.display  = user ? 'block' : 'none';
+  if (user) loadAdminData();
+}
+
+function adminLogin() {
+  const status = document.getElementById('admin-login-status');
+  const email  = document.getElementById('admin-email').value.trim();
+  const pass   = document.getElementById('admin-pass').value;
+  status.classList.remove('admin-error');
+  if (!window._auth) { status.textContent = 'Firebase no está configurado.'; return; }
+  if (!email || !pass) { status.textContent = 'Escribe el correo y la contraseña.'; return; }
+  status.textContent = 'Entrando…';
+  window._fbSignIn(window._auth, email, pass)
+    .then(() => {
+      /* Never leave the password sitting in the field behind the panel. */
+      document.getElementById('admin-pass').value = '';
+      status.textContent = '';
+    })
+    .catch(err => {
+      status.classList.add('admin-error');
+      status.textContent = mensajeAuth(err);
+      console.error(err);
+    });
+}
+
+/* Firebase codes say nothing to whoever is standing in front of the
+   panel, and the one that bites first is the setup step, not a typo. */
+function mensajeAuth(err) {
+  const code = err.code || '';
+  if (/configuration-not-found|operation-not-allowed/.test(code))
+    return 'Falta habilitar "Correo/contraseña" en Firebase → Authentication → Sign-in method.';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-login/.test(code))
+    return 'Correo o contraseña incorrectos.';
+  if (/invalid-email/.test(code)) return 'Ese correo no tiene un formato válido.';
+  if (/too-many-requests/.test(code))
+    return 'Demasiados intentos. Espera un momento y vuelve a probar.';
+  if (/network-request-failed/.test(code)) return 'Sin conexión con Firebase.';
+  return 'No se pudo entrar: ' + (code || err.message);
+}
+
+function adminLogout() {
+  if (window._auth) window._fbSignOut(window._auth);
+}
+document.addEventListener('firebaseReady', () => {
+  window._fbOnAuth(window._auth, user => {
+    if (document.getElementById('admin-panel').classList.contains('open')) {
+      mostrarSegunSesion(user);
+    }
+  });
+});
+
+document.getElementById('admin-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') adminLogin();
+});
+
 function closeAdmin() {
   document.getElementById('admin-panel').classList.remove('open');
   document.body.style.overflow = '';
+  /* Don't leave a typed password sitting in the DOM behind a closed panel. */
+  document.getElementById('admin-pass').value = '';
+  document.getElementById('admin-login-status').textContent = '';
 }
 
 async function loadAdminData() {
