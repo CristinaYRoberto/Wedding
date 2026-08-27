@@ -743,7 +743,7 @@ window.InvitacionPDF = (function () {
     const lines = [
       'Nombre,Pases,Entregada,De',
       'Familia Moreno Bernal,4,x,Cristina',
-      'Sr. Amos Benjamin Moreno,2,,Cristina',
+      'Sr. Amos Benjamín Moreno,2,,Cristina',
       'Familia Torres Casas,3,,Jose',
       'Srita. Valentina Cañez,1,,Jose',
     ];
