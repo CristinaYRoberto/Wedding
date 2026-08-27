@@ -11,7 +11,8 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+           GoogleAuthProvider, signInWithPopup }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   /*
   ════════════════════════════════════════════════════════════════
@@ -32,10 +33,19 @@
      service cloud.firestore {
        match /databases/{database}/documents {
          match /rsvps/{id} {
-           allow create: if true;                    // cualquiera confirma
-           allow read:   if request.auth != null;    // sólo la cuenta de arriba
+           allow create: if true;                 // cualquiera confirma
+           allow read:   if request.auth != null
+                         && request.auth.token.email in [
+                              'CORREO-DE-USTEDES-1@gmail.com',
+                              'CORREO-DE-USTEDES-2@gmail.com'
+                            ];
            allow update, delete: if false;
          }
+
+     Los correos van nombrados a propósito. Con "Correo/contraseña" sólo
+     existen las cuentas que tú creas, pero con Google habilitado
+     CUALQUIERA con una cuenta de Gmail puede iniciar sesión, y entonces
+     "request.auth != null" a secas deja leer la lista a todo el mundo.
        }
      }
 
@@ -62,6 +72,7 @@
     window._fbSignIn     = signInWithEmailAndPassword;
     window._fbSignOut    = signOut;
     window._fbOnAuth     = onAuthStateChanged;
+    window._fbGoogle     = () => signInWithPopup(getAuth(app), new GoogleAuthProvider());
     window._db           = db;
     window._fbCollection = collection;
     window._fbAddDoc     = addDoc;
@@ -2493,7 +2504,8 @@
                placeholder="Contraseña" autocomplete="current-password">
       </div>
       <div class="admin-actions" style="justify-content:center">
-        <button class="admin-btn" onclick="adminLogin()">ENTRAR</button>
+        <button class="admin-btn" onclick="adminLoginGoogle()">ENTRAR CON GOOGLE</button>
+        <button class="admin-btn" onclick="adminLogin()">ENTRAR CON CORREO</button>
         <button class="admin-btn" onclick="closeAdmin()">CANCELAR</button>
       </div>
       <p class="admin-loading" id="admin-login-status" style="margin-top:.6rem"></p>
@@ -3462,7 +3474,29 @@ function mensajeAuth(err) {
   if (/too-many-requests/.test(code))
     return 'Demasiados intentos. Espera un momento y vuelve a probar.';
   if (/network-request-failed/.test(code)) return 'Sin conexión con Firebase.';
+  if (/unauthorized-domain/.test(code))
+    return 'Este dominio no está autorizado: añádelo en Firebase → Authentication → Settings → Authorized domains.';
+  if (/popup-blocked/.test(code))
+    return 'El navegador bloqueó la ventana de Google. Permite las ventanas emergentes de este sitio.';
+  if (/popup-closed-by-user|cancelled-popup-request/.test(code))
+    return 'Se cerró la ventana de Google antes de terminar.';
   return 'No se pudo entrar: ' + (code || err.message);
+}
+
+/* Called straight from the click: signInWithPopup opens a window, and a
+   popup opened after an await is one the blocker eats. */
+function adminLoginGoogle() {
+  const status = document.getElementById('admin-login-status');
+  status.classList.remove('admin-error');
+  if (!window._fbGoogle) { status.textContent = 'Firebase no está configurado.'; return; }
+  status.textContent = 'Abriendo Google…';
+  window._fbGoogle()
+    .then(() => { status.textContent = ''; })
+    .catch(err => {
+      status.classList.add('admin-error');
+      status.textContent = mensajeAuth(err);
+      console.error(err);
+    });
 }
 
 function adminLogout() {
