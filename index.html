@@ -2019,7 +2019,7 @@
           </g>
         </svg>
         <p class="event-type" data-es="PRECOPEO" data-en="COCKTAIL HOUR">PRECOPEO</p>
-        <p class="event-time">5:00 PM &mdash; 7:00 PM</p>
+        <p class="event-time">5:00 PM</p>
         <p class="event-venue">Salón Las Cascadas<br>Los Molinos 97, Las Minitas<br>83285 Hermosillo, Son.</p>
         <a href="https://maps.app.goo.gl/YP5qQpQrmvKPxaF79" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
@@ -2977,7 +2977,7 @@ async function conPdf(fn, statusId, win) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/invitacion-pdf.js?v=6';
+        s.src = 'assets/invitacion-pdf.js?v=7';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador'));
         document.head.appendChild(s);
       });

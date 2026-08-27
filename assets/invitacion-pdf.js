@@ -322,7 +322,7 @@ window.InvitacionPDF = (function () {
     const events = [
       { cx: W / 6, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA, icon: a.iconMisa,
         lines: doc.splitTextToSize('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', COLW) },
-      { cx: W / 2, label: 'PRECOPEO', time: '5 – 7 PM', url: MAPS_FIESTA, icon: a.iconBrindis,
+      { cx: W / 2, label: 'PRECOPEO', time: '5:00 PM', url: MAPS_FIESTA, icon: a.iconBrindis,
         lines: doc.splitTextToSize('Salón Las Cascadas, mismo lugar de la recepción', COLW) },
       { cx: 5 * W / 6, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA, icon: a.iconFiesta,
         lines: doc.splitTextToSize('Salón Las Cascadas, Los Molinos 97, Las Minitas', COLW) },
