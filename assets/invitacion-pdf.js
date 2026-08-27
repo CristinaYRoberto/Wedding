@@ -158,7 +158,7 @@ window.InvitacionPDF = (function () {
 
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, brindis] = await Promise.all([
+    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, iconMisa, iconBrindis, iconFiesta] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
@@ -188,11 +188,13 @@ window.InvitacionPDF = (function () {
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
-      /* The clinking glasses over the precopeo column, taken from the
-         events section of the page itself. */
+      /* One ornament per column, all three taken from the events
+         section of the page itself. */
+      loadInlineSVG('#icon-misa', 260, hex(GOLD), 3.2),
       loadInlineSVG('#icon-brindis', 260, hex(GOLD), 3.2),
+      loadInlineSVG('#icon-fiesta', 260, hex(GOLD), 3.2),
     ]);
-    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, brindis };
+    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, iconMisa, iconBrindis, iconFiesta };
     return _assets;
   }
 
@@ -318,11 +320,11 @@ window.InvitacionPDF = (function () {
     const ey = 138, COLW = 44;
     setF(doc, 'Lato', 6.2, MUTED);
     const events = [
-      { cx: W / 6, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA,
+      { cx: W / 6, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA, icon: a.iconMisa,
         lines: doc.splitTextToSize('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', COLW) },
-      { cx: W / 2, label: 'PRECOPEO', time: '5 – 7 PM', url: MAPS_FIESTA, icon: a.brindis,
+      { cx: W / 2, label: 'PRECOPEO', time: '5 – 7 PM', url: MAPS_FIESTA, icon: a.iconBrindis,
         lines: doc.splitTextToSize('Salón Las Cascadas, mismo lugar de la recepción', COLW) },
-      { cx: 5 * W / 6, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA,
+      { cx: 5 * W / 6, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA, icon: a.iconFiesta,
         lines: doc.splitTextToSize('Salón Las Cascadas, Los Molinos 97, Las Minitas', COLW) },
     ];
     const linkY = ey + 16 + Math.max.apply(null, events.map(e => e.lines.length)) * 3.3 + 1.5;
@@ -330,9 +332,9 @@ window.InvitacionPDF = (function () {
       /* The icon sits in the gap above the row, which the guest box
          leaves free - it marks the loose hour without a second label. */
       if (e.icon) {
-        /* Hung from its top edge, not centred: the guest box ends at
-           129mm and the label starts at 136, so the icon has to sit
-           inside that 7mm band rather than straddle it. */
+        /* Hung from the top edge, not centred: the guest box ends at
+           129mm and the labels start at 136, so the row of ornaments
+           has to sit inside that 7mm band rather than straddle it. */
         const iw = 8, ih = iw / e.icon.aspect;
         doc.addImage(e.icon.data, 'PNG', e.cx - iw / 2, ey - 8, iw, ih, undefined, 'FAST');
       }

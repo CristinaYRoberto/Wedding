@@ -1983,6 +1983,17 @@
     <div class="divider reveal"></div>
     <div class="events-grid reveal">
       <div class="event-card">
+        <!-- Church front: cross, gable, arched door. Same 64x44 box and
+             stroke weight as the other two so the row reads as a set. -->
+        <svg class="event-icon" id="icon-misa" viewBox="0 0 64 44" fill="none"
+             stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M32 2.5V9M28.8 5.2h6.4"/>
+          <path d="M16.5 20.5 32 9.5l15.5 11"/>
+          <path d="M20.5 20.5v17M43.5 20.5v17M15.5 37.5h33"/>
+          <path d="M27.8 37.5V29a4.2 4.2 0 0 1 8.4 0v8.5"/>
+          <circle cx="32" cy="24.6" r="2"/>
+        </svg>
         <p class="event-type" data-es="CEREMONIA RELIGIOSA" data-en="RELIGIOUS CEREMONY">CEREMONIA RELIGIOSA</p>
         <p class="event-time">12:00 PM</p>
         <p class="event-venue">Catedral de Hermosillo<br>Blvr. Miguel Hidalgo S/N<br>Centro Norte, 83000 Hermosillo, Son.</p>
@@ -2013,6 +2024,15 @@
         <a href="https://maps.app.goo.gl/YP5qQpQrmvKPxaF79" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
       <div class="event-card">
+        <!-- A laid place setting for the dinner: plate, fork, knife. -->
+        <svg class="event-icon" id="icon-fiesta" viewBox="0 0 64 44" fill="none"
+             stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <circle cx="32" cy="23" r="10.5"/>
+          <circle cx="32" cy="23" r="6.4"/>
+          <path d="M13 9.5v6.2a3.1 3.1 0 0 0 6.2 0V9.5M16.1 9.5v6.2M16.1 18.8v15.7"/>
+          <path d="M47.9 9.5c2.9 1 4.3 3.7 4.3 6.7 0 2.6-1.7 4.5-4.3 4.5zM47.9 20.7v13.8"/>
+        </svg>
         <p class="event-type" data-es="RECEPCIÓN" data-en="RECEPTION">RECEPCIÓN</p>
         <p class="event-time">7:00 PM</p>
         <p class="event-venue">Salón Las Cascadas<br>Los Molinos 97, Las Minitas<br>83285 Hermosillo, Son.</p>
@@ -2802,20 +2822,26 @@ updateCountdown();
 const faqData = {
   es: [
     { q: '¿Dónde se realiza la ceremonia religiosa?', a: 'La misa se celebrará en la Catedral de Hermosillo, ubicada en Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. El inicio es a las 12:00 PM. Te recomendamos llegar con 15 minutos de anticipación.' },
+    { q: '¿Qué es el precopeo?', a: 'Podrás tomarte unos tragos de mixología o cerveza escuchando música en vivo: nos acompaña BreakOut, una banda de rock que toca de todas las eras.' },
+    { q: '¿A qué hora es el precopeo?', a: 'Inicia a las 5:00 PM y termina a las 7:00 PM. Si la bebida de la mixología aún no se termina para las 7:00 PM, el servicio continuará hasta las 9:00 PM.' },
     { q: '¿Dónde es la recepción y a qué hora?', a: 'La recepción tendrá lugar en el Salón Las Cascadas, ubicado en Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, a partir de las 7:00 PM. Puedes consultar la ubicación exacta en el mapa de esta página.' },
     { q: '¿Hay estacionamiento disponible?', a: 'Sí. La Catedral cuenta con estacionamiento en la zona del centro y calles aledañas. El Salón Las Cascadas dispone de estacionamiento privado gratuito para los invitados.' },
     { q: '¿Se permiten niños?', a: 'La celebración es exclusiva para adultos. Estrictamente no niños. Agradecemos de antemano tu comprensión.' },
     { q: '¿Cuál es el código de vestimenta?', a: 'Vestimenta formal. Para caballeros: traje sastre clásico en negro, gris o azul marino, con corbata o pañuelo de cualquier color menos blanco. Para damas: vestido largo o de cóctel. Te pedimos evitar blanco, gris, dorado y negro, reservados para los novios y la decoración. Consulta la sección "Dress Code" para más detalles.' },
+    { q: '¿Puedo llevar otros zapatos o tenis cómodos para bailar?', a: '¡Claro! Trae tus zapatos o tenis más cómodos para cuando te canses de los zapatos de vestir.' },
     { q: '¿Puedo llevar acompañante?', a: 'El número de invitados por mesa está cuidadosamente planificado. Los acompañantes ya fueron asignados con anterioridad, por favor no incluir a nadie extra ya que si no se encuentra en la lista no se le permitirá la entrada por cuestiones de logística. Si tienes alguna duda, escríbenos con gusto.' },
     { q: '¿Hasta cuándo puedo confirmar mi asistencia?', a: 'Te pedimos confirmar antes del 01 de septiembre de 2026. Después de esa fecha no podremos garantizar lugar, ya que la lista de invitados estará cerrada.' },
     { q: '¿Cómo puedo hacer llegar un regalo?', a: 'Contamos con opción de transferencia bancaria y buzón de efectivo en la recepción. Consulta la sección "Regalos" en esta misma página para ver todos los detalles.' },
   ],
   en: [
     { q: 'Where is the religious ceremony?', a: 'The wedding mass will be held at the Catedral de Hermosillo, located at Blvr. Miguel Hidalgo S/N, Centro Norte, 83000 Hermosillo, Sonora. It begins at 12:00 PM. We recommend arriving 15 minutes early.' },
+    { q: 'What is the precopeo?', a: 'The cocktail hour before dinner: drinks from the mixology bar or a beer, with live music from BreakOut, a rock band that plays every era.' },
+    { q: 'What time is the precopeo?', a: 'It starts at 5:00 PM and ends at 7:00 PM. If the mixology bar has not run dry by 7:00 PM, it keeps serving until 9:00 PM.' },
     { q: 'Where is the reception and what time does it start?', a: 'The reception will take place at Salón Las Cascadas, located at Los Molinos 97, Las Minitas, 83285 Hermosillo, Sonora, starting at 7:00 PM. You can find the exact location on the map included on this page.' },
     { q: 'Is parking available?', a: 'Yes. The Cathedral has street parking available in the surrounding downtown area. Salón Las Cascadas offers complimentary private parking for all guests.' },
     { q: 'Are children allowed?', a: 'This is an adults-only celebration. Strictly no children. We truly appreciate your understanding.' },
     { q: 'What is the dress code?', a: 'Formal attire. For gentlemen: a classic tailored suit in black, grey, or navy, with a tie or pocket square in any colour except white. For ladies: a floor-length or cocktail dress. We ask you to avoid white, grey, gold, and black, reserved for the couple and the décor. See the "Dress Code" section for details.' },
+    { q: 'Can I bring comfortable shoes or trainers for dancing?', a: 'Of course. Bring your most comfortable shoes or trainers for when the dress shoes have had enough.' },
     { q: 'Can I bring a plus-one?', a: 'Seating has been carefully arranged. Guests were already assigned in advance, so please do not include anyone extra: if a name is not on the list, entry cannot be guaranteed for logistical reasons. If you have any questions, feel free to reach out and we will be happy to help.' },
     { q: 'What is the RSVP deadline?', a: 'Please confirm your attendance by September 1, 2026. After that date we cannot guarantee a spot, as the guest list will be finalized.' },
     { q: 'How can I send a gift?', a: 'We have an online gift registry, a bank transfer option, and a cash box at the reception. Please visit the "Gift Registry" section on this page for full details.' },
@@ -2951,7 +2977,7 @@ async function conPdf(fn, statusId, win) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/invitacion-pdf.js?v=5';
+        s.src = 'assets/invitacion-pdf.js?v=6';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador'));
         document.head.appendChild(s);
       });
