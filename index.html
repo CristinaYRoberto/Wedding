@@ -1658,24 +1658,47 @@
   .admin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: .95rem;
+    font-size: .84rem;
     color: rgba(255,255,255,.75);
   }
   .admin-table th {
     font-family: 'Cinzel', serif;
     font-weight: 600;
-    font-size: .85rem;
-    letter-spacing: .15em;
+    font-size: .7rem;
+    letter-spacing: .12em;
     color: var(--gold);
     text-align: left;
-    padding: .6rem .8rem;
+    padding: .4rem .55rem;
     border-bottom: 1px solid rgba(184,154,106,.2);
     white-space: nowrap;
   }
   .admin-table td {
-    padding: .65rem .8rem;
+    padding: .45rem .55rem;
     border-bottom: 1px solid rgba(255,255,255,.05);
     vertical-align: top;
+  }
+  /* Name over email in one cell: two columns became one without losing
+     either, which is what buys the room for the message. */
+  .col-quien .quien-nombre { display: block; }
+  .col-quien .quien-mail {
+    display: block;
+    font-size: .76rem;
+    color: rgba(255,255,255,.42);
+  }
+  .col-dieta, .col-fecha { font-size: .78rem; }
+  .col-fecha { white-space: nowrap; }
+  /* The one free-text field, so the one that can wreck the layout. It is
+     capped at three lines and carries the whole thing in its tooltip;
+     the CSV always has the untruncated text. */
+  .col-msg { max-width: 20rem; }
+  .col-msg .msg {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: .78rem;
+    line-height: 1.4;
+    color: rgba(255,255,255,.6);
   }
   .admin-table tr:hover td { background: rgba(255,255,255,.03); }
   .badge-si { color: #7ab87a; }
@@ -2537,8 +2560,8 @@
       <table class="admin-table" id="admin-table" style="display:none">
         <thead>
           <tr>
-            <th>NOMBRE</th><th>APELLIDO</th><th>EMAIL</th>
-            <th>ASISTENCIA</th><th>PERSONAS</th><th>DIETA</th><th>FECHA</th>
+            <th>INVITADO</th><th>ASISTE</th><th>PAX</th>
+            <th>DIETA</th><th>MENSAJE</th><th>FECHA</th>
           </tr>
         </thead>
         <tbody id="admin-tbody"></tbody>
@@ -3577,16 +3600,27 @@ async function loadAdminData(reintento) {
     document.getElementById('stat-no').textContent     = totalNo;
     document.getElementById('stat-guests').textContent = totalGuest;
 
+    /* Everything below is text a guest typed into the form, dropped into
+       innerHTML. Unescaped, a message containing markup would run in the
+       browser of whoever opens this panel, so every value goes through
+       here first. */
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
+      c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
     tbody.innerHTML = rows.map(r => {
       const ts = r.timestamp?.toDate ? r.timestamp.toDate().toLocaleDateString('es-MX') : '—';
+      const nombre = [r.nombre, r.apellido].filter(Boolean).join(' ') || '—';
+      const msg = esc(r.mensaje || '');
       return `<tr>
-        <td>${r.nombre||'—'}</td>
-        <td>${r.apellido||'—'}</td>
-        <td style="font-size: .92rem">${r.email||'—'}</td>
+        <td class="col-quien">
+          <span class="quien-nombre">${esc(nombre)}</span>
+          ${r.email ? `<span class="quien-mail">${esc(r.email)}</span>` : ''}
+        </td>
         <td class="${r.asistencia==='si'?'badge-si':'badge-no'}">${r.asistencia==='si'?'Sí':'No'}</td>
-        <td style="text-align:center">${r.personas||1}</td>
-        <td style="font-size: .92rem">${r.dieta||'—'}</td>
-        <td style="font-size: .9rem">${ts}</td>
+        <td style="text-align:center">${esc(r.personas||1)}</td>
+        <td class="col-dieta">${esc(r.dieta||'—')}</td>
+        <td class="col-msg">${msg ? `<div class="msg" title="${msg}">${msg}</div>` : '—'}</td>
+        <td class="col-fecha">${esc(ts)}</td>
       </tr>`;
     }).join('');
 
