@@ -32,8 +32,10 @@
      rules_version = '2';
      service cloud.firestore {
        match /databases/{database}/documents {
+         // Confirmaciones: nombre, correo, telefono. Nadie las lee salvo
+         // las cuentas nombradas abajo.
          match /rsvps/{id} {
-           allow create: if true;                 // cualquiera confirma
+           allow create: if true;
            allow read:   if request.auth != null
                          && request.auth.token.email in [
                               'CORREO-DE-USTEDES-1@gmail.com',
@@ -41,10 +43,22 @@
                             ];
            allow update, delete: if false;
          }
+         // Marcador del juego (game.html): cada jugador lee el top 10,
+         // asi que la lectura es publica a proposito. Solo lleva nombre
+         // de pila y puntaje.
+         match /game_scores/{id} {
+           allow create: if true;
+           allow read:   if true;
+           allow update, delete: if false;
+         }
 
-     Los correos van nombrados a propósito. Con "Correo/contraseña" sólo
-     existen las cuentas que tú creas, pero con Google habilitado
-     CUALQUIERA con una cuenta de Gmail puede iniciar sesión, y entonces
+     Van las DOS colecciones: si publicas solo el bloque de rsvps,
+     game_scores se queda sin regla, Firestore la niega por defecto y el
+     marcador del juego deja de cargar.
+
+     Los correos van nombrados a proposito. Con "Correo/contrasena" solo
+     existen las cuentas que tu creas, pero con Google habilitado
+     CUALQUIERA con una cuenta de Gmail puede iniciar sesion, y entonces
      "request.auth != null" a secas deja leer la lista a todo el mundo.
        }
      }
