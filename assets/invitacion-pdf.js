@@ -117,9 +117,48 @@ window.InvitacionPDF = (function () {
     });
   }
 
+  /* The toast icon is the very drawing the site shows: the <svg> is read
+     out of the page, rasterised with its alpha intact and handed to
+     jsPDF as a PNG. One copy means the card and the sheet can never
+     drift apart. Resolves to null rather than throwing - a missing
+     ornament must not be able to stop an invitation from being built. */
+  function loadInlineSVG(selector, outW, colour, strokeWidth) {
+    return new Promise(res => {
+      const src = document.querySelector(selector);
+      if (!src) { res(null); return; }
+      const svg = src.cloneNode(true);
+      const vb = (svg.getAttribute('viewBox') || '0 0 64 44').trim().split(/[\s,]+/).map(Number);
+      const aspect = vb[2] / vb[3];
+      const outH = Math.round(outW / aspect);
+      svg.setAttribute('width', outW);
+      svg.setAttribute('height', outH);
+      /* currentColor has nothing to inherit from once the node is off
+         the page, so the stroke is set explicitly. It is also weighted
+         up: what reads on screen at 3rem is a 0.2mm hairline once the
+         same drawing is 8mm wide on paper. */
+      svg.setAttribute('stroke', colour);
+      if (strokeWidth) svg.setAttribute('stroke-width', strokeWidth);
+      const url = 'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(new XMLSerializer().serializeToString(svg));
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = outW; c.height = outH;
+        c.getContext('2d').drawImage(img, 0, 0, outW, outH);
+        res({ data: c.toDataURL('image/png'), aspect: aspect });
+      };
+      img.onerror = () => res(null);
+      img.src = url;
+    });
+  }
+
+  function hex(rgb) {
+    return '#' + rgb.map(n => n.toString(16).padStart(2, '0')).join('');
+  }
+
   async function ensureAssets() {
     if (_assets) return _assets;
-    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture] = await Promise.all([
+    const [band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, brindis] = await Promise.all([
       /* The hands sit just past the middle of this portrait, so the
          wide strip is cropped around them. */
       loadPhoto('assets/gallery/gallery-01.jpg', BAND_ASPECT, 1200, 0.52),
@@ -149,8 +188,11 @@ window.InvitacionPDF = (function () {
       /* Same faint scrollwork as the site, for the pages that have no
          photo of their own to sit on. */
       loadTiledTexture('assets/gallery/textura_03_tier1.jpg', W / H, 700, 140),
+      /* The clinking glasses over the precopeo column, taken from the
+         events section of the page itself. */
+      loadInlineSVG('#icon-brindis', 260, hex(GOLD), 3.2),
     ]);
-    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture };
+    _assets = { band, telasW, telasG, telasD, telasN, veil, twoA, twoB, closing, tennis, bgDoor, bgPath, bgStreet, texture, brindis };
     return _assets;
   }
 
@@ -264,24 +306,41 @@ window.InvitacionPDF = (function () {
       doc.text(pases + (pases === 1 ? ' ACOMPAÑANTE' : ' ACOMPAÑANTES'), W / 2, boxY + 17.6, { align: 'center' });
     }
 
-    /* Both columns share one baseline for the map link: the addresses
-       wrap to different line counts, and letting each column place its
-       own link left the two sitting at visibly different heights. */
-    const ey = 138, colL = W / 4, colR = 3 * W / 4;
-    setF(doc, 'Lato', 7, MUTED);
+    /* Three columns now that the precopeo sits between the mass and the
+       dinner, so everything here is a size down from the two-column
+       version. All three share one baseline for the map link: the
+       addresses wrap to different line counts, and letting each column
+       place its own link left them at visibly different heights.
+
+       The precopeo is at the reception's address, so it says so instead
+       of repeating the street - three wrapped addresses in 44mm would
+       push the row into the no-children line below it. */
+    const ey = 138, COLW = 44;
+    setF(doc, 'Lato', 6.2, MUTED);
     const events = [
-      { cx: colL, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA,
-        lines: doc.splitTextToSize('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', 56) },
-      { cx: colR, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA,
-        lines: doc.splitTextToSize('Salón Las Cascadas, Los Molinos 97, Las Minitas', 56) },
+      { cx: W / 6, label: 'CEREMONIA', time: '12:00 PM', url: MAPS_MISA,
+        lines: doc.splitTextToSize('Catedral de Hermosillo, Blvr. Miguel Hidalgo S/N, Centro', COLW) },
+      { cx: W / 2, label: 'PRECOPEO', time: '5 – 7 PM', url: MAPS_FIESTA, icon: a.brindis,
+        lines: doc.splitTextToSize('Salón Las Cascadas, mismo lugar de la recepción', COLW) },
+      { cx: 5 * W / 6, label: 'RECEPCIÓN', time: '7:00 PM', url: MAPS_FIESTA,
+        lines: doc.splitTextToSize('Salón Las Cascadas, Los Molinos 97, Las Minitas', COLW) },
     ];
-    const linkY = ey + 18 + Math.max.apply(null, events.map(e => e.lines.length)) * 3.6 + 1.5;
+    const linkY = ey + 16 + Math.max.apply(null, events.map(e => e.lines.length)) * 3.3 + 1.5;
     events.forEach(e => {
-      tracked(doc, e.label, ey, 6.2, GOLD, 0.7, e.cx);
-      centred(doc, e.time, ey + 10, 'Cinzel', 11, DARKGOLD, e.cx);
-      setF(doc, 'Lato', 7, MUTED);
-      e.lines.forEach((ln, i) => doc.text(ln, e.cx, ey + 18 + i * 3.6, { align: 'center' }));
-      setF(doc, 'Cinzel', 6, GOLD);
+      /* The icon sits in the gap above the row, which the guest box
+         leaves free - it marks the loose hour without a second label. */
+      if (e.icon) {
+        /* Hung from its top edge, not centred: the guest box ends at
+           129mm and the label starts at 136, so the icon has to sit
+           inside that 7mm band rather than straddle it. */
+        const iw = 8, ih = iw / e.icon.aspect;
+        doc.addImage(e.icon.data, 'PNG', e.cx - iw / 2, ey - 8, iw, ih, undefined, 'FAST');
+      }
+      tracked(doc, e.label, ey, 5.4, GOLD, 0.6, e.cx);
+      centred(doc, e.time, ey + 9, 'Cinzel', 9, DARKGOLD, e.cx);
+      setF(doc, 'Lato', 6.2, MUTED);
+      e.lines.forEach((ln, i) => doc.text(ln, e.cx, ey + 16 + i * 3.3, { align: 'center' }));
+      setF(doc, 'Cinzel', 5.6, GOLD);
       doc.text('VER EN MAPA', e.cx, linkY, { align: 'center' });
       const tw = doc.getTextWidth('VER EN MAPA');
       doc.link(e.cx - tw / 2, linkY - 3, tw, 4.5, { url: e.url });

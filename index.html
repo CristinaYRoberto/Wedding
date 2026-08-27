@@ -644,10 +644,21 @@
   #events { background: var(--cream); }
   .events-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
+    align-items: start;
   }
-  @media(max-width: 640px) { .events-grid { grid-template-columns: 1fr; } }
+  @media(max-width: 980px) { .events-grid { grid-template-columns: 1fr; max-width: 30rem; margin: 0 auto; } }
+  /* The toast marks the precopeo as the loose part of the day, between
+     the mass and the sit-down. Sized to the type it sits over, and it
+     inherits the gold from the label below it. */
+  .event-icon {
+    display: block;
+    width: 3.2rem;
+    height: auto;
+    margin: 0 auto .9rem;
+    color: var(--gold);
+  }
   .event-card {
     border: 1px solid rgba(184,154,106,.3);
     padding: 2.2rem 2.5rem;
@@ -1763,11 +1774,12 @@
   <p class="hero-date" data-es="03 · OCTUBRE · 2026" data-en="OCTOBER 3 · 2026">03 · OCTUBRE · 2026</p>
   <div class="hero-events-preview">
     <span data-es="Misa: Catedral · 12:00 PM" data-en="Mass: Cathedral · 12:00 PM">Misa: Catedral · 12:00 PM</span>
+    <span data-es="Precopeo: Salón Las Cascadas · 5:00 PM" data-en="Cocktail hour: Salón Las Cascadas · 5:00 PM">Precopeo: Salón Las Cascadas · 5:00 PM</span>
     <span data-es="Recepción: Salón Las Cascadas · 7:00 PM" data-en="Reception: Salón Las Cascadas · 7:00 PM">Recepción: Salón Las Cascadas · 7:00 PM</span>
   </div>
   <p class="hero-nokids" data-es="ESTRICTAMENTE NO NIÑOS" data-en="STRICTLY NO CHILDREN">ESTRICTAMENTE NO NIÑOS</p>
   <div class="calendar-links">
-    <a href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Frender%3Faction%3DTEMPLATE%26text%3DBoda%2520de%2520Cristina%2520y%2520Roberto%26dates%3D20261003T120000%2F20261003T230000%26details%3DMisa%253A%2520Catedral%2520de%2520Hermosillo%252C%252012%253A00%2520PM.%250ARecepci%25C3%25B3n%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25207%253A00%2520PM.%26location%3DCatedral%2520de%2520Hermosillo%252C%2520Blvr.%2520Miguel%2520Hidalgo%2520S%252FN%252C%2520Centro%2520Norte%252C%252083000%2520Hermosillo%252C%2520Son.%26ctz%3DAmerica%2FHermosillo" target="_blank" rel="noopener" data-es="+ Agregar a Google Calendar" data-en="+ Add to Google Calendar">+ Agregar a Google Calendar</a>
+    <a href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Frender%3Faction%3DTEMPLATE%26text%3DBoda%2520de%2520Cristina%2520y%2520Roberto%26dates%3D20261003T120000%2F20261003T230000%26details%3DMisa%253A%2520Catedral%2520de%2520Hermosillo%252C%252012%253A00%2520PM.%250APrecopeo%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25205%253A00%2520PM.%250ARecepci%25C3%25B3n%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25207%253A00%2520PM.%26location%3DCatedral%2520de%2520Hermosillo%252C%2520Blvr.%2520Miguel%2520Hidalgo%2520S%252FN%252C%2520Centro%2520Norte%252C%252083000%2520Hermosillo%252C%2520Son.%26ctz%3DAmerica%2FHermosillo" target="_blank" rel="noopener" data-es="+ Agregar a Google Calendar" data-en="+ Add to Google Calendar">+ Agregar a Google Calendar</a>
   </div>
 
   <!-- Personalized invite badge — shown only when opened via ?familia=&pases= -->
@@ -1975,6 +1987,30 @@
         <p class="event-time">12:00 PM</p>
         <p class="event-venue">Catedral de Hermosillo<br>Blvr. Miguel Hidalgo S/N<br>Centro Norte, 83000 Hermosillo, Son.</p>
         <a href="https://maps.app.goo.gl/SFEHyiZqfgwzFr6AA" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
+      </div>
+      <div class="event-card">
+        <!-- Two glasses clinking: a coupe and a beer mug, each tilted in
+             toward the other. Stroked in currentColor so it takes the
+             gold from .event-icon, and read by the PDF generator so the
+             invitation uses this very drawing (see invitacion-pdf.js). -->
+        <svg class="event-icon" id="icon-brindis" viewBox="0 0 64 44" fill="none"
+             stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M32 3.5v5.5M25 6l2.6 3.8M39 6l-2.6 3.8"/>
+          <g transform="rotate(14 18 26)">
+            <path d="M10 14.5h16c0 6.6-3.3 10.2-8 10.2s-8-3.6-8-10.2z"/>
+            <path d="M18 24.7v9.6M13 34.3h10"/>
+          </g>
+          <g transform="rotate(-14 46 26)">
+            <path d="M39.5 17.5h12.5v13.8a2 2 0 0 1-2 2h-8.5a2 2 0 0 1-2-2z"/>
+            <path d="M52 21.3h2.6a3 3 0 0 1 0 6H52"/>
+            <path d="M39.5 17.5c0-3 2-4.1 3.6-3.2.9-2.5 3.4-2.6 4.5-.6 2-.9 4.4.1 4.4 3.8"/>
+          </g>
+        </svg>
+        <p class="event-type" data-es="PRECOPEO" data-en="COCKTAIL HOUR">PRECOPEO</p>
+        <p class="event-time">5:00 PM &mdash; 7:00 PM</p>
+        <p class="event-venue">Salón Las Cascadas<br>Los Molinos 97, Las Minitas<br>83285 Hermosillo, Son.</p>
+        <a href="https://maps.app.goo.gl/YP5qQpQrmvKPxaF79" target="_blank" class="event-link" data-es="VER EN MAPA" data-en="VIEW ON MAP">VER EN MAPA</a>
       </div>
       <div class="event-card">
         <p class="event-type" data-es="RECEPCIÓN" data-en="RECEPTION">RECEPCIÓN</p>
@@ -2240,7 +2276,7 @@
       <h3 data-es="¡Gracias!" data-en="Thank you!">¡Gracias!</h3>
       <p style="color:rgba(255,255,255,.6); font-size: 1.05rem" data-es="Tu confirmación ha sido registrada. ¡Nos vemos en la boda!" data-en="Your RSVP has been recorded. See you at the wedding!">Tu confirmación ha sido registrada. ¡Nos vemos en la boda!</p>
       <div class="calendar-links" style="margin-top:1.4rem">
-        <a href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Frender%3Faction%3DTEMPLATE%26text%3DBoda%2520de%2520Cristina%2520y%2520Roberto%26dates%3D20261003T120000%2F20261003T230000%26details%3DMisa%253A%2520Catedral%2520de%2520Hermosillo%252C%252012%253A00%2520PM.%250ARecepci%25C3%25B3n%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25207%253A00%2520PM.%26location%3DCatedral%2520de%2520Hermosillo%252C%2520Blvr.%2520Miguel%2520Hidalgo%2520S%252FN%252C%2520Centro%2520Norte%252C%252083000%2520Hermosillo%252C%2520Son.%26ctz%3DAmerica%2FHermosillo" target="_blank" rel="noopener" data-es="+ Agregar a Google Calendar" data-en="+ Add to Google Calendar">+ Agregar a Google Calendar</a>
+        <a href="https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fcalendar.google.com%2Fcalendar%2Frender%3Faction%3DTEMPLATE%26text%3DBoda%2520de%2520Cristina%2520y%2520Roberto%26dates%3D20261003T120000%2F20261003T230000%26details%3DMisa%253A%2520Catedral%2520de%2520Hermosillo%252C%252012%253A00%2520PM.%250APrecopeo%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25205%253A00%2520PM.%250ARecepci%25C3%25B3n%253A%2520Sal%25C3%25B3n%2520Las%2520Cascadas%252C%25207%253A00%2520PM.%26location%3DCatedral%2520de%2520Hermosillo%252C%2520Blvr.%2520Miguel%2520Hidalgo%2520S%252FN%252C%2520Centro%2520Norte%252C%252083000%2520Hermosillo%252C%2520Son.%26ctz%3DAmerica%2FHermosillo" target="_blank" rel="noopener" data-es="+ Agregar a Google Calendar" data-en="+ Add to Google Calendar">+ Agregar a Google Calendar</a>
       </div>
     </div>
     <form class="rsvp-form reveal" id="rsvp-form" onsubmit="submitRSVP(event)">
@@ -2915,7 +2951,7 @@ async function conPdf(fn, statusId, win) {
       status.textContent = 'Cargando el generador…';
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'assets/invitacion-pdf.js?v=4';
+        s.src = 'assets/invitacion-pdf.js?v=5';
         s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el generador'));
         document.head.appendChild(s);
       });
