@@ -3083,13 +3083,22 @@ function pdfUno() {
   }, 'gen-status');
 }
 
+/* Excel guarda el CSV en ANSI (cp1252) salvo que se elija UTF-8 al
+   guardar: si el archivo no decodifica como UTF-8, se relee como cp1252
+   para que los acentos y la ñ de los nombres lleguen enteros al PDF. */
+async function leerCSV(file) {
+  const buf = await file.arrayBuffer();
+  const utf8 = new TextDecoder('utf-8').decode(buf);
+  return utf8.indexOf('�') === -1 ? utf8 : new TextDecoder('windows-1252').decode(buf);
+}
+
 function pdfCsvElegido(ev) {
   const file = ev.target.files && ev.target.files[0];
   const status = document.getElementById('gen-lote-status');
   const btn = document.getElementById('gen-lote-btn');
   if (!file) return;
   conPdf(async () => {
-    const text = await file.text();
+    const text = await leerCSV(file);
     _csvRows = window.InvitacionPDF.parseCSV(text);
     if (!_csvRows.length) {
       status.textContent = 'No se encontró ningún invitado en el archivo.';
@@ -3246,7 +3255,7 @@ function petCsvElegido(ev) {
   if (!file) return;
   const btn = document.getElementById('pet-lote-btn');
   conPadrinos(async status => {
-    _petRows = window.PadrinosPDF.parseGrupos(await file.text());
+    _petRows = window.PadrinosPDF.parseGrupos(await leerCSV(file));
     status.textContent = _petRows.length + ' hoja' + (_petRows.length === 1 ? '' : 's') + ' por generar.';
     btn.disabled = !_petRows.length;
   }, 'pet-lote-status');
@@ -3346,7 +3355,7 @@ function graCsvElegido(ev) {
   if (!file) return;
   const btn = document.getElementById('gra-lote-btn');
   conPadrinos(async status => {
-    _graRows = window.PadrinosPDF.parseGrupos(await file.text());
+    _graRows = window.PadrinosPDF.parseGrupos(await leerCSV(file));
     status.textContent = _graRows.length + ' hoja' + (_graRows.length === 1 ? '' : 's') + ' por generar.';
     btn.disabled = !_graRows.length;
   }, 'gra-lote-status');
@@ -3392,7 +3401,7 @@ function ausCsvElegido(ev) {
   if (!file) return;
   const btn = document.getElementById('aus-lote-btn');
   conPadrinos(async status => {
-    _ausRows = window.PadrinosPDF.parseAusencia(await file.text());
+    _ausRows = window.PadrinosPDF.parseAusencia(await leerCSV(file));
     status.textContent = _ausRows.length + ' hoja' + (_ausRows.length === 1 ? '' : 's') + ' por generar.';
     btn.disabled = !_ausRows.length;
   }, 'aus-lote-status');
@@ -3540,7 +3549,7 @@ function closeAdmin() {
   document.getElementById('admin-login-status').textContent = '';
 }
 
-async function loadAdminData() {
+async function loadAdminData(reintento) {
   const loading = document.getElementById('admin-loading');
   const table   = document.getElementById('admin-table');
   const tbody   = document.getElementById('admin-tbody');
@@ -3585,17 +3594,37 @@ async function loadAdminData() {
     table.style.display   = 'table';
     window._adminRows = rows;
   } catch(err) {
-    loading.classList.add('admin-error');
     const u = window._auth && window._auth.currentUser;
-    /* "Missing or insufficient permissions" says nothing about which of
-       the two halves failed. Signed in means the sign-in worked and the
-       rule is what is refusing, so name the account it refused. */
-    loading.textContent = /permission|insufficient/i.test(err.message || '')
-      ? (u
-          ? 'Firestore no deja leer con la cuenta ' + (u.email || '(sin correo)') +
-            '. Revisa que ese correo esté en la lista de la regla de rsvps y que la regla esté publicada.'
-          : 'Firestore rechazó la lectura porque no hay sesión iniciada.')
-      : 'Error al cargar: ' + err.message;
+    const denegado = /permission|insufficient/i.test(err.message || '');
+
+    /* A token minted before the rules changed carries the old claims, so
+       spend one round trip refreshing it before blaming the rule. */
+    if (denegado && u && !reintento) {
+      try { await u.getIdTokenResult(true); } catch (e) { /* seguimos igual */ }
+      return loadAdminData(true);
+    }
+
+    loading.classList.add('admin-error');
+    if (denegado && u) {
+      /* The rule matches on request.auth.token.email, and the account
+         shown in the header is only what the SDK reports. Print the claim
+         itself: that is the string the rule is actually compared against,
+         quoted, so a stray space or capital shows up. */
+      let claim = '(no se pudo leer)', verificado = '?';
+      try {
+        const t = await u.getIdTokenResult();
+        claim = JSON.stringify((t.claims || {}).email);
+        verificado = (t.claims || {}).email_verified ? 'sí' : 'no';
+      } catch (e) { /* nos quedamos con el marcador */ }
+      loading.textContent =
+        'Firestore rechazó la lectura. La regla compara request.auth.token.email, ' +
+        'que en esta sesión vale ' + claim + ' (verificado: ' + verificado + '). ' +
+        'Ese valor exacto debe estar en la lista de la regla de rsvps, y la regla publicada.';
+    } else if (denegado) {
+      loading.textContent = 'Firestore rechazó la lectura porque no hay sesión iniciada.';
+    } else {
+      loading.textContent = 'Error al cargar: ' + err.message;
+    }
     console.error(err);
   }
 }

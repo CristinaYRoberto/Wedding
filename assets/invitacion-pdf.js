@@ -620,10 +620,12 @@ window.InvitacionPDF = (function () {
     return doc;
   }
 
+  /* Accents and ñ stay in the file name - Windows, macOS and the ZIP
+     entries are all UTF-8, so only the characters a file system really
+     forbids are dropped. */
   function safeName(s) {
     return String(s || 'invitado')
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^A-Za-z0-9 _-]/g, '').trim().replace(/\s+/g, '_').slice(0, 60) || 'invitado';
+      .replace(/[\\/:*?"<>|\x00-\x1f]/g, '').trim().replace(/\s+/g, '_').slice(0, 60) || 'invitado';
   }
 
   async function one(familia, pases) {
