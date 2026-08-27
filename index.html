@@ -2500,7 +2500,7 @@
 <div id="admin-panel">
   <div class="admin-inner">
     <div class="admin-header">
-      <p class="admin-title">PANEL DE ADMINISTRACIÓN · C&R 2026</p>
+      <p class="admin-title">PANEL DE ADMINISTRACIÓN · C&R 2026<span id="admin-quien"></span></p>
       <button class="admin-close" onclick="closeAdmin()">CERRAR</button>
     </div>
 
@@ -3452,6 +3452,10 @@ function mostrarSegunSesion(user) {
   if (!login || !cont) return;
   login.style.display = user ? 'none' : 'block';
   cont.style.display  = user ? 'block' : 'none';
+  /* Which account is signed in decides whether the rules will allow the
+     read, so it is worth saying out loud rather than leaving to guesswork. */
+  const quien = document.getElementById('admin-quien');
+  if (quien) quien.textContent = user && user.email ? '  ·  ' + user.email : '';
   if (user) loadAdminData();
 }
 
@@ -3540,6 +3544,7 @@ async function loadAdminData() {
   const loading = document.getElementById('admin-loading');
   const table   = document.getElementById('admin-table');
   const tbody   = document.getElementById('admin-tbody');
+  loading.classList.remove('admin-error');
   loading.style.display = 'block';
   table.style.display   = 'none';
 
@@ -3580,7 +3585,18 @@ async function loadAdminData() {
     table.style.display   = 'table';
     window._adminRows = rows;
   } catch(err) {
-    loading.textContent = 'Error al cargar: ' + err.message;
+    loading.classList.add('admin-error');
+    const u = window._auth && window._auth.currentUser;
+    /* "Missing or insufficient permissions" says nothing about which of
+       the two halves failed. Signed in means the sign-in worked and the
+       rule is what is refusing, so name the account it refused. */
+    loading.textContent = /permission|insufficient/i.test(err.message || '')
+      ? (u
+          ? 'Firestore no deja leer con la cuenta ' + (u.email || '(sin correo)') +
+            '. Revisa que ese correo esté en la lista de la regla de rsvps y que la regla esté publicada.'
+          : 'Firestore rechazó la lectura porque no hay sesión iniciada.')
+      : 'Error al cargar: ' + err.message;
+    console.error(err);
   }
 }
 
