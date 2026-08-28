@@ -604,6 +604,7 @@ window.InvitacionPDF = (function () {
 
   /* ── Public API ───────────────────────────────────────────────────── */
   async function buildDoc(familia, pases, pageTwoVariant) {
+    familia = sinTrato(familia);
     const { jsPDF } = await ensureLibs();
     const a = await ensureAssets();
     const doc = new jsPDF({ unit: 'mm', format: [W, H], compress: true });
@@ -620,11 +621,18 @@ window.InvitacionPDF = (function () {
     return doc;
   }
 
+  /* Invitations are addressed by name alone: "Sr. José Dávila" is
+     printed and filed as "José Dávila". */
+  function sinTrato(s) {
+    return String(s == null ? '' : s)
+      .replace(/^\s*(sr|sra|sres|srs|srta|srtas|srita|sritas)\s*\.?\s+/i, '').trim();
+  }
+
   /* Accents and ñ stay in the file name - Windows, macOS and the ZIP
      entries are all UTF-8, so only the characters a file system really
      forbids are dropped. */
   function safeName(s) {
-    return String(s || 'invitado')
+    return sinTrato(s || 'invitado')
       .replace(/[\\/:*?"<>|\x00-\x1f]/g, '').trim().replace(/\s+/g, '_').slice(0, 60) || 'invitado';
   }
 
@@ -745,9 +753,9 @@ window.InvitacionPDF = (function () {
     const lines = [
       'Nombre,Pases,Entregada,De',
       'Familia Moreno Bernal,4,x,Cristina',
-      'Sr. Amos Benjamín Moreno,2,,Cristina',
+      'Amos Benjamín Moreno,2,,Cristina',
       'Familia Torres Casas,3,,Jose',
-      'Srita. Valentina Cañez,1,,Jose',
+      'Valentina Cañez,1,,Jose',
     ];
     const blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'],
                           { type: 'text/csv;charset=utf-8' });
@@ -769,7 +777,7 @@ window.InvitacionPDF = (function () {
     ensureLibs: ensureLibs, loadPhoto: loadPhoto, loadTiledTexture: loadTiledTexture,
     registerFonts: registerFonts, setF: setF, tracked: tracked, centred: centred,
     rule: rule, button: button, paragraph: paragraph, page: page,
-    safeName: safeName, parseRows: parseRows,
+    safeName: safeName, sinTrato: sinTrato, parseRows: parseRows,
   };
 
   return { one: one, preview: preview, batch: batch, parseCSV: parseCSV,

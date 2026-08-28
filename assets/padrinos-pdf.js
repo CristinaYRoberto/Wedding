@@ -394,9 +394,20 @@ window.PadrinosPDF = (function () {
     },
   };
 
+  /* One place for every sheet and every source - the cards on the page
+     and the CSV alike - so no sheet or file name carries a Sr./Sra. */
+  function sinTratos(data) {
+    const d = Object.assign({}, data || {});
+    if (Array.isArray(d.nombres)) d.nombres = d.nombres.map(K.sinTrato);
+    else if (d.nombres) d.nombres = K.sinTrato(d.nombres);
+    if (d.nombre) d.nombre = K.sinTrato(d.nombre);
+    return d;
+  }
+
   async function buildDoc(tipo, data) {
     const d = DESIGNS[tipo];
     if (!d) throw new Error('Diseño desconocido: ' + tipo);
+    data = sinTratos(data);
     await K.ensureLibs();
     const a = await ensureAssets();
     const doc = newDoc(d.title, d.name(data || {}) || '');
@@ -406,6 +417,7 @@ window.PadrinosPDF = (function () {
 
   function fileName(tipo, data) {
     const d = DESIGNS[tipo];
+    data = sinTratos(data);
     return d.file + '_' + K.safeName(d.name(data || {})) + '.pdf';
   }
 
@@ -509,7 +521,7 @@ window.PadrinosPDF = (function () {
 
   function plantillaAusencia() {
     descargarCSV('Plantilla_Sera_Para_La_Proxima.csv',
-      ['Nombre', 'Familia Torres Casas', 'Sr. Ignacio Torres']);
+      ['Nombre', 'Familia Torres Casas', 'Ignacio Torres']);
   }
 
   return {

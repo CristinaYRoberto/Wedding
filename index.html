@@ -1690,7 +1690,7 @@
   /* The one free-text field, so the one that can wreck the layout. It is
      capped at three lines and carries the whole thing in its tooltip;
      the CSV always has the untruncated text. */
-  .col-msg { max-width: 24rem; }
+  .col-msg { max-width: 28rem; }
   .col-msg .msg {
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -2561,7 +2561,7 @@
       <table class="admin-table" id="admin-table" style="display:none">
         <thead>
           <tr>
-            <th>INVITADO</th><th>ASISTE</th><th>PAX</th>
+            <th>INVITADO</th><th>ASISTE</th>
             <th>MENSAJE</th><th>FECHA</th>
           </tr>
         </thead>
@@ -3618,7 +3618,6 @@ async function loadAdminData(reintento) {
           ${r.email ? `<span class="quien-mail">${esc(r.email)}</span>` : ''}
         </td>
         <td class="${r.asistencia==='si'?'badge-si':'badge-no'}">${r.asistencia==='si'?'Sí':'No'}</td>
-        <td style="text-align:center">${esc(r.personas||1)}</td>
         <td class="col-msg">${msg ? `<div class="msg" title="${msg}">${msg}</div>` : '—'}</td>
         <td class="col-fecha">${esc(ts)}</td>
       </tr>`;
