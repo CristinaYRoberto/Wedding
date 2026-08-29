@@ -296,14 +296,16 @@ const STRINGS = {
     thName:   'Nombre',
     thScore:  'Puntaje',
     thTime:   'Tiempo',
-    thErrors: 'Errores',
+    thErrors: 'Intentos extra',
     thDate:   'Fecha',
+    lbFormula: function () { return 'Todos parten de ' + BASE_SCORE.toLocaleString(LOCALE) +
+      ' puntos: cada intento extra resta ' + ERROR_PENALTY + ' y cada segundo resta 1.'; },
     quit:            'Salir',
     allFound:        '✨ ¡Todos encontrados! ✨',
     congrats:        '¡Felicidades!',
     foundAll:        function (n) { return n + ', ¡encontraste todos los pares!'; },
     time:            'TIEMPO',
-    errors:          'ERRORES',
+    errors:          'INTENTOS EXTRA',
     finalScore:      'PUNTAJE FINAL',
     rankLine:        function (r) { return '🏆 ¡Puesto #' + r + ' en la tabla!'; },
     playAgain:       'Jugar de Nuevo',
@@ -330,14 +332,16 @@ const STRINGS = {
     thName:   'Name',
     thScore:  'Score',
     thTime:   'Time',
-    thErrors: 'Errors',
+    thErrors: 'Extra tries',
     thDate:   'Date',
+    lbFormula: function () { return 'Everyone starts at ' + BASE_SCORE.toLocaleString(LOCALE) +
+      ' points: each extra try takes ' + ERROR_PENALTY + ' off, each second takes 1.'; },
     quit:            'Quit',
     allFound:        '✨ All found! ✨',
     congrats:        'Congratulations!',
     foundAll:        function (n) { return n + ', you found all the pairs!'; },
     time:            'TIME',
-    errors:          'ERRORS',
+    errors:          'EXTRA TRIES',
     finalScore:      'FINAL SCORE',
     rankLine:        function (r) { return '🏆 Leaderboard rank #' + r + '!'; },
     playAgain:       'Play Again',
@@ -354,6 +358,7 @@ document.title = T.pageTitle;
 const WEDDING_IMAGE   = 'assets/UI/GamePortada.png';
 const TOTAL_PAIRS     = 12;
 const BASE_SCORE      = 3500;
+const ERROR_PENALTY   = 50;   /* what one mistake costs, shown as -50 in the table */
 const MAIN_SITE_URL   = 'index.html'; // ← change to your wedding site URL
 
 /* ── Asset pools (exact files on disk) ───────────────────────────────── */
@@ -423,8 +428,16 @@ function pick(pool, n) { return shuffle(pool).slice(0, n); }
 function formatTime(s) {
   return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
 }
+/* The row keeps the time as mm:ss, so read the seconds back off it to
+   show what the clock cost. */
+function secsOf(mmss) {
+  const p = String(mmss || '').split(':');
+  return p.length === 2 ? (+p[0]) * 60 + (+p[1]) : 0;
+}
+function menos(n) { return '−' + n.toLocaleString(LOCALE); }
+
 function calcScore(errors, secs) {
-  return Math.max(BASE_SCORE - errors * 50 - secs, 0);
+  return Math.max(BASE_SCORE - errors * ERROR_PENALTY - secs, 0);
 }
 
 /* 12 pairs — spread shuffle: matching cards always ≥4 Manhattan apart */
@@ -638,6 +651,10 @@ function LeaderboardScreen({ onBack, highlightTs }) {
             {T.lbTitle}
           </h2>
           <div style={{ width:50, height:2, background:'linear-gradient(90deg,transparent,#c9a84c,transparent)', margin:'8px auto 0' }}/>
+          {/* How a score is built, read before the table rather than after it */}
+          <div style={{ display:'inline-block', marginTop:'clamp(6px,1vmin,10px)', padding:'4px 12px', background:'rgba(10,4,0,0.8)', border:'1px solid rgba(201,168,76,0.35)', borderRadius:999, color:'#e8c96b', fontStyle:'italic', fontWeight:700, fontSize:'clamp(0.68rem,0.95vmin,0.8rem)' }}>
+            {T.lbFormula()}
+          </div>
         </div>
 
         {/* Table — solid dark panel so the rows stay legible over the art */}
@@ -662,11 +679,17 @@ function LeaderboardScreen({ onBack, highlightTs }) {
                       background: hi ? 'rgba(201,168,76,0.28)' : i%2===0 ? 'transparent' : 'rgba(255,255,255,0.07)',
                       borderLeft: hi ? '4px solid #c9a84c' : '4px solid transparent',
                     }}>
-                      <td style={{ padding:'8px 10px', textAlign:'center', fontSize:'clamp(0.9rem,1.3vmin,1.1rem)' }}>{medals[i] || '#'+(i+1)}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#fdf8f0', fontWeight:700, fontSize:'clamp(0.9rem,1.3vmin,1.1rem)' }}>{medals[i] || '#'+(i+1)}</td>
                       <td style={{ padding:'8px 10px', textAlign:'center', fontFamily:"'Playfair Display',Georgia,serif", fontWeight:600, color:'#fdf8f0', fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.name}</td>
                       <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8c96b', fontWeight:700, fontSize:'clamp(0.78rem,1.1vmin,0.9rem)' }}>{e.score.toLocaleString(LOCALE)}</td>
-                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.85)', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.time}</td>
-                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8a0c0', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>{e.errors}</td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.85)', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>
+                        {e.time}
+                        <div style={{ color:'rgba(253,248,240,0.45)', fontSize:'0.62rem' }}>{menos(secsOf(e.time))}</div>
+                      </td>
+                      <td style={{ padding:'8px 10px', textAlign:'center', color:'#e8a0c0', fontSize:'clamp(0.72rem,1vmin,0.85rem)' }}>
+                        {e.errors}
+                        <div style={{ color:'rgba(232,160,192,0.55)', fontSize:'0.62rem' }}>{menos(e.errors * ERROR_PENALTY)}</div>
+                      </td>
                       <td style={{ padding:'8px 10px', textAlign:'center', color:'rgba(253,248,240,0.6)', fontSize:'clamp(0.65rem,0.9vmin,0.76rem)' }}>{e.date}</td>
                     </tr>
                   );
@@ -713,11 +736,13 @@ function VictoryModal({ playerName, errors, seconds, rank, onPlayAgain, onLeader
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
               <div>
                 <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>{T.time}</div>
-                <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>⏱ {formatTime(seconds)}</div>
+                <div style={{ color:'#3d2b00', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>⏱ {formatTime(seconds)}
+                  <span style={{ color:'#9a8c70', fontWeight:600, fontSize:'0.68rem', marginLeft:5 }}>{menos(seconds)}</span></div>
               </div>
               <div>
                 <div style={{ color:'#aaa', fontSize:'0.62rem', marginBottom:2, letterSpacing:'0.06em' }}>{T.errors}</div>
-                <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>❌ {errors}</div>
+                <div style={{ color:'#8b4a6b', fontWeight:700, fontSize:'clamp(0.82rem,1.2vmin,1rem)' }}>{errors}
+                  <span style={{ color:'#a9788f', fontWeight:600, fontSize:'0.68rem', marginLeft:5 }}>{menos(errors * ERROR_PENALTY)}</span></div>
               </div>
             </div>
             <div style={{ paddingTop:10, borderTop:'1px solid #e8d8a0' }}>
