@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR del filtro · Cristina &amp; Roberto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Cinzel:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU"
+        crossorigin="anonymous"></script>
+<style>
+  :root { --cream:#f5f0e8; --warm:#faf7f2; --gold:#b89a6a; --dark-gold:#8a6f45; --charcoal:#2c2c2c; --muted:#7a6f63; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Lato',sans-serif; background:var(--cream); color:var(--charcoal); padding:24px 16px 60px; }
+
+  .tools {
+    max-width:520px; margin:0 auto 26px; background:var(--warm);
+    border:1px solid rgba(184,154,106,0.35); border-radius:14px; padding:18px;
+  }
+  .tools h2 { font-family:'Cinzel',serif; font-size:0.85rem; letter-spacing:0.16em; margin-bottom:12px; }
+  .tools label { display:block; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin:10px 0 4px; }
+  .tools input, .tools select {
+    width:100%; font-family:'Lato',sans-serif; font-size:0.9rem; padding:10px 12px;
+    border:1px solid rgba(184,154,106,0.45); border-radius:8px; background:#fff; color:var(--charcoal);
+  }
+  .tools .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .btn {
+    font-family:'Lato',sans-serif; font-size:0.74rem; letter-spacing:0.12em; font-weight:700;
+    text-transform:uppercase; padding:12px 18px; border-radius:999px;
+    border:1px solid var(--gold); background:var(--gold); color:#fff; cursor:pointer;
+  }
+  .btn.ghost { background:transparent; color:var(--dark-gold); }
+  .note { font-size:0.74rem; line-height:1.6; color:var(--muted); margin-top:12px; }
+
+  /* ── El cartel ─────────────────────────────────────────────── */
+  /* 5x7 pulgadas a 96dpi: la medida de un marco de mesa comprado en
+     cualquier lado, así no hay que mandar a hacer nada especial. */
+  .poster {
+    width:480px; height:672px; margin:0 auto; background:var(--warm);
+    border:1px solid rgba(184,154,106,0.4);
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    padding:34px 30px; text-align:center; position:relative;
+    box-shadow:0 14px 40px rgba(0,0,0,0.12);
+  }
+  .poster::before {
+    content:''; position:absolute; inset:12px;
+    border:1px solid rgba(184,154,106,0.55); pointer-events:none;
+  }
+  .poster::after {
+    content:''; position:absolute; inset:17px;
+    border:1px dashed rgba(184,154,106,0.3); pointer-events:none;
+  }
+  .p-names { font-family:'Great Vibes',cursive; font-size:2.5rem; color:var(--dark-gold); line-height:1.1; }
+  .p-date { font-family:'Cinzel',serif; font-size:0.66rem; letter-spacing:0.32em; color:var(--muted); margin-top:6px; }
+  .p-rule { width:70px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:14px auto; }
+  .p-call { font-family:'Cinzel',serif; font-size:1.08rem; letter-spacing:0.2em; color:var(--charcoal); }
+  .p-sub { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.02rem; color:var(--muted); margin-top:8px; line-height:1.5; }
+  #qr {
+    width:224px; height:224px; padding:12px; background:#fff;
+    border:1px solid rgba(184,154,106,0.4); display:flex; align-items:center; justify-content:center;
+  }
+  #qr img, #qr canvas { width:100% !important; height:100% !important; display:block; }
+  .p-steps { font-size:0.72rem; line-height:1.7; color:var(--muted); }
+  .p-steps b { color:var(--dark-gold); font-weight:700; }
+  .p-tag { font-family:'Cinzel',serif; font-size:0.82rem; letter-spacing:0.14em; color:var(--dark-gold); }
+  .p-url { font-size:0.6rem; letter-spacing:0.06em; color:#a89e92; word-break:break-all; }
+
+  /* Al imprimir solo sale el cartel, sin controles ni sombras. */
+  @media print {
+    body { background:#fff; padding:0; }
+    .tools { display:none; }
+    .poster { box-shadow:none; border-color:rgba(184,154,106,0.55); margin:0 auto; page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="tools">
+  <h2>CARTEL DEL FILTRO</h2>
+  <label for="url">Dirección a la que apunta el QR</label>
+  <input id="url" type="url" spellcheck="false">
+  <label for="lang">Idioma del cartel</label>
+  <select id="lang">
+    <option value="es">Español</option>
+    <option value="en">English</option>
+  </select>
+  <div class="row">
+    <button class="btn" onclick="window.print()">Imprimir / PDF</button>
+    <button class="btn ghost" id="dl-qr">Descargar solo el QR</button>
+    <button class="btn ghost" id="dl-poster">Descargar cartel PNG</button>
+  </div>
+  <p class="note">
+    Imprime uno por mesa. Mide 5×7 pulgadas: entra en cualquier marco de mesa.
+    El QR se regenera solo al cambiar la dirección. Prueba escanearlo desde
+    <b>la cámara del teléfono</b> antes de mandar a imprimir.
+  </p>
+</div>
+
+<div class="poster" id="poster">
+  <div>
+    <div class="p-names">Cristina &amp; Roberto</div>
+    <div class="p-date" id="p-date">03 · OCTUBRE · 2026</div>
+    <div class="p-rule"></div>
+    <div class="p-call" id="p-call">TÓMATE UNA FOTO</div>
+    <div class="p-sub" id="p-sub">Con nuestros filtros de boda</div>
+  </div>
+
+  <div id="qr"></div>
+
+  <div>
+    <div class="p-steps" id="p-steps"></div>
+    <div class="p-rule"></div>
+    <div class="p-tag">#CristinaYRoberto</div>
+    <div class="p-url" id="p-url"></div>
+  </div>
+</div>
+
+<script>
+/* La dirección se adivina desde donde está abierta esta página, así el
+   cartel sale bien sin que nadie escriba nada. Si el sitio vive en otro
+   dominio, se corrige en el campo de arriba. */
+const DEFAULT_URL = location.origin.startsWith('http')
+  ? new URL('weddingfilter.html', location.href).href
+  : 'https://cristinayroberto.github.io/Wedding/weddingfilter.html';
+
+const TXT = {
+  es: {
+    date:'03 · OCTUBRE · 2026',
+    call:'TÓMATE UNA FOTO',
+    sub:'Con nuestros filtros de boda',
+    steps:'<b>1.</b> Abre la cámara de tu teléfono<br>' +
+          '<b>2.</b> Apunta al código<br>' +
+          '<b>3.</b> Elige tu filtro y comparte'
+  },
+  en: {
+    date:'OCTOBER 3 · 2026',
+    call:'TAKE A PHOTO',
+    sub:'With our wedding filters',
+    steps:'<b>1.</b> Open your phone camera<br>' +
+          '<b>2.</b> Point at the code<br>' +
+          '<b>3.</b> Pick a filter and share'
+  }
+};
+
+const $ = id => document.getElementById(id);
+let qr = null;
+
+function drawQR(url) {
+  $('qr').innerHTML = '';
+  /* 1024 px de lado: sobra para imprimir nítido aunque el cartel se
+     amplíe a tamaño carta. correctLevel H aguanta que el papel se
+     manche o se doble en la mesa. */
+  qr = new QRCode($('qr'), {
+    text: url, width: 1024, height: 1024,
+    colorDark: '#2c2c2c', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  $('p-url').textContent = url.replace(/^https?:\/\//, '');
+}
+
+function applyLang(l) {
+  const T = TXT[l];
+  $('p-date').textContent  = T.date;
+  $('p-call').textContent  = T.call;
+  $('p-sub').textContent   = T.sub;
+  $('p-steps').innerHTML   = T.steps;
+  document.documentElement.lang = l;
+}
+
+/* La librería puede devolver <img> o <canvas> según el navegador. */
+function qrCanvas() {
+  const cv = $('qr').querySelector('canvas');
+  if (cv) return Promise.resolve(cv);
+  const im = $('qr').querySelector('img');
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    const go = () => { c.width = im.naturalWidth; c.height = im.naturalHeight;
+                       c.getContext('2d').drawImage(im, 0, 0); res(c); };
+    if (im.complete && im.naturalWidth) go(); else im.onload = go;
+  });
+}
+
+function download(dataUrl, name) {
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = name; a.click();
+}
+
+$('dl-qr').onclick = async () => {
+  download((await qrCanvas()).toDataURL('image/png'), 'QR-CristinaYRoberto.png');
+};
+
+/* El cartel se redibuja a mano en un canvas: html2canvas sería una
+   dependencia entera para nueve líneas de texto. */
+$('dl-poster').onclick = async () => {
+  const S = 2;                                    /* 960x1344, listo para imprimir */
+  const W = 480 * S, H = 672 * S;
+  const c = Object.assign(document.createElement('canvas'), { width:W, height:H }).getContext('2d');
+  const T = TXT[$('lang').value];
+
+  c.fillStyle = '#faf7f2'; c.fillRect(0, 0, W, H);
+  c.strokeStyle = 'rgba(184,154,106,0.55)'; c.lineWidth = 1 * S;
+  c.strokeRect(12 * S, 12 * S, W - 24 * S, H - 24 * S);
+  c.setLineDash([4 * S, 3 * S]); c.strokeStyle = 'rgba(184,154,106,0.35)';
+  c.strokeRect(17 * S, 17 * S, W - 34 * S, H - 34 * S); c.setLineDash([]);
+
+  c.textAlign = 'center';
+  c.fillStyle = '#8a6f45';
+  c.font = '400 ' + (40 * S) + 'px "Great Vibes", cursive';
+  c.fillText('Cristina & Roberto', W / 2, 92 * S);
+
+  const sp = s => s.split('').join(' ');
+  c.fillStyle = '#7a6f63';
+  c.font = '400 ' + (10 * S) + 'px Cinzel, serif';
+  c.fillText(sp(T.date), W / 2, 116 * S);
+
+  c.fillStyle = '#2c2c2c';
+  c.font = '600 ' + (17 * S) + 'px Cinzel, serif';
+  c.fillText(sp(T.call), W / 2, 156 * S);
+
+  c.fillStyle = '#7a6f63';
+  c.font = 'italic 300 ' + (16 * S) + 'px "Cormorant Garamond", serif';
+  c.fillText(T.sub, W / 2, 180 * S);
+
+  const q = await qrCanvas();
+  const qs = 224 * S, qx = (W - qs) / 2, qy = 226 * S;
+  c.fillStyle = '#fff'; c.fillRect(qx, qy, qs, qs);
+  c.strokeStyle = 'rgba(184,154,106,0.4)'; c.lineWidth = 1 * S;
+  c.strokeRect(qx, qy, qs, qs);
+  c.drawImage(q, qx + 12 * S, qy + 12 * S, qs - 24 * S, qs - 24 * S);
+
+  c.fillStyle = '#7a6f63';
+  c.font = '400 ' + (11 * S) + 'px Lato, sans-serif';
+  const steps = T.steps.replace(/<b>|<\/b>/g, '').split('<br>');
+  steps.forEach((s, i) => c.fillText(s, W / 2, (508 + i * 21) * S));
+
+  c.fillStyle = '#8a6f45';
+  c.font = '600 ' + (13 * S) + 'px Cinzel, serif';
+  c.fillText(sp('#CristinaYRoberto'), W / 2, 604 * S);
+
+  c.fillStyle = '#a89e92';
+  c.font = '400 ' + (9 * S) + 'px Lato, sans-serif';
+  c.fillText($('p-url').textContent, W / 2, 628 * S);
+
+  download(c.canvas.toDataURL('image/png'), 'Cartel-QR-CristinaYRoberto.png');
+};
+
+$('url').value = DEFAULT_URL;
+$('url').oninput = () => drawQR($('url').value.trim() || DEFAULT_URL);
+$('lang').onchange = () => applyLang($('lang').value);
+
+try { const s = localStorage.getItem('wedding_lang'); if (s === 'en') $('lang').value = 'en'; } catch (_e) {}
+applyLang($('lang').value);
+drawQR(DEFAULT_URL);
+</script>
+</body>
+</html>
