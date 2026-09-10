@@ -476,6 +476,8 @@ function buildDeck() {
   return [...h1, ...h2];
 }
 
+const LB_SIZE = 50;   // filas del tablero; sube si hay más invitados
+
 /* --- Leaderboard -----------------------------------------------------
    Firestore is the only store. A score that cannot be uploaded is not
    kept locally: the player is asked to get back online instead, so the
@@ -500,7 +502,7 @@ async function getGlobalLB() {
     const q = window._fbQuery(
       window._fbCollection(window._db, 'game_scores'),
       window._fbOrderBy('score', 'desc'),
-      window._fbLimit(10)
+      window._fbLimit(LB_SIZE)
     );
     const snap = await window._fbGetDocs(q);
     return snap.docs.map(d => d.data());
