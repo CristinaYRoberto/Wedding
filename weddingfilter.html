@@ -220,8 +220,8 @@
   <div class="rule"></div>
   <h1 class="title" data-es="FILTRO DE LA BODA" data-en="WEDDING FILTER">FILTRO DE LA BODA</h1>
   <p class="subtitle"
-     data-es="14 filtros animados. Toca para foto, mantén presionado para video, o arma una tira de cuatro. Nada se sube a ningún servidor: todo se queda en tu teléfono."
-     data-en="14 animated filters. Tap for a photo, hold for video, or make a strip of four. Nothing is uploaded anywhere — it all stays on your phone.">
+     data-es="17 filtros animados. Toca para foto, mantén presionado para video, o arma una tira de cuatro. Nada se sube a ningún servidor: todo se queda en tu teléfono."
+     data-en="17 animated filters. Tap for a photo, hold for video, or make a strip of four. Nothing is uploaded anywhere — it all stays on your phone.">
   </p>
   <div class="btn-row">
     <button type="button" class="btn btn-primary" id="btn-start" data-es="ABRIR LA CÁMARA" data-en="OPEN THE CAMERA">ABRIR LA CÁMARA</button>
@@ -373,7 +373,12 @@ const A = {
   cake     : ['assets/props/weddingStuff03.png'],
   heels    : ['assets/props/weddingStuff07.png'],
   bouquet  : ['assets/props/weddingStuff02.png'],
-  outfits  : ['assets/props/weddingStuff04.png']
+  outfits  : ['assets/props/weddingStuff04.png'],
+  /* Fotos de la sesión, reducidas a 640 px (assets/ar/moments). Las
+     originales de la galería pesan hasta 500 KB y 2048 px: doce de esas
+     decodificadas se comen la memoria de un teléfono modesto. */
+  moments  : ['m01','m02','m03','m04','m05','m06','m07','m08','m09','m10','m11','m12']
+               .map(n => 'assets/ar/moments/' + n + '.jpg')
 };
 
 const IMG = {};
@@ -676,6 +681,82 @@ function loveBurst(c, f, i, tt) {
   }, tt);
 }
 
+/* ── Fotos de nuestros momentos ──────────────────────────────── */
+
+/* Foto recortada en "cover" dentro de un rectángulo. El recorte se
+   sesga hacia arriba: en los retratos las caras están en el tercio
+   superior y centrar las cortaría. */
+function coverImage(c, im, x, y, w, h) {
+  const s = Math.max(w / im.naturalWidth, h / im.naturalHeight);
+  const sw = w / s, sh = h / s;
+  c.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) * 0.3, sw, sh, x, y, w, h);
+}
+
+/* Foto que cambia sola cada `period` segundos, con fundido en el
+   último 20% del ciclo. `offset` desfasa varias para que no cambien
+   todas a la vez. */
+function slideshow(c, list, x, y, w, h, tt, period, offset) {
+  const p = tt / period + (offset || 0);
+  const i = Math.floor(p), fade = Math.max(0, (p - i - 0.8) / 0.2);
+  const a = img(list[i % list.length]), b = img(list[(i + 1) % list.length]);
+  if (a) coverImage(c, a, x, y, w, h);
+  if (b && fade > 0) { c.save(); c.globalAlpha = fade; coverImage(c, b, x, y, w, h); c.restore(); }
+}
+
+function polaroid(c, list, cx, cy, w, rot, tt, offset, caption) {
+  const m = w * 0.06, ph = w - m * 2, h = w * 1.2;
+  c.save();
+  c.translate(cx, cy); c.rotate(rot);
+  c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = w * 0.08; c.shadowOffsetY = w * 0.03;
+  c.fillStyle = '#fbf8f2'; c.fillRect(-w / 2, -h / 2, w, h);
+  c.shadowColor = 'transparent';
+  c.fillStyle = '#ddd5c8'; c.fillRect(-w / 2 + m, -h / 2 + m, ph, ph);   /* mientras carga */
+  slideshow(c, list, -w / 2 + m, -h / 2 + m, ph, ph, tt, 3.2, offset);
+  /* Cinta adhesiva */
+  c.save(); c.translate(0, -h / 2); c.rotate(-0.06);
+  c.fillStyle = 'rgba(230,214,170,0.78)'; c.fillRect(-w * 0.18, -w * 0.045, w * 0.36, w * 0.09);
+  c.restore();
+  if (caption) {
+    c.fillStyle = '#8a6f45'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = '400 ' + (w * 0.12) + 'px "Great Vibes", cursive';
+    c.fillText(caption, 0, h / 2 - (h - m - ph) / 2);
+  }
+  c.restore();
+}
+
+/* Tira de película que corre de lado. Es más ancha que la pantalla
+   para que la inclinación no deje esquinas vacías. */
+function filmStrip(c, W, H, list, cy, tt, dir, tilt) {
+  const bh = W * 0.3, fw = bh * 0.8, gap = bh * 0.1, cell = fw + gap;
+  const L = W * 1.4;
+  const off  = tt * W * 0.07 * dir;
+  const base = Math.floor(off / cell);
+  const shift = off - base * cell;
+  c.save();
+  c.translate(W / 2, cy); c.rotate(tilt);
+  c.fillStyle = 'rgba(20,18,15,0.94)'; c.fillRect(-L / 2, -bh / 2, L, bh);
+
+  const ph = bh * 0.7;
+  const n = Math.ceil(L / cell) + 2;
+  for (let k = -1; k < n; k++) {
+    const x = -L / 2 + k * cell + shift;
+    /* El índice viaja con la celda: la foto no salta al moverse. */
+    const src = list[(((k - base) % list.length) + list.length) % list.length];
+    const im = img(src);
+    c.fillStyle = '#2d2a25'; c.fillRect(x, -ph / 2, fw, ph);
+    if (im) coverImage(c, im, x, -ph / 2, fw, ph);
+  }
+  /* Perforaciones */
+  c.fillStyle = 'rgba(245,240,232,0.85)';
+  const hs = cell / 4, hw = bh * 0.07, hh = bh * 0.055;
+  const hshift = ((shift % hs) + hs) % hs;
+  for (let x = -L / 2 - hs + hshift; x < L / 2; x += hs) {
+    c.fillRect(x, -bh / 2 + bh * 0.04, hw, hh);
+    c.fillRect(x,  bh / 2 - bh * 0.04 - hh, hw, hh);
+  }
+  c.restore();
+}
+
 /* ════════════════════════════════════════════════════════════════
    CATÁLOGO DE FILTROS
    ────────────────────────────────────────────────────────────────
@@ -817,6 +898,40 @@ const FILTERS = [
         colors:['#b89a6a','#e6c563','#f5f0e8','#7a8c6e','#e0798c'] });
     },
     frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? '¡VIVA LOS NOVIOS!' : 'HOORAY!', tt); signature(c, W, H); }
+  },
+
+  /* ── Nuestros momentos ─────────────────────────────────────
+     Fotos de la sesión. Van por las orillas: el centro queda libre
+     para la cara de quien se toma la foto. */
+  {
+    label:{ es:'Polaroids', en:'Polaroids' },
+    needs: A.moments,
+    scene:(c, W, H, tt) => {
+      const sway = k => Math.sin(tt * 1.1 + k) * 0.03;
+      polaroid(c, A.moments, W * 0.23, H * 0.225, W * 0.34, -0.14 + sway(0), tt, 0);
+      polaroid(c, A.moments, W * 0.8,  H * 0.25,  W * 0.3,   0.12 + sway(2), tt, 4.33);
+      polaroid(c, A.moments, W * 0.2,  H * 0.61,  W * 0.28,  0.09 + sway(4), tt, 8.66);
+    },
+    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Carrete', en:'Film reel' },
+    needs: A.moments,
+    scene:(c, W, H, tt) => {
+      filmStrip(c, W, H, A.moments,               H * 0.2,  tt, -1, -0.05);
+      filmStrip(c, W, H, A.moments.slice().reverse(), H * 0.64, tt,  1,  0.04);
+    },
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Nuestra historia', en:'Our story' },
+    needs: A.moments,
+    scene:(c, W, H, tt) => {
+      polaroid(c, A.moments, W * 0.73, H * 0.605, W * 0.42, 0.06 + Math.sin(tt * 0.9) * 0.025, tt, 0,
+               lang === 'es' ? 'nuestra historia' : 'our story');
+      sparkles(c, W, H, tt, 8);
+    },
+    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
   }
 ];
 let filterIx = 0;
