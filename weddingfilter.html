@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#201e1c">
+<title>Filtro AR · Cristina &amp; Roberto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Cinzel:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --gold: #b89a6a;
+    --dark-gold: #8a6f45;
+    --sage: #7a8c6e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  /* Sin esto, el display de .btn / #countdown gana sobre [hidden] y el
+     botón de compartir aparece donde no debe. */
+  [hidden] { display:none !important; }
+  html, body { height:100%; }
+  body {
+    font-family:'Lato',sans-serif;
+    background:radial-gradient(circle at 50% 0%, #3a3632 0%, #201e1c 60%, #141312 100%);
+    color:var(--cream);
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100%;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    overflow-x:hidden;
+  }
+
+  /* ── Cabecera ───────────────────────────────────────────────── */
+  header {
+    width:100%; max-width:520px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:14px 16px 6px;
+  }
+  .back {
+    color:var(--gold); text-decoration:none; font-size:0.78rem;
+    letter-spacing:0.12em; border:1px solid rgba(184,154,106,0.45);
+    padding:7px 12px; border-radius:999px; white-space:nowrap;
+  }
+  .back:active { background:rgba(184,154,106,0.18); }
+  #lang-toggle { display:flex; gap:4px; }
+  #lang-toggle button {
+    font-family:'Lato',sans-serif; font-size:0.72rem; letter-spacing:0.1em;
+    background:none; border:1px solid rgba(184,154,106,0.35);
+    color:rgba(245,240,232,0.6); padding:6px 10px; border-radius:999px; cursor:pointer;
+  }
+  #lang-toggle button.active { background:var(--gold); border-color:var(--gold); color:#1b1a18; font-weight:700; }
+
+  .title {
+    font-family:'Cinzel',serif; font-size:clamp(1.05rem,4.5vw,1.35rem);
+    letter-spacing:0.18em; text-align:center;
+  }
+  .subtitle {
+    font-family:'Cormorant Garamond',serif; font-style:italic;
+    color:rgba(245,240,232,0.65); font-size:clamp(0.9rem,3.8vw,1.05rem);
+    text-align:center; margin-top:10px; line-height:1.55;
+  }
+  .rule { width:60px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:14px auto; }
+
+  /* ── Pantallas ──────────────────────────────────────────────── */
+  section { width:100%; max-width:520px; padding:10px 16px 28px; }
+  section[hidden] { display:none !important; }
+
+  #intro { text-align:center; padding-top:6vh; }
+  .intro-mark { font-family:'Great Vibes',cursive; font-size:clamp(2.2rem,11vw,3.4rem); color:var(--gold); line-height:1.1; }
+  .intro-note {
+    margin-top:20px; font-size:0.76rem; color:rgba(245,240,232,0.42);
+    line-height:1.6; border-top:1px solid rgba(184,154,106,0.2); padding-top:14px;
+  }
+
+  .btn {
+    display:inline-block; font-family:'Lato',sans-serif; font-size:0.8rem;
+    letter-spacing:0.14em; font-weight:700; text-transform:uppercase;
+    padding:15px 26px; border-radius:999px; border:1px solid var(--gold);
+    cursor:pointer; text-decoration:none; transition:transform .1s ease;
+  }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:var(--gold); color:#1b1a18; }
+  .btn-outline { background:transparent; color:var(--gold); }
+  .btn-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:22px; }
+
+  /* ── Visor de cámara ────────────────────────────────────────── */
+  .viewport {
+    position:relative; width:100%; aspect-ratio:9/16;
+    border-radius:18px; overflow:hidden; background:#0d0c0b;
+    border:1px solid rgba(184,154,106,0.35);
+    box-shadow:0 18px 50px rgba(0,0,0,0.55);
+  }
+  .viewport canvas { display:block; width:100%; height:100%; }
+  #cam { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+  #countdown {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:26vw; color:rgba(250,247,242,0.92);
+    text-shadow:0 4px 24px rgba(0,0,0,0.6); pointer-events:none;
+  }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .35s ease; }
+  .ar-badge {
+    position:absolute; top:10px; left:10px;
+    font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase;
+    background:rgba(20,19,18,0.72); border:1px solid rgba(184,154,106,0.4);
+    color:var(--gold); padding:4px 9px; border-radius:999px;
+  }
+
+  /* ── Carrusel de filtros ────────────────────────────────────── */
+  .filters {
+    display:flex; gap:8px; overflow-x:auto; padding:14px 2px 4px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .filters::-webkit-scrollbar { display:none; }
+  .filters button {
+    flex:0 0 auto; font-family:'Lato',sans-serif; font-size:0.7rem;
+    letter-spacing:0.08em; text-transform:uppercase;
+    background:rgba(245,240,232,0.07); color:rgba(245,240,232,0.75);
+    border:1px solid rgba(184,154,106,0.3); border-radius:999px;
+    padding:10px 15px; cursor:pointer;
+  }
+  .filters button.active { background:var(--gold); border-color:var(--gold); color:#1b1a18; font-weight:700; }
+
+  /* ── Controles ──────────────────────────────────────────────── */
+  .controls { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:12px; }
+  .icon-btn {
+    width:50px; height:50px; border-radius:50%; flex:0 0 auto;
+    background:rgba(245,240,232,0.08); border:1px solid rgba(184,154,106,0.35);
+    color:var(--cream); font-size:0.82rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn.on { background:var(--gold); color:#1b1a18; border-color:var(--gold); font-weight:700; }
+  #shutter {
+    width:76px; height:76px; border-radius:50%; flex:0 0 auto;
+    background:var(--cream); border:4px solid var(--gold); cursor:pointer;
+    box-shadow:0 0 0 4px rgba(20,19,18,0.8), 0 10px 30px rgba(0,0,0,0.5);
+  }
+  #shutter:active { transform:scale(0.93); }
+  #shutter:disabled { opacity:0.4; }
+
+  /* ── Resultado ──────────────────────────────────────────────── */
+  #shot {
+    display:block; width:100%; border-radius:18px;
+    border:1px solid rgba(184,154,106,0.35);
+    box-shadow:0 18px 50px rgba(0,0,0,0.55);
+  }
+  .hint { margin-top:16px; font-size:0.78rem; line-height:1.6; color:rgba(245,240,232,0.55); text-align:center; }
+  .hashtag { font-family:'Cinzel',serif; letter-spacing:0.1em; color:var(--gold); }
+
+  .alert {
+    background:rgba(180,83,75,0.12); border:1px solid rgba(180,83,75,0.5);
+    color:#f0c9c5; border-radius:12px; padding:14px 16px;
+    font-size:0.82rem; line-height:1.6; margin-top:18px; text-align:left;
+  }
+  #toast {
+    position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom));
+    transform:translate(-50%,20px); opacity:0; pointer-events:none;
+    background:rgba(20,19,18,0.95); border:1px solid rgba(184,154,106,0.45);
+    color:var(--cream); padding:11px 18px; border-radius:999px;
+    font-size:0.78rem; transition:opacity .25s ease, transform .25s ease; z-index:50;
+    max-width:88vw; text-align:center;
+  }
+  #toast.show { opacity:1; transform:translate(-50%,0); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html" data-es="← Volver" data-en="← Back">← Volver</a>
+  <div id="lang-toggle">
+    <button type="button" class="active" onclick="setLang('es')">ES</button>
+    <button type="button" onclick="setLang('en')">EN</button>
+  </div>
+</header>
+
+<!-- ══ INTRO ══════════════════════════════════════════════════ -->
+<section id="intro">
+  <div class="intro-mark">Cristina &amp; Roberto</div>
+  <div class="rule"></div>
+  <h1 class="title" data-es="FILTRO DE LA BODA" data-en="WEDDING FILTER">FILTRO DE LA BODA</h1>
+  <p class="subtitle"
+     data-es="Tómate una foto con nuestros filtros y compártela en tus historias. Nada se sube a ningún servidor: la foto es solo tuya."
+     data-en="Take a photo with our filters and share it to your stories. Nothing is uploaded anywhere — the photo is yours alone.">
+    Tómate una foto con nuestros filtros y compártela en tus historias.
+  </p>
+  <div class="btn-row">
+    <button type="button" class="btn btn-primary" id="btn-start" data-es="ABRIR LA CÁMARA" data-en="OPEN THE CAMERA">ABRIR LA CÁMARA</button>
+  </div>
+  <p class="intro-note"
+     data-es="Tu teléfono pedirá permiso para usar la cámara. El video nunca sale de tu dispositivo."
+     data-en="Your phone will ask for camera permission. The video never leaves your device.">
+    Tu teléfono pedirá permiso para usar la cámara.
+  </p>
+  <div class="alert" id="intro-error" hidden></div>
+</section>
+
+<!-- ══ CÁMARA ═════════════════════════════════════════════════ -->
+<section id="stage" hidden>
+  <div class="viewport">
+    <video id="cam" playsinline muted autoplay></video>
+    <canvas id="view"></canvas>
+    <div class="ar-badge" id="ar-badge"></div>
+    <div id="countdown" hidden></div>
+    <div id="flash"></div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="controls">
+    <button type="button" class="icon-btn" id="btn-timer">3s</button>
+    <button type="button" id="shutter" aria-label="Foto"></button>
+    <button type="button" class="icon-btn" id="btn-flip">⟲</button>
+  </div>
+</section>
+
+<!-- ══ RESULTADO ══════════════════════════════════════════════ -->
+<section id="result" hidden>
+  <img id="shot" alt="">
+  <div class="btn-row">
+    <button type="button" class="btn btn-primary" id="btn-share" data-es="COMPARTIR" data-en="SHARE">COMPARTIR</button>
+    <a class="btn btn-outline" id="btn-save" download="CristinaYRoberto.jpg" data-es="GUARDAR" data-en="SAVE">GUARDAR</a>
+    <button type="button" class="btn btn-outline" id="btn-again" data-es="OTRA FOTO" data-en="RETAKE">OTRA FOTO</button>
+  </div>
+  <p class="hint" id="hint-tag"></p>
+  <p class="hint" id="save-hint" hidden></p>
+</section>
+
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   FILTRO AR — Cristina & Roberto
+   ────────────────────────────────────────────────────────────────
+   Sin SDK de pago. Tres piezas del navegador y una librería:
+     · getUserMedia   → la cámara
+     · <canvas>       → el filtro se dibuja encima del video
+     · navigator.share → abre el menú nativo (Instagram, Facebook,
+                         WhatsApp). Es el ÚNICO camino para publicar
+                         en Instagram desde la web; no existe una API
+                         pública para subir una historia directamente.
+     · MediaPipe FaceDetector (gratis, CDN, corre en el dispositivo)
+                       → posición de la cara para la corona y lentes.
+
+   Si MediaPipe no carga (red del salón, teléfono viejo), los marcos
+   siguen funcionando: solo se pierden los adornos sobre la cara.
+   ════════════════════════════════════════════════════════════════ */
+
+const NAMES   = 'Cristina & Roberto';
+const DATE_ES = '03 · OCTUBRE · 2026';
+const DATE_EN = 'OCTOBER 3 · 2026';
+const HASHTAG = '#CristinaYRoberto';
+
+/* Relación de aspecto del encuadre. 9/16 es el formato de historias
+   (Instagram, Facebook, WhatsApp, TikTok): entra a pantalla completa
+   sin barras. En el feed Instagram lo recorta a 4/5, por eso la firma
+   va con margen abajo. Cambia a 4 / 5 si prefieres el feed. */
+const RATIO = 9 / 16;
+/* Alto del archivo final en píxeles. 1920 da 1080x1920, la medida
+   nativa de una historia. */
+const CAP_H = 1920;
+
+const MP_VER   = '0.10.14';
+const MP_WASM  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VER + '/wasm';
+const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_detector/' +
+                 'blaze_face_short_range/float16/1/blaze_face_short_range.tflite';
+
+/* ── Idioma: el mismo que eligieron en index.html ─────────────── */
+let lang = 'es';
+try { const s = localStorage.getItem('wedding_lang'); if (s === 'es' || s === 'en') lang = s; } catch (_e) {}
+
+const STR = {
+  es: {
+    arOn:'AR activo', arOff:'Solo marco', arLoad:'Cargando AR…',
+    noFace:'Acerca tu cara a la cámara',
+    denied:'No diste permiso a la cámara. Ábrelo en los ajustes del navegador (candado junto a la dirección) y vuelve a intentar.',
+    nocam:'No encontramos ninguna cámara en este dispositivo.',
+    insecure:'La cámara solo funciona en una dirección https://. Abre esta página desde el enlace de la boda.',
+    unsupported:'Este navegador no permite usar la cámara. Prueba con Chrome o Safari.',
+    saved:'Foto guardada',
+    sharefail:'No se pudo abrir el menú de compartir. Usa GUARDAR.',
+    tag:'Compártela con <span class="hashtag">' + HASHTAG + '</span> para que podamos verla.',
+    savehint:'¿No aparece el menú de compartir? Guarda la foto y súbela desde Instagram o Facebook.',
+    date:DATE_ES
+  },
+  en: {
+    arOn:'AR on', arOff:'Frame only', arLoad:'Loading AR…',
+    noFace:'Bring your face closer',
+    denied:'Camera permission was denied. Allow it in your browser settings (the lock icon next to the address) and try again.',
+    nocam:'No camera found on this device.',
+    insecure:'The camera only works over https://. Open this page from the wedding link.',
+    unsupported:'This browser cannot use the camera. Try Chrome or Safari.',
+    saved:'Photo saved',
+    sharefail:'Could not open the share sheet. Use SAVE instead.',
+    tag:'Share it with <span class="hashtag">' + HASHTAG + '</span> so we can see it.',
+    savehint:'No share sheet? Save the photo and upload it from Instagram or Facebook.',
+    date:DATE_EN
+  }
+};
+const t = k => STR[lang][k];
+
+function setLang(l) {
+  lang = l;
+  try { localStorage.setItem('wedding_lang', l); } catch (_e) {}
+  document.documentElement.lang = l;
+  document.querySelectorAll('#lang-toggle button').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && l === 'es') || (i === 1 && l === 'en'));
+  });
+  document.querySelectorAll('[data-es]').forEach(el => {
+    const txt = el.getAttribute('data-' + l);
+    if (txt) el.innerHTML = txt;
+  });
+  document.getElementById('hint-tag').innerHTML  = t('tag');
+  document.getElementById('save-hint').innerHTML = t('savehint');
+  buildFilterBar();
+  updateBadge();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FILTROS
+   ────────────────────────────────────────────────────────────────
+   Cada filtro tiene:
+     label  → nombre en las dos lenguas
+     face   → adornos sobre cada cara (opcional). Recibe el punto de
+              referencia ya medido: centro de los ojos, distancia
+              entre ojos, inclinación.
+     frame  → marco y texto, se dibuja sin espejo para que las letras
+              se lean bien.
+   Para cambiar un adorno por un PNG propio, mete la imagen en
+   assets/ar/ y usa drawImg(...) dentro de face (ver ejemplo al final).
+   ════════════════════════════════════════════════════════════════ */
+const FILTERS = [
+  {
+    label:{ es:'Clásico', en:'Classic' },
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Corona de flores', en:'Flower crown' },
+    face:(c, f) => flowerCrown(c, f),
+    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Lentes de corazón', en:'Heart glasses' },
+    face:(c, f) => heartGlasses(c, f),
+    frame:(c, W, H) => { goldFrame(c, W, H); ribbon(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Velo y sombrero', en:'Veil & hat' },
+    /* Alterna por cara: la primera lleva velo, la segunda sombrero.
+       Con dos personas en el cuadro sale la pareja. */
+    face:(c, f, i) => (i % 2 === 0 ? veil(c, f) : topHat(c, f)),
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Pétalos', en:'Petals' },
+    frame:(c, W, H, time) => { petals(c, W, H, time); thinFrame(c, W, H); signature(c, W, H); }
+  }
+];
+let filterIx = 0;
+
+/* ── Marcos ──────────────────────────────────────────────────── */
+function goldFrame(c, W, H) {
+  const m = W * 0.035;
+  c.strokeStyle = 'rgba(184,154,106,0.95)'; c.lineWidth = Math.max(2, W * 0.006);
+  c.strokeRect(m, m, W - m * 2, H - m * 2);
+  c.strokeStyle = 'rgba(184,154,106,0.5)'; c.lineWidth = Math.max(1, W * 0.002);
+  const n = m + W * 0.016;
+  c.strokeRect(n, n, W - n * 2, H - n * 2);
+}
+
+function thinFrame(c, W, H) {
+  const m = W * 0.03;
+  c.strokeStyle = 'rgba(245,240,232,0.75)'; c.lineWidth = Math.max(1, W * 0.003);
+  c.strokeRect(m, m, W - m * 2, H - m * 2);
+}
+
+function vignette(c, W, H) {
+  const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.72);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(30,22,14,0.55)');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+}
+
+/* Firma: nombres, fecha y hashtag al pie. */
+function signature(c, W, H) {
+  const pad = H * 0.055;
+  const g = c.createLinearGradient(0, H - pad * 3.4, 0, H);
+  g.addColorStop(0, 'rgba(20,19,18,0)');
+  g.addColorStop(1, 'rgba(20,19,18,0.72)');
+  c.fillStyle = g; c.fillRect(0, H - pad * 3.4, W, pad * 3.4);
+
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.fillStyle = '#f5f0e8';
+  c.font = '400 ' + (W * 0.098) + 'px "Great Vibes", cursive';
+  c.fillText(NAMES, W / 2, H - pad * 1.62);
+
+  c.fillStyle = 'rgba(184,154,106,0.95)';
+  c.font = '600 ' + (W * 0.031) + 'px Cinzel, serif';
+  c.fillText(spread(t('date')), W / 2, H - pad * 0.92);
+
+  c.fillStyle = 'rgba(245,240,232,0.6)';
+  c.font = '400 ' + (W * 0.027) + 'px Lato, sans-serif';
+  c.fillText(HASHTAG, W / 2, H - pad * 0.36);
+}
+
+/* Canvas no tiene letter-spacing: se simula con espacios finos. */
+const spread = s => s.split('').join(' ');
+
+function ribbon(c, W, H) {
+  const txt = lang === 'es' ? 'RECIÉN CASADOS' : 'JUST MARRIED';
+  const y = H * 0.105, h = W * 0.072;
+  c.fillStyle = 'rgba(184,154,106,0.92)';
+  c.fillRect(W * 0.14, y, W * 0.72, h);
+  c.fillStyle = '#1b1a18'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.font = '700 ' + (W * 0.038) + 'px Cinzel, serif';
+  c.fillText(spread(txt), W / 2, y + h / 2);
+}
+
+/* Pétalos: estado propio, se dibuja el instante actual — la foto
+   captura lo mismo que se ve en pantalla. */
+const PETALS = Array.from({ length: 26 }, () => ({
+  x: Math.random(), y: Math.random(), r: 0.012 + Math.random() * 0.022,
+  vy: 0.04 + Math.random() * 0.07, vx: (Math.random() - 0.5) * 0.03,
+  sp: Math.random() * Math.PI * 2, vs: (Math.random() - 0.5) * 2
+}));
+let petalClock = 0;
+function petals(c, W, H, time) {
+  const dt = petalClock ? Math.min(0.05, (time - petalClock) / 1000) : 0;
+  petalClock = time;
+  for (const p of PETALS) {
+    p.y += p.vy * dt; p.x += p.vx * dt; p.sp += p.vs * dt;
+    if (p.y > 1.05) { p.y = -0.05; p.x = Math.random(); }
+    c.save();
+    c.translate(p.x * W, p.y * H); c.rotate(p.sp);
+    c.fillStyle = 'rgba(250,240,238,0.85)';
+    c.beginPath();
+    c.ellipse(0, 0, p.r * W, p.r * W * 0.55, 0, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+}
+
+/* ── Adornos sobre la cara ───────────────────────────────────────
+   f = { x, y, d, a }  centro entre los ojos, distancia entre ojos,
+   inclinación en radianes. Todo se mide en múltiplos de d para que
+   el adorno crezca con la cara. */
+function faceSpace(c, f, fn) {
+  c.save(); c.translate(f.x, f.y); c.rotate(f.a);
+  fn(c, f.d);
+  c.restore();
+}
+
+function petal5(c, x, y, r, fill) {
+  c.save(); c.translate(x, y);
+  for (let i = 0; i < 5; i++) {
+    c.rotate(Math.PI * 2 / 5);
+    c.beginPath();
+    c.ellipse(0, -r * 0.62, r * 0.42, r * 0.66, 0, 0, Math.PI * 2);
+    c.fillStyle = fill; c.fill();
+  }
+  c.beginPath(); c.arc(0, 0, r * 0.3, 0, Math.PI * 2);
+  c.fillStyle = '#e6c563'; c.fill();
+  c.restore();
+}
+
+function flowerCrown(c, f) {
+  faceSpace(c, f, (c, d) => {
+    /* Hojas primero, flores encima. */
+    for (let i = 0; i <= 16; i++) {
+      const u = -1 + (i / 16) * 2;
+      const x = u * d * 1.85;
+      const y = -d * 1.18 - (1 - u * u) * d * 0.5;
+      c.save(); c.translate(x, y); c.rotate(u * 1.1);
+      c.beginPath(); c.ellipse(0, d * 0.18, d * 0.12, d * 0.3, 0, 0, Math.PI * 2);
+      c.fillStyle = 'rgba(122,140,110,0.95)'; c.fill();
+      c.restore();
+    }
+    const tints = ['#fdf6f2', '#f7dfe4', '#fbeccd', '#f3d3d8'];
+    for (let i = 0; i <= 10; i++) {
+      const u = -1 + (i / 10) * 2;
+      const x = u * d * 1.78;
+      const y = -d * 1.22 - (1 - u * u) * d * 0.52;
+      const r = d * (0.24 + (1 - Math.abs(u)) * 0.12);
+      petal5(c, x, y, r, tints[i % tints.length]);
+    }
+  });
+}
+
+function heartPath(c, r) {
+  c.beginPath();
+  c.moveTo(0, r * 0.72);
+  c.bezierCurveTo(-r * 1.35, -r * 0.25, -r * 0.5, -r * 1.15, 0, -r * 0.42);
+  c.bezierCurveTo(r * 0.5, -r * 1.15, r * 1.35, -r * 0.25, 0, r * 0.72);
+  c.closePath();
+}
+
+function heartGlasses(c, f) {
+  faceSpace(c, f, (c, d) => {
+    const r = d * 0.52;
+    c.strokeStyle = '#b89a6a'; c.lineWidth = d * 0.09;
+    /* Puente y patillas */
+    c.beginPath(); c.moveTo(-d * 0.18, -d * 0.05); c.lineTo(d * 0.18, -d * 0.05); c.stroke();
+    c.beginPath(); c.moveTo(-d * 1.02, -d * 0.12); c.lineTo(-d * 1.5, -d * 0.3); c.stroke();
+    c.beginPath(); c.moveTo(d * 1.02, -d * 0.12);  c.lineTo(d * 1.5, -d * 0.3);  c.stroke();
+    for (const sx of [-1, 1]) {
+      c.save(); c.translate(sx * d * 0.52, 0);
+      heartPath(c, r);
+      c.fillStyle = 'rgba(180,83,75,0.42)'; c.fill();
+      c.lineWidth = d * 0.08; c.strokeStyle = '#b89a6a'; c.stroke();
+      c.restore();
+    }
+  });
+}
+
+function veil(c, f) {
+  faceSpace(c, f, (c, d) => {
+    c.fillStyle = 'rgba(250,247,242,0.3)';
+    c.beginPath();
+    c.moveTo(-d * 1.5, -d * 1.25);
+    c.bezierCurveTo(-d * 3.1, d * 0.6, -d * 2.6, d * 3.4, -d * 1.7, d * 3.6);
+    c.lineTo(d * 1.7, d * 3.6);
+    c.bezierCurveTo(d * 2.6, d * 3.4, d * 3.1, d * 0.6, d * 1.5, -d * 1.25);
+    c.closePath(); c.fill();
+    /* Tiara */
+    c.strokeStyle = 'rgba(230,197,99,0.95)'; c.lineWidth = d * 0.11;
+    c.beginPath(); c.ellipse(0, -d * 1.28, d * 1.45, d * 0.62, 0, Math.PI, 0); c.stroke();
+    for (let i = -1; i <= 1; i++) {
+      petal5(c, i * d * 0.78, -d * 1.72, d * 0.2, '#fdf6f2');
+    }
+  });
+}
+
+function topHat(c, f) {
+  faceSpace(c, f, (c, d) => {
+    c.fillStyle = '#24221f';
+    c.fillRect(-d * 2.1, -d * 1.58, d * 4.2, d * 0.2);           /* ala */
+    c.fillRect(-d * 1.18, -d * 3.1, d * 2.36, d * 1.55);         /* copa */
+    c.fillStyle = '#b89a6a';
+    c.fillRect(-d * 1.18, -d * 1.94, d * 2.36, d * 0.3);         /* cinta */
+  });
+}
+
+/* Ejemplo para cambiar un adorno por un PNG propio:
+
+   const CROWN = new Image(); CROWN.src = 'assets/ar/corona.png';
+   function flowerCrown(c, f) {
+     faceSpace(c, f, (c, d) => {
+       const w = d * 4;
+       c.drawImage(CROWN, -w / 2, -d * 2.1, w, w * CROWN.height / CROWN.width);
+     });
+   }
+*/
+
+/* ════════════════════════════════════════════════════════════════
+   CÁMARA Y DIBUJADO
+   ════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const video = $('cam'), viewCv = $('view');
+const vctx = viewCv.getContext('2d');
+
+let stream = null, facing = 'user', raf = 0;
+let detector = null, arState = 'load';   /* load | on | off */
+let faces = [], smooth = [], lastTs = -1;
+let shotBlob = null, shotUrl = null, timerOn = false, busy = false;
+
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function updateBadge() {
+  $('ar-badge').textContent =
+    arState === 'load' ? t('arLoad') : arState === 'on' ? t('arOn') : t('arOff');
+}
+
+function buildFilterBar() {
+  const bar = $('filters'); bar.innerHTML = '';
+  FILTERS.forEach((f, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = f.label[lang];
+    b.className = i === filterIx ? 'active' : '';
+    b.onclick = () => { filterIx = i; buildFilterBar(); };
+    bar.appendChild(b);
+  });
+}
+
+/* ── Arranque de la cámara ───────────────────────────────────── */
+async function startCamera() {
+  if (!window.isSecureContext) { introError(t('insecure')); return false; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { introError(t('unsupported')); return false; }
+
+  if (stream) stream.getTracks().forEach(tr => tr.stop());
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1600 } }
+    });
+  } catch (e) {
+    introError(e.name === 'NotAllowedError' || e.name === 'SecurityError' ? t('denied')
+             : e.name === 'NotFoundError' || e.name === 'OverconstrainedError' ? t('nocam')
+             : t('unsupported'));
+    return false;
+  }
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+  lastTs = -1; smooth = [];
+  return true;
+}
+
+function introError(msg) {
+  const el = $('intro-error'); el.textContent = msg; el.hidden = false;
+}
+
+/* ── MediaPipe: se carga aparte, nunca bloquea la cámara ─────── */
+async function loadDetector() {
+  try {
+    const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VER);
+    const files  = await vision.FilesetResolver.forVisionTasks(MP_WASM);
+    detector = await vision.FaceDetector.createFromOptions(files, {
+      baseOptions: { modelAssetPath: MP_MODEL, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      minDetectionConfidence: 0.45
+    });
+    arState = 'on';
+  } catch (e) {
+    /* ponytail: el modelo y el wasm vienen del CDN. Si la red del salón
+       falla, copia los archivos a assets/ar/ y apunta MP_WASM/MP_MODEL ahí. */
+    console.warn('AR no disponible:', e && e.message);
+    arState = 'off';
+  }
+  updateBadge();
+}
+
+/* Encaje "cover" del video dentro del lienzo destino. */
+function coverFit(vw, vh, W, H) {
+  const s = Math.max(W / vw, H / vh);
+  return { s, dx: (W - vw * s) / 2, dy: (H - vh * s) / 2 };
+}
+
+/* Una detección de MediaPipe → punto de referencia en píxeles del
+   lienzo destino. keypoints: 0 ojo, 1 ojo, 2 nariz, 3 boca, 4/5 orejas. */
+function toFace(det, vw, vh, fit) {
+  const k = det.keypoints;
+  if (!k || k.length < 2) return null;
+  const p = i => ({ x: fit.dx + k[i].x * vw * fit.s, y: fit.dy + k[i].y * vh * fit.s });
+  const a = p(0), b = p(1);
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+    d: Math.hypot(b.x - a.x, b.y - a.y) || 1,
+    a: Math.atan2(b.y - a.y, b.x - a.x)
+  };
+}
+
+/* La detección tiembla cuadro a cuadro; un promedio exponencial por
+   índice de cara basta para que el adorno no vibre. */
+function smoothFaces(list) {
+  const out = [];
+  for (let i = 0; i < list.length; i++) {
+    const n = list[i], o = smooth[i];
+    if (!o) { out.push(Object.assign({}, n)); continue; }
+    const L = (a, b) => a + (b - a) * 0.4;
+    /* El ángulo se interpola por su seno y coseno: así -179° y 179°
+       no se promedian en 0°. */
+    const ang = Math.atan2(L(Math.sin(o.a), Math.sin(n.a)), L(Math.cos(o.a), Math.cos(n.a)));
+    out.push({ x: L(o.x, n.x), y: L(o.y, n.y), d: L(o.d, n.d), a: ang });
+  }
+  smooth = out;
+  return out;
+}
+
+/* ── El dibujado: una sola función para la pantalla y para la foto.
+   mirror = true con la cámara frontal, para que la imagen coincida
+   con lo que la persona ve (y el texto del marco NO se voltea). ── */
+function render(c, W, H, facesPx, time, mirror) {
+  c.clearRect(0, 0, W, H);
+  const vw = video.videoWidth, vh = video.videoHeight;
+
+  if (vw && vh) {
+    const fit = coverFit(vw, vh, W, H);
+    c.save();
+    if (mirror) { c.translate(W, 0); c.scale(-1, 1); }
+    c.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
+    const f = FILTERS[filterIx].face;
+    if (f) facesPx.forEach((fc, i) => f(c, fc, i));
+    c.restore();
+  }
+  FILTERS[filterIx].frame(c, W, H, time);
+}
+
+function loop(time) {
+  raf = requestAnimationFrame(loop);
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw) return;
+
+  /* Lienzo de pantalla a la resolución real del dispositivo. */
+  const cssW = viewCv.clientWidth;
+  const dpr  = Math.min(window.devicePixelRatio || 1, 2);
+  const W = Math.round(cssW * dpr), H = Math.round(cssW / RATIO * dpr);
+  if (viewCv.width !== W || viewCv.height !== H) { viewCv.width = W; viewCv.height = H; }
+
+  if (detector && FILTERS[filterIx].face && video.currentTime !== lastTs) {
+    lastTs = video.currentTime;
+    try {
+      const res = detector.detectForVideo(video, time);
+      const fit = coverFit(vw, vh, W, H);
+      const raw = (res.detections || []).map(d => toFace(d, vw, vh, fit)).filter(Boolean);
+      if (raw.length !== smooth.length) smooth = [];
+      faces = smoothFaces(raw);
+    } catch (_e) { /* un cuadro perdido no importa */ }
+  } else if (!FILTERS[filterIx].face) {
+    faces = [];
+  }
+
+  render(vctx, W, H, faces, time, facing === 'user');
+}
+
+/* ── Captura ─────────────────────────────────────────────────── */
+async function capture() {
+  const H = CAP_H, W = Math.round(CAP_H * RATIO);
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+
+  /* Las caras se midieron para el lienzo de pantalla: se reescalan al
+     del archivo, que es más grande. */
+  const k = W / viewCv.width;
+  const scaled = faces.map(f => ({ x: f.x * k, y: f.y * k, d: f.d * k, a: f.a }));
+  render(c, W, H, scaled, performance.now(), facing === 'user');
+
+  const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.92));
+  if (!blob) { toast(t('sharefail')); return; }
+
+  if (shotUrl) URL.revokeObjectURL(shotUrl);
+  shotBlob = blob; shotUrl = URL.createObjectURL(blob);
+  $('shot').src = shotUrl;
+  $('btn-save').href = shotUrl;
+
+  /* Sin menú nativo (escritorio, navegadores viejos) solo queda guardar. */
+  const file = new File([blob], 'CristinaYRoberto.jpg', { type: 'image/jpeg' });
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  $('btn-share').hidden = !canShare;
+  $('save-hint').hidden = canShare;
+
+  show('result');
+}
+
+function flashAndShoot() {
+  const fl = $('flash');
+  fl.style.transition = 'none'; fl.style.opacity = '0.9';
+  requestAnimationFrame(() => { fl.style.transition = 'opacity .35s ease'; fl.style.opacity = '0'; });
+  capture();
+}
+
+async function shoot() {
+  if (busy) return;
+  busy = true; $('shutter').disabled = true;
+  if (timerOn) {
+    const cd = $('countdown'); cd.hidden = false;
+    for (let n = 3; n > 0; n--) {
+      cd.textContent = n;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    cd.hidden = true;
+  }
+  flashAndShoot();
+  busy = false; $('shutter').disabled = false;
+}
+
+/* ── Compartir ───────────────────────────────────────────────── */
+async function share() {
+  if (!shotBlob) return;
+  const file = new File([shotBlob], 'CristinaYRoberto.jpg', { type: 'image/jpeg' });
+  try {
+    /* El menú nativo es el único camino a Instagram desde la web:
+       no hay API pública para publicar una historia. */
+    await navigator.share({ files: [file], text: NAMES + ' · ' + HASHTAG });
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;   /* el invitado canceló */
+    toast(t('sharefail'));
+    $('save-hint').hidden = false;
+  }
+}
+
+/* ── Navegación entre pantallas ──────────────────────────────── */
+function show(name) {
+  for (const s of ['intro', 'stage', 'result']) $(s).hidden = (s !== name);
+  if (name === 'stage') { if (!raf) raf = requestAnimationFrame(loop); }
+  else if (raf) { cancelAnimationFrame(raf); raf = 0; }
+  window.scrollTo(0, 0);
+}
+
+/* ── Conexiones ──────────────────────────────────────────────── */
+$('btn-start').onclick = async () => {
+  $('intro-error').hidden = true;
+  if (!await startCamera()) return;
+  show('stage');
+  if (!detector && arState === 'load') loadDetector();
+};
+
+$('shutter').onclick = shoot;
+
+$('btn-timer').onclick = () => {
+  timerOn = !timerOn;
+  $('btn-timer').classList.toggle('on', timerOn);
+  $('btn-timer').textContent = timerOn ? '3s' : 'off';
+};
+
+$('btn-flip').onclick = async () => {
+  facing = facing === 'user' ? 'environment' : 'user';
+  if (!await startCamera()) { facing = facing === 'user' ? 'environment' : 'user'; await startCamera(); }
+};
+
+$('btn-share').onclick = share;
+$('btn-save').onclick  = () => toast(t('saved'));
+$('btn-again').onclick = () => show('stage');
+
+/* Soltar la cámara al salir de la página o al esconderla: si no, el
+   LED sigue encendido y algunos teléfonos no la prestan de vuelta. */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+  else if (!document.hidden && !$('stage').hidden && !raf) raf = requestAnimationFrame(loop);
+});
+window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEach(tr => tr.stop()); });
+
+/* Las fuentes deben estar listas antes del primer texto en canvas,
+   o el marco sale con la tipografía de respaldo. */
+if (document.fonts && document.fonts.ready) document.fonts.ready.catch(() => {});
+setLang(lang);
+$('btn-timer').textContent = 'off';
+</script>
+</body>
+</html>
