@@ -84,8 +84,15 @@
   .btn-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:22px; }
 
   /* ── Visor de cámara ────────────────────────────────────────── */
+  /* 9/16 es alto: en un teléfono no cabe a lo ancho completo junto con
+     los filtros y el obturador. El ancho se calcula desde la altura
+     disponible y se limita al ancho de la columna, así el visor siempre
+     entra en pantalla sin scroll y sin deformarse. */
   .viewport {
-    position:relative; width:100%; aspect-ratio:9/16;
+    position:relative; aspect-ratio:9/16;
+    width:min(100%, calc((100vh - 232px) * 9 / 16));
+    width:min(100%, calc((100dvh - 232px) * 9 / 16));
+    margin-inline:auto;
     border-radius:18px; overflow:hidden; background:#0d0c0b;
     border:1px solid rgba(184,154,106,0.35);
     box-shadow:0 18px 50px rgba(0,0,0,0.55);
@@ -381,25 +388,31 @@ function vignette(c, W, H) {
 }
 
 /* Firma: nombres, fecha y hashtag al pie. */
+/* SAFE = franja de abajo que Instagram y Facebook tapan con la barra
+   de "enviar mensaje" cuando la foto se sube como historia. El texto
+   se levanta por encima; el degradado sí baja hasta el borde. */
 function signature(c, W, H) {
-  const pad = H * 0.055;
-  const g = c.createLinearGradient(0, H - pad * 3.4, 0, H);
+  const pad  = W * 0.075;
+  const safe = H * 0.115;
+  const top  = H - pad * 3.4 - safe;
+  const g = c.createLinearGradient(0, top, 0, H);
   g.addColorStop(0, 'rgba(20,19,18,0)');
-  g.addColorStop(1, 'rgba(20,19,18,0.72)');
-  c.fillStyle = g; c.fillRect(0, H - pad * 3.4, W, pad * 3.4);
+  g.addColorStop(0.75, 'rgba(20,19,18,0.7)');
+  g.addColorStop(1, 'rgba(20,19,18,0.78)');
+  c.fillStyle = g; c.fillRect(0, top, W, H - top);
 
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
   c.fillStyle = '#f5f0e8';
-  c.font = '400 ' + (W * 0.098) + 'px "Great Vibes", cursive';
-  c.fillText(NAMES, W / 2, H - pad * 1.62);
+  c.font = '400 ' + (W * 0.115) + 'px "Great Vibes", cursive';
+  c.fillText(NAMES, W / 2, H - safe - pad * 1.62);
 
   c.fillStyle = 'rgba(184,154,106,0.95)';
-  c.font = '600 ' + (W * 0.031) + 'px Cinzel, serif';
-  c.fillText(spread(t('date')), W / 2, H - pad * 0.92);
+  c.font = '600 ' + (W * 0.036) + 'px Cinzel, serif';
+  c.fillText(spread(t('date')), W / 2, H - safe - pad * 0.92);
 
-  c.fillStyle = 'rgba(245,240,232,0.6)';
-  c.font = '400 ' + (W * 0.027) + 'px Lato, sans-serif';
-  c.fillText(HASHTAG, W / 2, H - pad * 0.36);
+  c.fillStyle = 'rgba(245,240,232,0.62)';
+  c.font = '400 ' + (W * 0.031) + 'px Lato, sans-serif';
+  c.fillText(HASHTAG, W / 2, H - safe - pad * 0.3);
 }
 
 /* Canvas no tiene letter-spacing: se simula con espacios finos. */
@@ -407,7 +420,8 @@ const spread = s => s.split('').join(' ');
 
 function ribbon(c, W, H) {
   const txt = lang === 'es' ? 'RECIÉN CASADOS' : 'JUST MARRIED';
-  const y = H * 0.105, h = W * 0.072;
+  /* Debajo de la franja que la historia tapa con el avatar y el nombre. */
+  const y = H * 0.145, h = W * 0.085;
   c.fillStyle = 'rgba(184,154,106,0.92)';
   c.fillRect(W * 0.14, y, W * 0.72, h);
   c.fillStyle = '#1b1a18'; c.textAlign = 'center'; c.textBaseline = 'middle';
