@@ -220,8 +220,8 @@
   <div class="rule"></div>
   <h1 class="title" data-es="FILTRO DE LA BODA" data-en="WEDDING FILTER">FILTRO DE LA BODA</h1>
   <p class="subtitle"
-     data-es="17 filtros animados. Toca para foto, mantén presionado para video, o arma una tira de cuatro. Nada se sube a ningún servidor: todo se queda en tu teléfono."
-     data-en="17 animated filters. Tap for a photo, hold for video, or make a strip of four. Nothing is uploaded anywhere — it all stays on your phone.">
+     data-es="14 filtros animados. Toca para foto, mantén presionado para video, o arma una tira de cuatro. Nada se sube a ningún servidor: todo se queda en tu teléfono."
+     data-en="14 animated filters. Tap for a photo, hold for video, or make a strip of four. Nothing is uploaded anywhere — it all stays on your phone.">
   </p>
   <div class="btn-row">
     <button type="button" class="btn btn-primary" id="btn-start" data-es="ABRIR LA CÁMARA" data-en="OPEN THE CAMERA">ABRIR LA CÁMARA</button>
@@ -363,12 +363,8 @@ const t = k => STR[lang][k];
    elige el filtro que los usa.
    ════════════════════════════════════════════════════════════════ */
 const A = {
-  ikerWalk : ['assets/characters/iker_walking01.png',  'assets/iker_walking02.png'],
-  finchWalk: ['assets/characters/finch_walking01.png', 'assets/finch_walking02.png'],
-  pillyWalk: ['assets/pilly_walking01.png',            'assets/pilly_walking02.png'],
-  valeWalk : ['assets/characters/vale_walking01.png',  'assets/vale_walking02.png'],
-  ikerMeow : ['assets/iker_meow01.png', 'assets/iker_meow02.png', 'assets/iker_meow03.png'],
-  novios   : ['assets/characters/novios_dancing01.png', 'assets/characters/novios_dancing02.png',
+  /* Los novios, en sus tres animaciones. Cada filtro usa una sola. */
+  dancing  : ['assets/characters/novios_dancing01.png', 'assets/characters/novios_dancing02.png',
               'assets/characters/novios_dancing03.png'],
   kiss     : ['assets/characters/novios_kiss01.png', 'assets/characters/novios_kiss02.png'],
   win      : ['assets/characters/novios_win01.png', 'assets/characters/novios_win02.png'],
@@ -377,11 +373,7 @@ const A = {
   cake     : ['assets/props/weddingStuff03.png'],
   heels    : ['assets/props/weddingStuff07.png'],
   bouquet  : ['assets/props/weddingStuff02.png'],
-  outfits  : ['assets/props/weddingStuff04.png'],
-  saveDate : ['assets/props/weddingStuff01.png'],
-  chaos    : ['assets/weddingStuff08.png', 'assets/weddingStuff09.png',
-              'assets/weddingStuff10.png', 'assets/weddingStuff011.png', 'assets/weddingStuff12.png'],
-  powers   : ['assets/booster.png', 'assets/life.png', 'assets/shield.png']
+  outfits  : ['assets/props/weddingStuff04.png']
 };
 
 const IMG = {};
@@ -486,51 +478,14 @@ function bokeh(c, W, H, tt) {
   }
 }
 
-/* Los gatos del juego caminando por el borde de abajo. */
-function catWalk(c, W, H, tt, walks, o) {
-  o = o || {};
-  const h = (o.size || 0.2) * W;
-  const floor = H * (o.floor || 0.845);
-  walks.forEach((walk, i) => {
-    const speed = 0.09 + i * 0.03;
-    const life = ((tt * speed) + i * 0.37) % 1;
-    const dir = i % 2 ? -1 : 1;
-    const x = dir > 0 ? life * (W + h) - h / 2 : W + h / 2 - life * (W + h);
-    const bob = Math.abs(Math.sin(tt * 7 + i)) * h * 0.05;
-    const im = img(anim(walk, 6, tt + i * 0.2));
-    if (!im) return;
-    const w = h * im.naturalWidth / im.naturalHeight;
-    c.save();
-    c.translate(x, floor - bob);
-    if (dir < 0) c.scale(-1, 1);        /* que mire hacia donde camina */
-    c.drawImage(im, -w / 2, -h / 2, w, h);
-    c.restore();
-  });
-}
-
 /* ── Marcos ──────────────────────────────────────────────────── */
-function goldFrame(c, W, H, tt) {
+function goldFrame(c, W, H) {
   const m = W * 0.035;
   c.strokeStyle = 'rgba(184,154,106,0.95)'; c.lineWidth = Math.max(2, W * 0.006);
   c.strokeRect(m, m, W - m * 2, H - m * 2);
   c.strokeStyle = 'rgba(184,154,106,0.5)'; c.lineWidth = Math.max(1, W * 0.002);
   const n = m + W * 0.016;
   c.strokeRect(n, n, W - n * 2, H - n * 2);
-  /* Brillo que recorre el marco: el detalle que delata que es un filtro
-     vivo y no una calcomanía pegada. */
-  if (tt !== undefined) {
-    const p = (tt * 0.22) % 1, per = (W + H) * 2 - m * 8;
-    let d = p * per, x, y;
-    const w2 = W - m * 2, h2 = H - m * 2;
-    if (d < w2)               { x = m + d;          y = m; }
-    else if (d < w2 + h2)     { x = W - m;          y = m + (d - w2); }
-    else if (d < w2 * 2 + h2) { x = W - m - (d - w2 - h2); y = H - m; }
-    else                      { x = m;              y = H - m - (d - w2 * 2 - h2); }
-    const g = c.createRadialGradient(x, y, 0, x, y, W * 0.14);
-    g.addColorStop(0, 'rgba(255,240,200,0.85)');
-    g.addColorStop(1, 'rgba(255,240,200,0)');
-    c.fillStyle = g; c.beginPath(); c.arc(x, y, W * 0.14, 0, Math.PI * 2); c.fill();
-  }
 }
 
 function thinFrame(c, W, H) {
@@ -704,16 +659,6 @@ function ringHalo(c, f, i, tt) {
   }, tt);
 }
 
-/* Un gato del juego asomado sobre el hombro. */
-function shoulderCat(c, f, i, tt) {
-  const side = i % 2 ? -1 : 1;
-  faceSpace(c, f, (c, d) => {
-    const src = anim(A.ikerMeow, 4, tt + i);
-    const bob = Math.sin(tt * 3 + i) * d * 0.12;
-    drawSprite(c, src, side * d * 2.9, d * 1.5 + bob, d * 2.4, side * 0.12, 1);
-  }, tt);
-}
-
 /* Corazoncitos que salen de la cara. */
 function loveBurst(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
@@ -745,7 +690,7 @@ function loveBurst(c, f, i, tt) {
 const FILTERS = [
   {
     label:{ es:'Clásico', en:'Classic' },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
     label:{ es:'Corona de flores', en:'Flower crown' },
@@ -757,14 +702,14 @@ const FILTERS = [
     label:{ es:'Lentes de corazón', en:'Heart glasses' },
     face: heartGlasses,
     scene:(c, W, H, tt) => flakes(c, W, H, tt, { n:16, speed:0.07, size:0.02, colors:['#e0798c','#f3b8c4','#f7dfe4'] }),
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); ribbon(c, W, H, lang === 'es' ? 'RECIÉN CASADOS' : 'JUST MARRIED', tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? 'RECIÉN CASADOS' : 'JUST MARRIED', tt); signature(c, W, H); }
   },
   {
     label:{ es:'Velo y sombrero', en:'Veil & hat' },
     /* Alterna por cara: la primera lleva velo, la segunda sombrero.
        Con dos personas en el cuadro sale la pareja. */
     face:(c, f, i, tt) => (i % 2 === 0 ? veil(c, f, i, tt) : topHat(c, f, i, tt)),
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
     label:{ es:'Te amo', en:'In love' },
@@ -784,7 +729,7 @@ const FILTERS = [
         colors:['#b89a6a','#e6c563','#f5f0e8','#7a8c6e','#e0798c'] });
       sparkles(c, W, H, tt, 8);
     },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); ribbon(c, W, H, lang === 'es' ? '¡VIVA LOS NOVIOS!' : 'HOORAY!', tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? 'QUE VIVA EL AMOR' : 'LET US CELEBRATE', tt); signature(c, W, H); }
   },
   {
     label:{ es:'Luces de fiesta', en:'Party lights' },
@@ -798,7 +743,7 @@ const FILTERS = [
     needs: A.rings,
     face: ringHalo,
     scene:(c, W, H, tt) => { field(c, W, H, tt, A.rings, { n:6, speed:0.05, size:0.16, alpha:0.85 }); sparkles(c, W, H, tt, 12); },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
     label:{ es:'Brindis', en:'Cheers' },
@@ -817,35 +762,7 @@ const FILTERS = [
       }
       c.globalAlpha = 1;
     },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); ribbon(c, W, H, lang === 'es' ? 'SALUD' : 'CHEERS', tt); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Los gatos', en:'The cats' },
-    needs: [].concat(A.ikerWalk, A.finchWalk, A.pillyWalk, A.valeWalk),
-    scene:(c, W, H, tt) => {
-      /* floor por encima de la firma: si caminan más abajo, los gatos
-         se meten entre los nombres y no se lee nada. */
-      catWalk(c, W, H, tt, [A.ikerWalk, A.finchWalk, A.pillyWalk, A.valeWalk], { size:0.24, floor:0.7 });
-    },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Gato al hombro', en:'Cat on you' },
-    needs: A.ikerMeow,
-    face: shoulderCat,
-    scene:(c, W, H, tt) => sparkles(c, W, H, tt, 6),
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Los novios', en:'The couple' },
-    needs: [].concat(A.novios, A.kiss),
-    scene:(c, W, H, tt) => {
-      const bob = Math.sin(tt * 6) * H * 0.008;
-      drawSprite(c, anim(A.novios, 6, tt), W * 0.78, H * 0.655 + bob, W * 0.34, Math.sin(tt * 3) * 0.06);
-      drawSprite(c, anim(A.kiss, 1.2, tt), W * 0.2, H * 0.675 - bob, W * 0.27, -Math.sin(tt * 3) * 0.05);
-      flakes(c, W, H, tt, { n:14, speed:0.1, size:0.018, colors:['#e6c563','#f5f0e8','#e0798c'] });
-    },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); ribbon(c, W, H, lang === 'es' ? 'NOS CASAMOS' : 'WE ARE MARRIED', tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? 'SALUD' : 'CHEERS', tt); signature(c, W, H); }
   },
   {
     label:{ es:'Pastel y fiesta', en:'Cake & party' },
@@ -855,37 +772,51 @@ const FILTERS = [
             { n:8, speed:0.045, size:0.19, alpha:0.92, up:true });
       sparkles(c, W, H, tt, 8);
     },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); signature(c, W, H); }
   },
+
+  /* ── Los novios ────────────────────────────────────────────
+     Uno solo por filtro, cada uno con su animación del juego. */
   {
-    label:{ es:'Poderes', en:'Power-ups' },
-    needs: A.powers,
+    label:{ es:'Los novios bailan', en:'The couple dances' },
+    needs: A.dancing,
     scene:(c, W, H, tt) => {
-      field(c, W, H, tt, A.powers, { n:9, speed:0.11, size:0.15, alpha:0.95, up:true });
-      sparkles(c, W, H, tt, 14, '#f6e1a0');
+      const bob = Math.sin(tt * 6) * H * 0.01;
+      drawSprite(c, anim(A.dancing, 6, tt), W * 0.74, H * 0.645 + bob, W * 0.4, Math.sin(tt * 3) * 0.06);
+      flakes(c, W, H, tt, { n:14, speed:0.1, size:0.018, colors:['#e6c563','#f5f0e8','#e0798c'] });
     },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); ribbon(c, W, H, lang === 'es' ? 'NIVEL: BODA' : 'LEVEL: WEDDING', tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? 'NOS CASAMOS' : 'WE ARE MARRIED', tt); signature(c, W, H); }
   },
   {
-    /* El chiste del juego: los "bloqueadores" de la vida real. */
-    label:{ es:'La vida real', en:'Real life' },
-    needs: A.chaos,
-    scene:(c, W, H, tt) => field(c, W, H, tt, A.chaos, { n:11, speed:0.13, size:0.2, alpha:0.95 }),
-    frame:(c, W, H, tt) => {
-      goldFrame(c, W, H, tt);
-      ribbon(c, W, H, lang === 'es' ? 'Y VIVIERON FELICES' : 'HAPPILY EVER AFTER', tt);
-      signature(c, W, H);
-    }
-  },
-  {
-    label:{ es:'Save the date', en:'Save the date' },
-    needs: A.saveDate,
+    label:{ es:'El beso', en:'The kiss' },
+    needs: A.kiss,
     scene:(c, W, H, tt) => {
-      drawSprite(c, A.saveDate[0], W * 0.5, H * 0.3 + Math.sin(tt * 1.4) * H * 0.012,
-                 W * 0.44, Math.sin(tt * 0.9) * 0.05, 0.97);
-      sparkles(c, W, H, tt, 10);
+      const bob = Math.sin(tt * 2.2) * H * 0.008;
+      drawSprite(c, anim(A.kiss, 1.4, tt), W * 0.74, H * 0.65 + bob, W * 0.38, Math.sin(tt * 1.6) * 0.04);
+      /* Corazones subiendo desde los novios. */
+      for (let i = 0; i < 9; i++) {
+        const life = ((tt * 0.3 + rnd(i, 1)) % 1);
+        c.save();
+        c.globalAlpha = Math.sin(life * Math.PI) * 0.85;
+        c.translate(W * 0.74 + (rnd(i, 2) - 0.5) * W * 0.3, H * 0.6 - life * H * 0.3);
+        c.rotate(Math.sin(tt * 2 + i) * 0.3);
+        heartPath(c, W * (0.02 + rnd(i, 3) * 0.022));
+        c.fillStyle = '#e0798c'; c.fill();
+        c.restore();
+      }
     },
-    frame:(c, W, H, tt) => { goldFrame(c, W, H, tt); signature(c, W, H); }
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'¡Viva los novios!', en:'Hooray!' },
+    needs: A.win,
+    scene:(c, W, H, tt) => {
+      const jump = Math.abs(Math.sin(tt * 3.2)) * H * 0.03;
+      drawSprite(c, anim(A.win, 4, tt), W * 0.74, H * 0.655 - jump, W * 0.4, Math.sin(tt * 4) * 0.07);
+      flakes(c, W, H, tt, { n:34, speed:0.16, size:0.026, rect:true,
+        colors:['#b89a6a','#e6c563','#f5f0e8','#7a8c6e','#e0798c'] });
+    },
+    frame:(c, W, H, tt) => { goldFrame(c, W, H); ribbon(c, W, H, lang === 'es' ? '¡VIVA LOS NOVIOS!' : 'HOORAY!', tt); signature(c, W, H); }
   }
 ];
 let filterIx = 0;
