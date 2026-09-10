@@ -7,7 +7,7 @@
 <title>Filtro · Cristina &amp; Roberto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Cinzel:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Cinzel:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Great+Vibes&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root {
     --cream: #f5f0e8;
@@ -384,7 +384,38 @@ const STR = {
     tooShort:'Muy corto. Mantén presionado más tiempo.',
     faceHint:'Acerca tu cara a la cámara',
     faceLoad:'Preparando el filtro…',
-    faceOff:'Este filtro no funciona en este teléfono'
+    faceOff:'Este filtro no funciona en este teléfono',
+    tapPhrase:'Toca la pantalla para cambiar la frase',
+    danceTip:'Para tomar a otros, cambia a la cámara de atrás',
+    /* Frases de los filtros chistosos. Se pueden cambiar, quitar o
+       agregar sin tocar nada más: los filtros las toman de aquí. */
+    signs:[
+      'Oficialmente fuera del mercado',
+      'Ya no hay devoluciones',
+      'Yo vine por el pastel',
+      '¿Y para cuándo el bebé?',
+      'Aquí se baila hasta que salga el sol',
+      'Aprobado por la suegra',
+      'Ella dijo que sí. Él no tuvo opción',
+      'Team Cristina',
+      'Team Roberto',
+      'Barra libre = amor eterno',
+      'Hasta que la muerte (o el wifi) nos separe',
+      'Soltería: 0 · Amor: 1'
+    ],
+    bubbles:[
+      '¿A qué hora es la comida?',
+      'Ese ramo es mío',
+      'Yo siempre dije que duraban',
+      'Mañana no me levanto',
+      'Nadie me saca de la pista',
+      'La que sigue soy yo',
+      '¿Ya me puedo quitar los zapatos?',
+      'Esta canción es mía',
+      'Yo los presenté',
+      'Otra ronda, por favor'
+    ],
+    arcade:{ score:'PUNTOS', level:'NIVEL: CASADOS', cont:'¿CONTINUAR?', yes:'SÍ, PARA SIEMPRE' }
   },
   en: {
     back:'Back', toCamera:'Camera',
@@ -407,7 +438,36 @@ const STR = {
     tooShort:'Too short. Hold the button longer.',
     faceHint:'Bring your face closer',
     faceLoad:'Getting the filter ready…',
-    faceOff:'This filter does not work on this phone'
+    faceOff:'This filter does not work on this phone',
+    tapPhrase:'Tap the screen to change the phrase',
+    danceTip:'To shoot others, switch to the back camera',
+    signs:[
+      'Officially off the market',
+      'No returns, no refunds',
+      'I’m just here for the cake',
+      'So… when’s the baby?',
+      'Dancing till sunrise',
+      'Mother-in-law approved',
+      'She said yes. He had no choice',
+      'Team Cristina',
+      'Team Roberto',
+      'Open bar = eternal love',
+      'Till death (or wifi) do us part',
+      'Single life: 0 · Love: 1'
+    ],
+    bubbles:[
+      'When do we eat?',
+      'That bouquet is mine',
+      'I always knew they’d make it',
+      'Not waking up tomorrow',
+      'Nobody’s getting me off this floor',
+      'I’m next',
+      'Can I take my shoes off yet?',
+      'This is my song',
+      'I introduced them',
+      'One more round, please'
+    ],
+    arcade:{ score:'SCORE', level:'LEVEL: MARRIED', cont:'CONTINUE?', yes:'YES, FOREVER' }
   }
 };
 const t = k => STR[lang][k];
@@ -592,6 +652,34 @@ function signature(c, W, H) {
   c.fillText(HASHTAG, W / 2, H - safe - pad * 0.3);
 }
 
+/* ── Stickers en alta calidad ────────────────────────────────────
+   Cada adorno tiene un dibujo vectorial de respaldo. Para cambiarlo por
+   arte de verdad (PNG con fondo transparente, 1024 px de ancho), pon el
+   archivo en assets/ar/stickers/ y descomenta su línea. La posición y el
+   tamaño sobre la cara ya están calculados: no hay que tocar nada más.
+   Sin la línea el archivo no se pide, así no hay errores 404. */
+const HQ = {
+  crown:        'assets/ar/stickers/crown.png',
+  // mustache:     'assets/ar/stickers/mustache.png',
+  lips:         'assets/ar/stickers/lips.png',
+  discoball:    'assets/ar/stickers/discoball.png',
+  sunglasses:   'assets/ar/stickers/sunglasses.png',
+  // heartglasses: 'assets/ar/stickers/heart-glasses.png',
+  // flowercrown:  'assets/ar/stickers/flower-crown.png',
+  // veil:         'assets/ar/stickers/veil.png',
+  tophat:       'assets/ar/stickers/top-hat.png'
+};
+/* Dibuja el sticker centrado en (x, y) con ancho w, si ya cargó. w
+   incluye el margen transparente del PNG: los de Fluent traen ~12%, por
+   eso sus anchos aquí son algo mayores que los del dibujo vectorial. */
+function hq(c, key, x, y, w) {
+  const im = HQ[key] && img(HQ[key]);
+  if (!im) return false;
+  const h = w * im.naturalHeight / im.naturalWidth;
+  c.drawImage(im, x - w / 2, y - h / 2, w, h);
+  return true;
+}
+
 /* ── Adornos sobre la cara ───────────────────────────────────────
    f = { x, y, d, a }: centro entre los ojos, distancia entre ojos,
    inclinación. Todo se mide en múltiplos de d para que el adorno
@@ -617,6 +705,7 @@ function petal5(c, x, y, r, fill) {
 
 function flowerCrown(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    if (hq(c, 'flowercrown', 0, -d * 1.35, d * 4)) return;
     for (let k = 0; k <= 16; k++) {
       const u = -1 + (k / 16) * 2;
       const x = u * d * 1.85;
@@ -648,6 +737,7 @@ function heartPath(c, r) {
 
 function heartGlasses(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    if (hq(c, 'heartglasses', 0, 0, d * 3.3)) return;
     const beat = 1 + Math.sin(tt * 4) * 0.07;
     const r = d * 0.52 * beat;
     c.strokeStyle = '#b89a6a'; c.lineWidth = d * 0.09;
@@ -679,6 +769,7 @@ function lensPath(c, w, h) {
 
 function sunglasses(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    if (hq(c, 'sunglasses', 0, d * 0.05, d * 3.6)) return;
     const w = d * 0.98, h = d * 0.66;
     /* Patillas */
     c.strokeStyle = '#141312'; c.lineWidth = d * 0.1; c.lineCap = 'round';
@@ -711,6 +802,7 @@ function sunglasses(c, f, i, tt) {
 
 function veil(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    if (hq(c, 'veil', 0, d * 1.0, d * 6.5)) return;
     const sway = Math.sin(tt * 1.2) * d * 0.18;
     c.fillStyle = 'rgba(250,247,242,0.3)';
     c.beginPath();
@@ -728,6 +820,7 @@ function veil(c, f, i, tt) {
 function topHat(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     c.rotate(Math.sin(tt * 1.1) * 0.03);
+    if (hq(c, 'tophat', 0, -d * 2.3, d * 4.2)) return;
     c.fillStyle = '#24221f';
     c.fillRect(-d * 2.1, -d * 1.58, d * 4.2, d * 0.2);
     c.fillRect(-d * 1.18, -d * 3.1, d * 2.36, d * 1.55);
@@ -838,6 +931,359 @@ function filmStrip(c, W, H, list, cy, tt, dir, tilt) {
   c.restore();
 }
 
+/* ── Para la pista ───────────────────────────────────────────── */
+
+const PARTY = ['255,92,160', '92,200,255', '255,214,92', '168,112,255', '120,255,176'];
+
+/* Bola disco. o = { cx, cy, r, noDots, noString } para dibujarla en
+   otro lugar (la miniatura). Por defecto cuelga arriba al centro,
+   debajo de la franja que la historia tapa con el avatar. */
+function discoBall(c, W, H, tt, o) {
+  o = o || {};
+  const cx = o.cx !== undefined ? o.cx : W * 0.5;
+  const cy = o.cy !== undefined ? o.cy : H * 0.17;
+  const r  = o.r  !== undefined ? o.r  : W * 0.12;
+
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+  /* Haces que giran */
+  const reach = Math.hypot(W, H);
+  for (let i = 0; i < 8; i++) {
+    const ang = i / 8 * Math.PI * 2 + tt * (i % 2 ? 0.5 : -0.35);
+    const spread = 0.07 + rnd(i, 31) * 0.05;
+    const col = PARTY[i % PARTY.length];
+    const g = c.createRadialGradient(cx, cy, r, cx, cy, reach);
+    g.addColorStop(0, 'rgba(' + col + ',0.32)');
+    g.addColorStop(1, 'rgba(' + col + ',0)');
+    c.fillStyle = g;
+    c.beginPath(); c.moveTo(cx, cy);
+    c.arc(cx, cy, reach, ang - spread, ang + spread);
+    c.closePath(); c.fill();
+  }
+  /* Puntitos de luz reflejados, girando por toda la escena */
+  if (!o.noDots) for (let i = 0; i < 36; i++) {
+    const ang = rnd(i, 41) * Math.PI * 2 + tt * 0.35;
+    const dist = (0.25 + rnd(i, 43) * 0.9) * Math.max(W, H) * 0.6;
+    const pr = W * (0.008 + rnd(i, 47) * 0.012);
+    c.fillStyle = 'rgba(' + PARTY[i % PARTY.length] + ',' + (0.35 + 0.35 * Math.sin(tt * 3 + i)) + ')';
+    c.beginPath(); c.arc(cx + Math.cos(ang) * dist, cy + Math.sin(ang) * dist * 1.3, pr, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+
+  if (!o.noString) {
+    c.strokeStyle = 'rgba(230,230,230,0.8)'; c.lineWidth = Math.max(1, W * 0.004);
+    c.beginPath(); c.moveTo(cx, 0); c.lineTo(cx, cy - r); c.stroke();
+  }
+  if (hq(c, 'discoball', cx, cy, r * 2.7)) return;
+
+  /* La bola: cuadritos de espejo que se encienden al girar */
+  c.save();
+  c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.clip();
+  const base = c.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.1, cx, cy, r);
+  base.addColorStop(0, '#f4f4f4'); base.addColorStop(1, '#5a5a5e');
+  c.fillStyle = base; c.fillRect(cx - r, cy - r, r * 2, r * 2);
+  const n = 9, cell = (r * 2) / n, spin = tt * 1.2;
+  const shift = (spin % 1) * cell;
+  for (let row = 0; row < n; row++) for (let col = -1; col <= n; col++) {
+    const lit = rnd(row * 13 + (col - Math.floor(spin)), 53);
+    if (lit < 0.55) continue;
+    c.fillStyle = 'rgba(255,255,255,' + ((lit - 0.55) * 1.8) + ')';
+    c.fillRect(cx - r + col * cell + shift + cell * 0.08, cy - r + row * cell + cell * 0.08, cell * 0.84, cell * 0.84);
+  }
+  c.strokeStyle = 'rgba(40,40,44,0.45)'; c.lineWidth = Math.max(1, r * 0.02);
+  for (let k = 0; k <= n; k++) {
+    c.beginPath(); c.moveTo(cx - r, cy - r + k * cell); c.lineTo(cx + r, cy - r + k * cell); c.stroke();
+    const x = cx - r + k * cell + shift;
+    c.beginPath(); c.moveTo(x, cy - r); c.lineTo(x, cy + r); c.stroke();
+  }
+  /* Sombra de esfera, para que no se vea como un cuadro plano */
+  const rim = c.createRadialGradient(cx, cy, r * 0.55, cx, cy, r);
+  rim.addColorStop(0, 'rgba(0,0,0,0)'); rim.addColorStop(1, 'rgba(0,0,0,0.55)');
+  c.fillStyle = rim; c.fillRect(cx - r, cy - r, r * 2, r * 2);
+  c.restore();
+}
+
+/* Cañones de confeti: una ráfaga desde cada esquina de abajo cada 2,6 s.
+   Tiro parabólico con resistencia del aire, en función del tiempo: la
+   foto congela el mismo instante que se ve.
+   Con v' = g - k·v:  y(t) = y0 + (g/k)·t + (vy - g/k)·(1 - e^-kt)/k */
+const CONFETTI = ['#b89a6a', '#e6c563', '#f5f0e8', '#7a8c6e', '#e0798c', '#7fc4e8'];
+function cannons(c, W, H, tt) {
+  const period = 2.6, life = 3, g = H * 1.1, kd = 1.2;
+  const now = Math.floor(tt / period);
+  for (let b = now - 1; b <= now; b++) {
+    for (const side of [-1, 1]) {
+      const t = tt - b * period - (side > 0 ? 0.12 : 0);
+      if (t < 0 || t > life) continue;
+      const fade = Math.min(1, (life - t) / 0.6);
+      const x0 = side < 0 ? W * 0.02 : W * 0.98, y0 = H * 0.8;
+      const e = (1 - Math.exp(-kd * t)) / kd;
+      for (let i = 0; i < 34; i++) {
+        const seed = b * 97 + i * 3 + (side > 0 ? 500 : 0);
+        const off = 0.2 + rnd(seed, 1) * 0.6;
+        const sp = H * (1.1 + rnd(seed, 2) * 0.6);
+        const vx = -side * Math.sin(off) * sp, vy = -Math.cos(off) * sp;
+        const x = x0 + vx * e;
+        const y = y0 + (vy - g / kd) * e + g * t / kd;
+        const sz = W * (0.018 + rnd(seed, 3) * 0.014);
+        const rot = t * (4 + rnd(seed, 4) * 6) + seed;
+        c.save();
+        c.globalAlpha = fade;
+        c.translate(x, y); c.rotate(rot);
+        c.fillStyle = CONFETTI[i % CONFETTI.length];
+        c.fillRect(-sz / 2, -sz * 0.3, sz * Math.cos(rot * 1.3), sz * 0.6);
+        c.restore();
+      }
+    }
+  }
+}
+
+/* Corona del rey de la pista: brinca a 120 BPM, el tempo de casi toda
+   la música de fiesta. */
+function danceCrown(c, f, i, tt) {
+  faceSpace(c, f, (c, d) => {
+    const beat = Math.abs(Math.sin(tt * Math.PI * 2));
+    c.translate(0, -d * 1.35 - beat * d * 0.12);
+    c.rotate(Math.sin(tt * Math.PI * 2) * 0.05);
+    if (hq(c, 'crown', 0, -d * 0.65, d * 3.3)) return;
+    const w = d * 3.1, h = d * 1.3;
+    c.beginPath();
+    c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -h * 0.55); c.lineTo(-w * 0.25, -h * 0.2);
+    c.lineTo(0, -h); c.lineTo(w * 0.25, -h * 0.2); c.lineTo(w / 2, -h * 0.55); c.lineTo(w / 2, 0);
+    c.closePath();
+    const g = c.createLinearGradient(0, -h, 0, 0);
+    g.addColorStop(0, '#f7e08a'); g.addColorStop(1, '#b8872e');
+    c.fillStyle = g; c.fill();
+    c.strokeStyle = '#8a6420'; c.lineWidth = d * 0.05; c.stroke();
+    c.fillStyle = '#c99a3a'; c.fillRect(-w / 2, -h * 0.14, w, h * 0.18);
+    [[-w * 0.3, '#e0584e'], [0, '#5aa9e6'], [w * 0.3, '#7a8c6e']].forEach(([x, col]) => {
+      c.fillStyle = col; c.beginPath(); c.arc(x, -h * 0.05, d * 0.09, 0, Math.PI * 2); c.fill();
+    });
+    [[-w / 2, -h * 0.55], [0, -h], [w / 2, -h * 0.55]].forEach(([x, y]) => {
+      c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(x, y, d * 0.08, 0, Math.PI * 2); c.fill();
+    });
+  }, tt);
+}
+
+/* ── Chistosos ───────────────────────────────────────────────── */
+
+/* Rectángulo redondeado a mano: c.roundRect no existe en iOS 15. */
+function rrect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);         c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+/* Parte un texto en líneas que caben en maxW con la fuente ya puesta. */
+function wrapText(c, text, maxW) {
+  const lines = [];
+  let line = '';
+  for (const w of text.split(' ')) {
+    const test = line ? line + ' ' + w : w;
+    if (line && c.measureText(test).width > maxW) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/* Texto centrado que se achica hasta caber en la caja (máximo 3 líneas). */
+function fitText(c, text, cx, cy, maxW, maxH, size, weight, family, color) {
+  let lines;
+  for (;;) {
+    c.font = weight + ' ' + size + 'px ' + family;
+    lines = wrapText(c, text, maxW);
+    const fits = lines.length <= 3 && lines.length * size * 1.18 <= maxH &&
+                 lines.every(l => c.measureText(l).width <= maxW);
+    if (fits || size < 8) break;
+    size *= 0.9;
+  }
+  c.fillStyle = color; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const lh = size * 1.18, top = cy - (lines.length - 1) * lh / 2;
+  lines.forEach((l, k) => c.fillText(l, cx, top + k * lh));
+}
+
+/* Frase en turno. k desfasa para que cada cara del grupo diga algo
+   distinto; tocar la pantalla avanza phraseIx. */
+let bubbleRects = [];                       /* burbujas ya puestas en este cuadro */
+const phrase = (key, k) => { const list = STR[lang][key]; return list[(phraseIx + (k || 0)) % list.length]; };
+
+/* Rebote al cambiar de frase (ease-out-back, ~0,26 s). */
+function popScale() {
+  const p = Math.min(1, (performance.now() - phraseAt) / 260), q = p - 1, k = 1.70158;
+  return q * q * ((k + 1) * q + k) + 1;
+}
+
+/* Letrero de photobooth en palito, abajo a la izquierda. */
+function funnySign(c, W, H, tt, text, sc) {
+  const bw = W * 0.52, bh = W * 0.31;
+  c.save();
+  c.translate(W * 0.31, H * 0.615 + bh);             /* pivote en la mano */
+  c.rotate(-0.07 + Math.sin(tt * 1.4) * 0.03);
+  c.scale(sc, sc);
+  c.translate(0, -bh);
+  c.fillStyle = '#b8894e'; c.fillRect(-W * 0.013, bh * 0.4, W * 0.026, H * 0.3);
+  c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = W * 0.03; c.shadowOffsetY = W * 0.01;
+  c.fillStyle = '#fbf6ec'; rrect(c, -bw / 2, -bh / 2, bw, bh, W * 0.03); c.fill();
+  c.shadowColor = 'transparent';
+  c.strokeStyle = '#b89a6a'; c.lineWidth = W * 0.008; c.stroke();
+  fitText(c, text, 0, 0, bw * 0.84, bh * 0.8, W * 0.06, '700', 'Lato, sans-serif', '#2c2c2c');
+  c.restore();
+}
+
+/* Burbuja de diálogo sobre una cara, derecha y sin espejo (el texto se
+   tiene que poder leer). f viene ya en coordenadas de pantalla. */
+function speechBubble(c, f, i, tt, W, H, text, sc) {
+  const size = W * 0.042;
+  c.font = '700 ' + size + 'px Lato, sans-serif';
+  /* Líneas parejas: sin esto "Nadie me saca de la / pista" deja una
+     palabra sola abajo. */
+  let lines = wrapText(c, text, W * 0.5);
+  if (lines.length > 1) lines = wrapText(c, text, c.measureText(text).width / lines.length * 1.12);
+  const tw = Math.max.apply(null, lines.map(l => c.measureText(l).width));
+  const bw = tw + size * 1.4, bh = lines.length * size * 1.2 + size;
+  const m = W * 0.04;
+  const side = i % 2 ? -1 : 1;
+  const bx = Math.max(m + bw / 2, Math.min(W - m - bw / 2, f.x + side * f.d * 1.2));
+  const top = H * 0.12, gap = size * 0.4;
+  let by = Math.max(top + bh / 2, f.y - f.d * 2.5 - bh / 2);
+  /* En grupo las burbujas chocaban. Cada una se acomoda respecto a las
+     ya puestas en este cuadro: arriba de la que estorba o, si ya no
+     cabe arriba, debajo. */
+  for (let tries = 0; tries < 6; tries++) {
+    const hit = bubbleRects.find(r => Math.abs(r.x - bx) < (r.w + bw) / 2 + gap &&
+                                      Math.abs(r.y - by) < (r.h + bh) / 2 + gap);
+    if (!hit) break;
+    const up = hit.y - (hit.h + bh) / 2 - gap;
+    by = up - bh / 2 >= top ? up : hit.y + (hit.h + bh) / 2 + gap;
+  }
+  bubbleRects.push({ x: bx, y: by, w: bw, h: bh });
+  const tipX = f.x, tipY = Math.max(f.y - f.d * 1.5, by + bh / 2 + size);
+  c.save();
+  c.translate(bx, by); c.scale(sc, sc); c.translate(-bx, -by);
+  c.shadowColor = 'rgba(0,0,0,0.3)'; c.shadowBlur = W * 0.02;
+  c.fillStyle = '#ffffff';
+  rrect(c, bx - bw / 2, by - bh / 2, bw, bh, Math.min(size, bh * 0.35)); c.fill();
+  const baseX = Math.max(bx - bw / 2 + size, Math.min(bx + bw / 2 - size, tipX));
+  c.beginPath();
+  c.moveTo(baseX - size * 0.5, by + bh / 2 - 1); c.lineTo(tipX, tipY); c.lineTo(baseX + size * 0.5, by + bh / 2 - 1);
+  c.closePath(); c.fill();
+  c.shadowColor = 'transparent';
+  c.fillStyle = '#2c2c2c'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const lh = size * 1.2, ty = by - (lines.length - 1) * lh / 2;
+  lines.forEach((l, k) => c.fillText(l, bx, ty + k * lh));
+  c.restore();
+}
+
+/* Bigote o labios en palito, como los accesorios de photobooth. Alterna
+   por cara: en pareja, uno bigote y otro labios. */
+function mustacheStick(c, f, i, tt) {
+  faceSpace(c, f, (c, d) => {
+    c.rotate(Math.sin(tt * 2 + i) * 0.04);
+    const lips = i % 2 === 1;
+    c.save();
+    c.translate(lips ? -d * 0.2 : d * 0.2, lips ? d * 1.2 : d * 1.0);
+    c.rotate(lips ? 0.35 : -0.35);
+    c.fillStyle = '#b8894e'; c.fillRect(-d * 0.05, 0, d * 0.1, d * 3.2);
+    c.restore();
+    if (!lips) {
+      if (hq(c, 'mustache', 0, d * 0.95, d * 2.7)) return;
+      c.save(); c.translate(0, d * 0.9); c.scale(1.3, 1.3); c.fillStyle = '#2b1d15';
+      for (const sx of [1, -1]) {
+        c.save(); c.scale(sx, 1);
+        c.beginPath();
+        c.moveTo(0, -d * 0.06);
+        c.bezierCurveTo(d * 0.3, -d * 0.3, d * 0.62, -d * 0.12, d * 0.72, d * 0.02);
+        c.bezierCurveTo(d * 0.86, d * 0.1, d * 1.02, -d * 0.05, d * 0.98, -d * 0.3);
+        c.bezierCurveTo(d * 1.12, -d * 0.02, d * 0.95, d * 0.3, d * 0.62, d * 0.24);
+        c.bezierCurveTo(d * 0.38, d * 0.2, d * 0.16, d * 0.12, 0, d * 0.2);
+        c.closePath(); c.fill();
+        c.restore();
+      }
+      c.restore();
+    } else {
+      if (hq(c, 'lips', 0, d * 1.2, d * 2.1)) return;
+      c.save(); c.translate(0, d * 1.15); c.scale(1.25, 1.25);
+      c.fillStyle = '#d0344a';
+      c.beginPath();
+      c.moveTo(-d * 0.62, 0);
+      c.bezierCurveTo(-d * 0.35, -d * 0.32, -d * 0.12, -d * 0.3, 0, -d * 0.16);
+      c.bezierCurveTo(d * 0.12, -d * 0.3, d * 0.35, -d * 0.32, d * 0.62, 0);
+      c.bezierCurveTo(d * 0.35, d * 0.4, -d * 0.35, d * 0.4, -d * 0.62, 0);
+      c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(120,20,35,0.6)'; c.lineWidth = d * 0.04;
+      c.beginPath(); c.moveTo(-d * 0.55, d * 0.01); c.quadraticCurveTo(0, d * 0.08, d * 0.55, d * 0.01); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.35)';
+      c.beginPath(); c.ellipse(-d * 0.22, d * 0.14, d * 0.12, d * 0.04, 0, 0, Math.PI * 2); c.fill();
+      c.restore();
+    }
+  }, tt);
+}
+
+/* Game over, como pantalla de arcade: guiño al juego de la boda. */
+const PIXEL = '"Press Start 2P", monospace';
+function pixelHeart(c, x, y, p, color) {
+  const rows = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+  c.fillStyle = color;
+  rows.forEach((r, j) => { for (let k = 0; k < r.length; k++) if (r[k] === 'X') c.fillRect(x + k * p, y + j * p, p, p); });
+}
+
+function ballAndChain(c, W, H, tt) {
+  const bx = W * 0.2, by = H * 0.69, r = W * 0.075;
+  const ex = W * 1.04, ey = H * 0.63;                 /* la cadena sale del cuadro */
+  const sag = H * 0.05 + Math.sin(tt * 1.3) * H * 0.008;
+  const ang = Math.atan2(ey - by, ex - bx);
+  c.lineWidth = W * 0.009; c.strokeStyle = '#3d3d42';
+  for (let k = 0; k <= 11; k++) {
+    const u = k / 11;
+    c.save();
+    c.translate(bx + (ex - bx) * u, by + (ey - by) * u + Math.sin(u * Math.PI) * sag);
+    c.rotate(ang);
+    c.beginPath(); c.ellipse(0, 0, W * 0.024, W * (k % 2 ? 0.008 : 0.014), 0, 0, Math.PI * 2); c.stroke();
+    c.restore();
+  }
+  const g = c.createRadialGradient(bx - r * 0.35, by - r * 0.35, r * 0.1, bx, by, r);
+  g.addColorStop(0, '#7a7a80'); g.addColorStop(1, '#1b1b1f');
+  c.fillStyle = g; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#e6c563'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.font = (W * 0.022) + 'px ' + PIXEL;
+  c.fillText('1000', bx, by - r * 0.05); c.fillText('KG', bx, by + r * 0.35);
+}
+
+function arcade(c, W, H, tt) {
+  const T8 = STR[lang].arcade;
+  /* Líneas de tele vieja */
+  const step = Math.max(3, Math.round(H * 0.004));
+  c.fillStyle = 'rgba(0,0,0,0.13)';
+  for (let y = 0; y < H; y += step) c.fillRect(0, y, W, Math.max(1, step * 0.4));
+
+  c.textBaseline = 'middle'; c.fillStyle = '#ffffff';
+  c.font = (W * 0.027) + 'px ' + PIXEL;
+  c.textAlign = 'left';  c.fillText(T8.score + ' 031026', W * 0.07, H * 0.135);
+  c.textAlign = 'right'; c.fillText(T8.level, W * 0.93, H * 0.135);
+  for (let k = 0; k < 3; k++) pixelHeart(c, W * 0.07 + k * W * 0.07, H * 0.152, W * 0.008, '#ff4d6d');
+
+  c.textAlign = 'center';
+  const big = W * 0.088;
+  c.font = big + 'px ' + PIXEL;
+  c.fillStyle = '#2c2c2c'; c.fillText('GAME OVER', W / 2 + big * 0.08, H * 0.24 + big * 0.08);
+  c.fillStyle = '#ff4d6d'; c.fillText('GAME OVER', W / 2, H * 0.24);
+
+  c.font = (W * 0.04) + 'px ' + PIXEL; c.fillStyle = '#ffffff';
+  c.fillText(T8.cont, W / 2, H * 0.3);
+  const opt = W * 0.036;
+  c.font = opt + 'px ' + PIXEL; c.fillStyle = '#e6c563';
+  c.fillText(T8.yes, W / 2 + opt * 0.9, H * 0.345);
+  if (Math.floor(tt * 2.5) % 2 === 0) {                /* la flechita parpadea */
+    const ax = W / 2 + opt * 0.9 - c.measureText(T8.yes).width / 2 - opt * 1.2, ay = H * 0.345;
+    c.beginPath(); c.moveTo(ax, ay - opt * 0.45); c.lineTo(ax + opt * 0.7, ay); c.lineTo(ax, ay + opt * 0.45);
+    c.closePath(); c.fill();
+  }
+  ballAndChain(c, W, H, tt);
+}
+
 /* ════════════════════════════════════════════════════════════════
    CATÁLOGO DE FILTROS
    ────────────────────────────────────────────────────────────────
@@ -845,6 +1291,10 @@ function filmStrip(c, W, H, list, cy, tt, dir, tilt) {
    puede traer:
      face  → adorno sobre cada cara detectada (va espejeado con el
              video, para que caiga donde la persona se ve)
+     faceText → como face, pero sin espejo: para lo que lleva letras
+     echo  → la imagen deja estela (ver updateEcho)
+     tap   → tocar la pantalla cambia la frase
+     backTip → sugiere la cámara de atrás (filtros para tomar a otros)
      scene → capa sobre el video, sin espejo (sprites, partículas)
      frame → marco y firma, siempre lo último
      needs → imágenes que hay que tener listas antes de disparar
@@ -941,6 +1391,91 @@ const FILTERS = [
         colors:['#b89a6a','#e6c563','#f5f0e8','#7a8c6e','#e0798c'] });
     },
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+
+  /* ── Para la pista ───────────────────────────────────────────
+     Sin cara: funcionan igual con la cámara de atrás, para tomarle
+     fotos a los que están bailando. */
+  {
+    label:{ es:'Bola disco', en:'Disco ball' },
+    backTip: true,
+    thumb:{ draw:(c, S) => discoBall(c, S, S, 0.8, { cx:S / 2, cy:S / 2, r:S * 0.26, noDots:true, noString:true }) },
+    scene:(c, W, H, tt) => discoBall(c, W, H, tt),
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Estela', en:'Motion trail' },
+    backTip: true,
+    echo: true,
+    thumb:{ draw:(c, S) => {
+      [0.25, 0.5, 1].forEach((a, k) => {
+        const x = S * (0.34 + k * 0.14);
+        c.globalAlpha = a; c.fillStyle = '#e6c563';
+        c.beginPath(); c.arc(x, S * 0.34, S * 0.09, 0, Math.PI * 2); c.fill();
+        c.beginPath(); c.ellipse(x, S * 0.67, S * 0.12, S * 0.2, 0, 0, Math.PI * 2); c.fill();
+      });
+      c.globalAlpha = 1;
+    } },
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Cañones de confeti', en:'Confetti cannons' },
+    backTip: true,
+    thumb:{ draw:(c, S) => cannons(c, S, S, 0.55) },
+    scene:(c, W, H, tt) => cannons(c, W, H, tt),
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Rey de la pista', en:'Dance floor royalty' },
+    thumb:{ draw:(c, S) => danceCrown(c, { x:S / 2, y:S * 0.95, d:S * 0.3, a:0 }, 0, 0) },
+    face: danceCrown,
+    scene:(c, W, H, tt) => sparkles(c, W, H, tt, 10),
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+
+  /* ── Chistosos ───────────────────────────────────────────── */
+  {
+    label:{ es:'Letreros', en:'Funny signs' },
+    tap: true,
+    thumb:{ draw:(c, S) => {
+      c.fillStyle = '#b8894e'; c.fillRect(S * 0.47, S * 0.6, S * 0.06, S * 0.4);
+      rrect(c, S * 0.12, S * 0.22, S * 0.76, S * 0.42, S * 0.05);
+      c.fillStyle = '#fbf6ec'; c.fill();
+      c.strokeStyle = '#b89a6a'; c.lineWidth = S * 0.025; c.stroke();
+      fitText(c, 'JAJA', S / 2, S * 0.43, S * 0.6, S * 0.3, S * 0.2, '700', 'Lato, sans-serif', '#2c2c2c');
+    } },
+    scene:(c, W, H, tt) => funnySign(c, W, H, tt, phrase('signs'), popScale()),
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Burbujas', en:'Speech bubbles' },
+    tap: true,
+    thumb:{ draw:(c, S) => {
+      c.fillStyle = '#ffffff';
+      rrect(c, S * 0.14, S * 0.2, S * 0.72, S * 0.42, S * 0.14); c.fill();
+      c.beginPath(); c.moveTo(S * 0.36, S * 0.6); c.lineTo(S * 0.3, S * 0.8); c.lineTo(S * 0.5, S * 0.6); c.fill();
+      c.fillStyle = '#2c2c2c';
+      [0.35, 0.5, 0.65].forEach(x => { c.beginPath(); c.arc(S * x, S * 0.41, S * 0.045, 0, Math.PI * 2); c.fill(); });
+    } },
+    faceText:(c, f, i, tt, W, H) => speechBubble(c, f, i, tt, W, H, phrase('bubbles', i), popScale()),
+    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Bigote y labios', en:'Mustache & lips' },
+    thumb:{ draw:(c, S) => mustacheStick(c, { x:S / 2, y:S * 0.2, d:S * 0.36, a:0 }, 0, 0) },
+    face: mustacheStick,
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Game over', en:'Game over' },
+    thumb:{ draw:(c, S) => {
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = (S * 0.16) + 'px ' + PIXEL;
+      c.fillStyle = '#2c2c2c'; c.fillText('GAME', S / 2 + 2, S * 0.4 + 2); c.fillText('OVER', S / 2 + 2, S * 0.62 + 2);
+      c.fillStyle = '#ff4d6d'; c.fillText('GAME', S / 2, S * 0.4);         c.fillText('OVER', S / 2, S * 0.62);
+    } },
+    scene:(c, W, H, tt) => arcade(c, W, H, tt),
+    frame:(c, W, H) => signature(c, W, H)
   },
 
   /* ── Sobre la cara ───────────────────────────────────────── */
@@ -1067,6 +1602,7 @@ const vctx = viewCv.getContext('2d');
 let stream = null, facing = 'user', raf = 0;
 let detector = null, arState = 'load';   /* load | on | off */
 let faces = [], smooth = [], lastTs = -1, lastFaceAt = 0, shownHint = null;
+let phraseIx = 0, phraseAt = 0, selectedAt = 0, danceTipShown = false;
 let mode = 'photo';                      /* photo | strip */
 let shotBlob = null, shotUrl = null, shotName = 'CristinaYRoberto.jpg';
 let timerOn = false, busy = false;
@@ -1142,9 +1678,13 @@ function selectFilter(i, scroll) {
   i = Math.max(0, Math.min(FILTERS.length - 1, i));
   if (i !== filterIx) {
     filterIx = i;
-    lastFaceAt = performance.now();
+    lastFaceAt = selectedAt = performance.now();
     tileHits = []; smooth = [];
     if (FILTERS[i].needs) preload(FILTERS[i].needs);
+    if (FILTERS[i].backTip && facing === 'user' && !danceTipShown) {
+      danceTipShown = true;
+      toast(t('danceTip'));
+    }
   }
   [...$('rail').children].forEach((b, k) => b.classList.toggle('active', k === i));
   $('filter-name').textContent = FILTERS[i].label[lang];
@@ -1410,11 +1950,17 @@ function render(c, W, H, facesPx, tt, mirror, bare) {
 
   if (vw && vh) {
     const fit = coverFit(vw, vh, W, H);
+    /* La estela ya trae el espejo y el encuadre aplicados. */
+    const echo = F.echo && echoReady;
+    if (echo) c.drawImage(echoCv, 0, 0, W, H);
     c.save();
     if (mirror) { c.translate(W, 0); c.scale(-1, 1); }
-    c.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
+    if (!echo) c.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
     if (F.face) facesPx.forEach((fc, i) => F.face(c, fc, i, tt));
     c.restore();
+    bubbleRects = [];
+    if (F.faceText) facesPx.forEach((fc, i) =>
+      F.faceText(c, mirror ? { x: W - fc.x, y: fc.y, d: fc.d, a: -fc.a } : fc, i, tt, W, H));
   }
   if (F.scene) F.scene(c, W, H, tt);
   /* bare = las tomas de la tira: llevan los efectos del filtro pero no
@@ -1424,15 +1970,38 @@ function render(c, W, H, facesPx, tt, mirror, bare) {
   else if (F.frame) F.frame(c, W, H, tt);
 }
 
-/* Aviso de cara: sustituye al viejo letrero de "AR activo". Solo
-   aparece cuando sirve — un filtro de cara sin cara a la vista. */
+const usesFaces = F => !!(F.face || F.faceText);
+
+/* ── Estela ──────────────────────────────────────────────────────
+   Cada cuadro se pinta al 30% encima del anterior: lo que se mueve deja
+   rastro y lo quieto se ve normal. Es el único filtro con memoria entre
+   cuadros, por eso vive aparte y render() solo lo lee.
+   ponytail: el búfer mide lo que la pantalla, así que la foto de este
+   filtro sale a esa resolución (~650x1150), no a 1080x1920. */
+const echoCv = document.createElement('canvas'), echoCtx = echoCv.getContext('2d');
+let echoReady = false;
+function updateEcho(W, H, vw, vh) {
+  if (echoCv.width !== W || echoCv.height !== H) { echoCv.width = W; echoCv.height = H; echoReady = false; }
+  const fit = coverFit(vw, vh, W, H);
+  echoCtx.save();
+  echoCtx.globalAlpha = echoReady ? 0.3 : 1;
+  if (facing === 'user') { echoCtx.translate(W, 0); echoCtx.scale(-1, 1); }
+  echoCtx.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
+  echoCtx.restore();
+  echoReady = true;
+}
+
+/* Aviso sobre la cámara. Solo aparece cuando sirve: un filtro de cara
+   sin cara a la vista, o recién elegido un filtro de frases. */
 function updateFaceHint(time) {
+  const F = FILTERS[filterIx];
   let hint = '';
-  if (FILTERS[filterIx].face) {
+  if (usesFaces(F)) {
     if (faces.length) lastFaceAt = time;
     if (arState === 'off') hint = t('faceOff');
     else if (time - lastFaceAt > 1500) hint = arState === 'load' ? t('faceLoad') : t('faceHint');
   }
+  if (!hint && F.tap && time - selectedAt < 3500) hint = t('tapPhrase');
   if (hint !== shownHint) {
     shownHint = hint;
     $('face-hint').textContent = hint;
@@ -1450,7 +2019,7 @@ function loop(time) {
   const W = Math.round(cssW * dpr), H = Math.round(cssW / RATIO * dpr);
   if (viewCv.width !== W || viewCv.height !== H) { viewCv.width = W; viewCv.height = H; }
 
-  if (detector && FILTERS[filterIx].face && video.currentTime !== lastTs) {
+  if (detector && usesFaces(FILTERS[filterIx]) && video.currentTime !== lastTs) {
     lastTs = video.currentTime;
     try {
       const fit = coverFit(vw, vh, W, H);
@@ -1458,10 +2027,11 @@ function loop(time) {
         ({ x: fit.dx + f.x * fit.s, y: fit.dy + f.y * fit.s, d: f.d * fit.s, a: f.a }));
       faces = smoothFaces(raw);
     } catch (_e) { /* un cuadro perdido no importa */ }
-  } else if (!FILTERS[filterIx].face) {
+  } else if (!usesFaces(FILTERS[filterIx])) {
     faces = [];
   }
 
+  if (FILTERS[filterIx].echo) updateEcho(W, H, vw, vh); else echoReady = false;
   updateFaceHint(time);
   render(vctx, W, H, faces, time / 1000, facing === 'user');
 }
@@ -1724,6 +2294,10 @@ $('viewport').addEventListener('pointerup', e => {
   const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
   swipe = null;
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) selectFilter(filterIx + (dx < 0 ? 1 : -1), true);
+  else if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && FILTERS[filterIx].tap) {
+    phraseIx++; phraseAt = performance.now();
+    selectedAt = 0;                       /* ya sabe tocar: fuera el aviso */
+  }
 });
 $('viewport').addEventListener('pointercancel', () => { swipe = null; });
 
@@ -1763,6 +2337,9 @@ window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEa
    firma y el monograma salen con la tipografía de respaldo. */
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => { paintThumbs(); fitViewport(); }).catch(() => {});
+  /* Press Start 2P solo se usa dentro del canvas, y el navegador no baja
+     una fuente que ningún texto de la página pide. */
+  document.fonts.load('16px "Press Start 2P"').then(paintThumbs).catch(() => {});
 }
 
 recMime = pickMime();

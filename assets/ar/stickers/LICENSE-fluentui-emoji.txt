@@ -1,0 +1,34 @@
+Los archivos de esta carpeta vienen de Fluent Emoji (Microsoft), estilo 3D:
+https://github.com/microsoft/fluentui-emoji
+
+  crown.png       <- assets/Crown/3D/crown_3d.png
+  discoball.png   <- assets/Mirror ball/3D/mirror_ball_3d.png
+  lips.png        <- assets/Mouth/3D/mouth_3d.png
+  sunglasses.png  <- assets/Sunglasses/3D/sunglasses_3d.png
+  top-hat.png     <- assets/Top hat/3D/top_hat_3d.png
+
+Son provisionales, mientras llega el arte en el estilo del juego.
+
+--------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) Microsoft Corporation.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
