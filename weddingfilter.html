@@ -30,7 +30,7 @@
   }
   /* Con la cámara abierta la página no hace scroll: el visor se mide
      para que todo quepa. */
-  body.shooting { overflow:hidden; }
+  body.shooting { overflow:hidden; -webkit-user-select:none; user-select:none; }
   button { font-family:inherit; }
   svg.i { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
 
@@ -135,6 +135,10 @@
   }
   #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .35s ease; }
   #rec-bar { position:absolute; left:0; top:0; height:4px; width:0%; background:var(--rec); }
+  #rec-pill {
+    top:14px; background:rgba(224,88,78,0.92); border-color:rgba(255,255,255,0.3);
+    font-weight:700; letter-spacing:0.06em; font-variant-numeric:tabular-nums;
+  }
   #strip-dots { position:absolute; top:18px; left:16px; display:flex; gap:6px; }
   #strip-dots i { width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,0.35); }
   #strip-dots i.done { background:var(--gold-hi); }
@@ -216,13 +220,28 @@
   #result { text-align:center; padding-top:4px; }
   #shot, #shot-video {
     display:block; margin:0 auto; max-width:100%;
-    max-height:calc(100vh - 290px); max-height:calc(100dvh - 290px);
+    max-height:calc(100vh - 380px); max-height:calc(100dvh - 380px);
     border-radius:18px; box-shadow:0 18px 50px rgba(0,0,0,0.55); background:#0d0c0b;
   }
   .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
   .actions .full { grid-column:1 / -1; }
   .hint { margin-top:14px; font-size:0.76rem; line-height:1.6; color:rgba(245,240,232,0.55); }
-  .hashtag { font-family:'Cinzel',serif; letter-spacing:0.08em; color:var(--gold); }
+  /* Etiquétanos: el @ sí les avisa aunque la cuenta del invitado sea
+     privada; el hashtag no. */
+  .tag-us {
+    margin-top:16px; padding:12px 14px; border-radius:14px;
+    background:rgba(245,240,232,0.06); border:1px solid rgba(245,240,232,0.14);
+  }
+  .tag-title { font-family:'Cinzel',serif; font-size:0.74rem; letter-spacing:0.14em; color:var(--gold); text-transform:uppercase; }
+  .tag-handles { margin-top:6px; font-size:0.84rem; line-height:1.6; }
+  .tag-handles a { color:var(--cream); text-decoration:none; white-space:nowrap; }
+  .tag-handles span { opacity:0.4; margin:0 6px; }
+  .btn-copy {
+    margin-top:10px; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--cream); background:rgba(245,240,232,0.1); border:1px solid rgba(245,240,232,0.2);
+    padding:8px 16px; border-radius:999px; cursor:pointer;
+  }
+  .btn-copy:active { transform:scale(0.96); }
 
   .alert {
     background:rgba(180,83,75,0.12); border:1px solid rgba(180,83,75,0.5);
@@ -294,6 +313,7 @@
     <div id="countdown" hidden></div>
     <div id="flash"></div>
     <div id="rec-bar"></div>
+    <div class="pill" id="rec-pill" hidden></div>
   </div>
 
   <div id="filter-name"></div>
@@ -327,7 +347,11 @@
     </button>
   </div>
   <p class="hint" id="save-hint" hidden></p>
-  <p class="hint" id="hint-tag"></p>
+  <div class="tag-us">
+    <p class="tag-title" data-es="Etiquétanos en tu historia" data-en="Tag us in your story">Etiquétanos en tu historia</p>
+    <p class="tag-handles" id="tag-handles"></p>
+    <button type="button" class="btn-copy" id="btn-copy" data-es="Copiar cuentas" data-en="Copy accounts">Copiar cuentas</button>
+  </div>
 </section>
 
 <div id="toast"></div>
@@ -353,6 +377,9 @@ const NAMES   = 'Cristina & Roberto';
 const DATE_ES = '03 · OCTUBRE · 2026';
 const DATE_EN = 'OCTOBER 3 · 2026';
 const HASHTAG = '#CristinaYRoberto';
+/* Cuentas de Instagram para etiquetar. Quitar o agregar una es tocar
+   solo esta lista. */
+const INSTAGRAM = ['cristinaborquez1', 'cristinaborquez.beauty', 'chepemorenor'];
 
 /* 9/16: formato de historias. El feed de Instagram lo recorta a 4/5,
    por eso la firma va dentro de la zona segura de abajo. */
@@ -387,7 +414,8 @@ const STR = {
     saved:'Listo, revisa tus descargas',
     sharefail:'No se abrió el menú de compartir; la guardamos en tu teléfono',
     shotfail:'No se pudo tomar la foto. Intenta de nuevo.',
-    tag:'Compártela con <span class="hashtag">' + HASHTAG + '</span>',
+    copied:'Copiadas: pégalas en tu historia o descripción',
+    copyfail:'No se pudieron copiar; mantén presionado el nombre para copiarlo',
     savehint:'Guárdala y súbela desde Instagram, Facebook o WhatsApp.',
     iosSave:'Para guardarla en tu galería: <b>Compartir</b> → <b>Guardar imagen</b> o <b>Guardar video</b>.',
     date:DATE_ES,
@@ -396,7 +424,7 @@ const STR = {
     holdHint:'Toca una vez el círculo del filtro para tomar foto, o mantenlo presionado para grabar un video',
     tapHint:'Toca una vez el círculo del filtro: se toman 4 fotos seguidas',
     recording:'Grabando… suelta para terminar',
-    tooShort:'Muy corto. Mantén presionado más tiempo.',
+    tapToStop:'Sigue grabando: toca el círculo para detener',
     faceHint:'Acerca tu cara a la cámara',
     faceLoad:'Preparando el filtro…',
     faceOff:'Este filtro no funciona en este teléfono',
@@ -413,7 +441,8 @@ const STR = {
     saved:'Done — check your downloads',
     sharefail:'The share sheet did not open; we saved it to your phone',
     shotfail:'Could not take the photo. Try again.',
-    tag:'Share it with <span class="hashtag">' + HASHTAG + '</span>',
+    copied:'Copied: paste them into your story or caption',
+    copyfail:'Could not copy; long-press a name to copy it',
     savehint:'Save it and upload it from Instagram, Facebook or WhatsApp.',
     iosSave:'To keep it in your photos: <b>Share</b> → <b>Save Image</b> or <b>Save Video</b>.',
     date:DATE_EN,
@@ -422,7 +451,7 @@ const STR = {
     holdHint:'Tap the filter circle once to take a photo, or hold it to record a video',
     tapHint:'Tap the filter circle once: 4 photos are taken in a row',
     recording:'Recording… let go to finish',
-    tooShort:'Too short. Hold the button longer.',
+    tapToStop:'Still recording: tap the circle to stop',
     faceHint:'Bring your face closer',
     faceLoad:'Getting the filter ready…',
     faceOff:'This filter does not work on this phone',
@@ -449,12 +478,7 @@ const A = {
   cake     : ['assets/props/weddingStuff03.png'],
   heels    : ['assets/props/weddingStuff07.png'],
   bouquet  : ['assets/props/weddingStuff02.png'],
-  outfits  : ['assets/props/weddingStuff04.png'],
-  /* Fotos de la sesión, reducidas a 640 px (assets/ar/moments). Las
-     originales de la galería pesan hasta 500 KB y 2048 px: doce de esas
-     decodificadas se comen la memoria de un teléfono modesto. */
-  moments  : ['m01','m02','m03','m04','m05','m06','m07','m08','m09','m10','m11','m12']
-               .map(n => 'assets/ar/moments/' + n + '.jpg')
+  outfits  : ['assets/props/weddingStuff04.png']
 };
 
 const IMG = {};
@@ -836,77 +860,6 @@ function loveBurst(c, f, i, tt) {
   }, tt);
 }
 
-/* ── Fotos de nuestros momentos ──────────────────────────────── */
-
-/* Foto recortada en "cover" dentro de un rectángulo. El recorte se
-   sesga hacia arriba: en los retratos las caras están en el tercio
-   superior y centrar las cortaría. */
-function coverImage(c, im, x, y, w, h) {
-  const s = Math.max(w / im.naturalWidth, h / im.naturalHeight);
-  const sw = w / s, sh = h / s;
-  c.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) * 0.3, sw, sh, x, y, w, h);
-}
-
-/* Foto que cambia sola cada `period` segundos, con fundido en el
-   último 20% del ciclo. `offset` desfasa varias para que no cambien
-   todas a la vez. */
-function slideshow(c, list, x, y, w, h, tt, period, offset) {
-  const p = tt / period + (offset || 0);
-  const i = Math.floor(p), fade = Math.max(0, (p - i - 0.8) / 0.2);
-  const a = img(list[i % list.length]), b = img(list[(i + 1) % list.length]);
-  if (a) coverImage(c, a, x, y, w, h);
-  if (b && fade > 0) { c.save(); c.globalAlpha = fade; coverImage(c, b, x, y, w, h); c.restore(); }
-}
-
-function polaroid(c, list, cx, cy, w, rot, tt, offset) {
-  const m = w * 0.06, ph = w - m * 2, h = w * 1.2;
-  c.save();
-  c.translate(cx, cy); c.rotate(rot);
-  c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = w * 0.08; c.shadowOffsetY = w * 0.03;
-  c.fillStyle = '#fbf8f2'; c.fillRect(-w / 2, -h / 2, w, h);
-  c.shadowColor = 'transparent';
-  c.fillStyle = '#ddd5c8'; c.fillRect(-w / 2 + m, -h / 2 + m, ph, ph);   /* mientras carga */
-  slideshow(c, list, -w / 2 + m, -h / 2 + m, ph, ph, tt, 3.2, offset);
-  /* Cinta adhesiva */
-  c.save(); c.translate(0, -h / 2); c.rotate(-0.06);
-  c.fillStyle = 'rgba(230,214,170,0.78)'; c.fillRect(-w * 0.18, -w * 0.045, w * 0.36, w * 0.09);
-  c.restore();
-  c.restore();
-}
-
-/* Tira de película que corre de lado. Es más ancha que la pantalla
-   para que la inclinación no deje esquinas vacías. */
-function filmStrip(c, W, H, list, cy, tt, dir, tilt) {
-  const bh = W * 0.3, fw = bh * 0.8, gap = bh * 0.1, cell = fw + gap;
-  const L = W * 1.4;
-  const off  = tt * W * 0.07 * dir;
-  const base = Math.floor(off / cell);
-  const shift = off - base * cell;
-  c.save();
-  c.translate(W / 2, cy); c.rotate(tilt);
-  c.fillStyle = 'rgba(20,18,15,0.94)'; c.fillRect(-L / 2, -bh / 2, L, bh);
-
-  const ph = bh * 0.7;
-  const n = Math.ceil(L / cell) + 2;
-  for (let k = -1; k < n; k++) {
-    const x = -L / 2 + k * cell + shift;
-    /* El índice viaja con la celda: la foto no salta al moverse. */
-    const src = list[(((k - base) % list.length) + list.length) % list.length];
-    const im = img(src);
-    c.fillStyle = '#2d2a25'; c.fillRect(x, -ph / 2, fw, ph);
-    if (im) coverImage(c, im, x, -ph / 2, fw, ph);
-  }
-  /* Perforaciones */
-  c.fillStyle = 'rgba(245,240,232,0.85)';
-  const hs = cell / 4, hw = bh * 0.07, hh = bh * 0.055;
-  const hshift = ((shift % hs) + hs) % hs;
-  for (let x = -L / 2 - hs + hshift; x < L / 2; x += hs) {
-    c.fillRect(x, -bh / 2 + bh * 0.04, hw, hh);
-    c.fillRect(x,  bh / 2 - bh * 0.04 - hh, hw, hh);
-  }
-  c.restore();
-}
-
 /* ── Para la pista ───────────────────────────────────────────── */
 
 const PARTY = ['255,92,160', '92,200,255', '255,214,92', '168,112,255', '120,255,176'];
@@ -1112,23 +1065,25 @@ function arcade(c, W, H, tt) {
 
   c.textBaseline = 'middle'; c.fillStyle = '#ffffff';
   c.font = (W * 0.027) + 'px ' + PIXEL;
-  c.textAlign = 'left';  c.fillText(T8.score + ' 031026', W * 0.07, H * 0.135);
-  c.textAlign = 'right'; c.fillText(T8.level, W * 0.93, H * 0.135);
-  for (let k = 0; k < 3; k++) pixelHeart(c, W * 0.07 + k * W * 0.07, H * 0.152, W * 0.008, '#ff4d6d');
+  /* Todo el letrero vive en la franja de arriba (8–25% del alto): más
+     abajo tapaba frentes y caras. */
+  c.textAlign = 'left';  c.fillText(T8.score + ' 031026', W * 0.07, H * 0.09);
+  c.textAlign = 'right'; c.fillText(T8.level, W * 0.93, H * 0.09);
+  for (let k = 0; k < 3; k++) pixelHeart(c, W * 0.07 + k * W * 0.07, H * 0.104, W * 0.008, '#ff4d6d');
 
   c.textAlign = 'center';
   const big = W * 0.088;
   c.font = big + 'px ' + PIXEL;
-  c.fillStyle = '#2c2c2c'; c.fillText('GAME OVER', W / 2 + big * 0.08, H * 0.24 + big * 0.08);
-  c.fillStyle = '#ff4d6d'; c.fillText('GAME OVER', W / 2, H * 0.24);
+  c.fillStyle = '#2c2c2c'; c.fillText('GAME OVER', W / 2 + big * 0.08, H * 0.155 + big * 0.08);
+  c.fillStyle = '#ff4d6d'; c.fillText('GAME OVER', W / 2, H * 0.155);
 
   c.font = (W * 0.04) + 'px ' + PIXEL; c.fillStyle = '#ffffff';
-  c.fillText(T8.cont, W / 2, H * 0.3);
+  c.fillText(T8.cont, W / 2, H * 0.2);
   const opt = W * 0.036;
   c.font = opt + 'px ' + PIXEL; c.fillStyle = '#e6c563';
-  c.fillText(T8.yes, W / 2 + opt * 0.9, H * 0.345);
+  c.fillText(T8.yes, W / 2 + opt * 0.9, H * 0.232);
   if (Math.floor(tt * 2.5) % 2 === 0) {                /* la flechita parpadea */
-    const ax = W / 2 + opt * 0.9 - c.measureText(T8.yes).width / 2 - opt * 1.2, ay = H * 0.345;
+    const ax = W / 2 + opt * 0.9 - c.measureText(T8.yes).width / 2 - opt * 1.2, ay = H * 0.232;
     c.beginPath(); c.moveTo(ax, ay - opt * 0.45); c.lineTo(ax + opt * 0.7, ay); c.lineTo(ax, ay + opt * 0.45);
     c.closePath(); c.fill();
   }
@@ -1146,7 +1101,7 @@ function arcade(c, W, H, tt) {
      scene → capa sobre el video, sin espejo (sprites, partículas)
      frame → marco y firma, siempre lo último
      needs → imágenes que hay que tener listas antes de disparar
-     thumb → miniatura del selector: { src, fit }, { glyph } o
+     thumb → miniatura del selector: { src }, { glyph } o
              { draw(c, S) }. Las partículas a escala de miniatura se
              vuelven puntitos irreconocibles, por eso los filtros sin
              imagen dibujan su propio ícono en grande.
@@ -1156,42 +1111,6 @@ const FILTERS = [
     label:{ es:'Clásico', en:'Classic' },
     thumb:{ glyph:'C&R' },
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
-  },
-
-  /* ── Nuestros momentos ─────────────────────────────────────
-     Fotos de la sesión. Van por las orillas: el centro queda libre
-     para la cara de quien se toma la foto. */
-  {
-    label:{ es:'Polaroids', en:'Polaroids' },
-    needs: A.moments,
-    thumb:{ src:A.moments[0], fit:'cover' },
-    scene:(c, W, H, tt) => {
-      const sway = k => Math.sin(tt * 1.1 + k) * 0.03;
-      polaroid(c, A.moments, W * 0.23, H * 0.225, W * 0.34, -0.14 + sway(0), tt, 0);
-      polaroid(c, A.moments, W * 0.8,  H * 0.25,  W * 0.3,   0.12 + sway(2), tt, 4.33);
-      polaroid(c, A.moments, W * 0.2,  H * 0.61,  W * 0.28,  0.09 + sway(4), tt, 8.66);
-    },
-    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Carrete', en:'Film reel' },
-    needs: A.moments,
-    thumb:{ src:A.moments[6], fit:'cover' },
-    scene:(c, W, H, tt) => {
-      /* Una sola tira arriba: la segunda tapaba la cara. */
-      filmStrip(c, W, H, A.moments, H * 0.165, tt, -1, 0);
-    },
-    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Nuestra historia', en:'Our story' },
-    needs: A.moments,
-    thumb:{ src:A.moments[10], fit:'cover' },
-    scene:(c, W, H, tt) => {
-      polaroid(c, A.moments, W * 0.73, H * 0.605, W * 0.42, 0.06 + Math.sin(tt * 0.9) * 0.025, tt, 0);
-      sparkles(c, W, H, tt, 8);
-    },
-    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
   },
 
   /* ── Los novios ────────────────────────────────────────────
@@ -1437,7 +1356,7 @@ function toast(msg) {
 
 /* ── Selector de filtros ─────────────────────────────────────── */
 
-/* Miniatura: una foto, un sprite, un monograma, o el filtro mismo
+/* Miniatura: un sprite, un monograma, o el filtro mismo
    dibujado sobre una cara imaginaria. Devuelve false si le falta una
    imagen, para volver a pintarla cuando cargue. */
 function drawThumb(cv, F) {
@@ -1456,11 +1375,8 @@ function drawThumb(cv, F) {
   }
   if (th.src) {
     const im = img(th.src); if (!im) return false;
-    if (th.fit === 'cover') coverImage(c, im, 0, 0, S, S);
-    else {
-      const h = S * 0.78, w = h * im.naturalWidth / im.naturalHeight;
-      c.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
-    }
+    const h = S * 0.78, w = h * im.naturalWidth / im.naturalHeight;
+    c.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
     return true;
   }
   const tt = 1.3;
@@ -1562,7 +1478,6 @@ function setLang(l) {
     const txt = el.getAttribute('data-' + l);
     if (txt) el.innerHTML = txt;
   });
-  $('hint-tag').innerHTML = t('tag');
   $('btn-flip').setAttribute('aria-label', t('flip'));
   $('btn-timer').setAttribute('aria-label', t('timer'));
   $('shutter').setAttribute('aria-label', t('shutter'));
@@ -2001,10 +1916,14 @@ async function startRec() {
   /* La barra va con setInterval y no con rAF: si llega una notificación,
      rAF se pausa y la barra se quedaría congelada mientras la
      grabación sigue corriendo. */
-  const bar = $('rec-bar');
-  recBarTimer = setInterval(() => {
-    bar.style.width = Math.min(100, (performance.now() - recStart) / (MAX_SECS * 1000) * 100) + '%';
-  }, 100);
+  const bar = $('rec-bar'), pill = $('rec-pill');
+  const tick = () => {
+    const secs = (performance.now() - recStart) / 1000;
+    bar.style.width = Math.min(100, secs / MAX_SECS * 100) + '%';
+    pill.textContent = '● 0:' + String(Math.floor(secs)).padStart(2, '0');
+  };
+  tick(); pill.hidden = false;
+  recBarTimer = setInterval(tick, 100);
   recStopTimer = setTimeout(stopRec, MAX_SECS * 1000);
 }
 
@@ -2017,14 +1936,18 @@ async function stopRec() {
   await done;
 
   $('rec-bar').style.width = '0%';
+  $('rec-pill').hidden = true;
   $('shutter').classList.remove('rec');
   recStream.getTracks().forEach(tr => tr.stop());
   recorder = null; recStream = null;
 
   /* Un video de medio segundo no sirve y algunos navegadores ni
      siquiera cierran bien el contenedor. */
-  if (secs < 0.8 || !recChunks.length) { toast(t('tooShort')); return; }
-  showResult(new Blob(recChunks, { type: recMime }), 'CristinaYRoberto.mp4');
+  if (secs < 0.8 || !recChunks.length) return 'short';
+  /* Tipo sin ";codecs=…": con el parámetro, algunos Android dicen que no
+     pueden compartir el archivo. */
+  showResult(new Blob(recChunks, { type: recMime.split(';')[0] }), 'CristinaYRoberto.mp4');
+  return 'ok';
 }
 
 /* ── Cuenta regresiva, destello, esperas ─────────────────────── */
@@ -2134,10 +2057,21 @@ async function runShot() {
 
 /* Arrastrar desde el obturador también mueve el carrusel: es justo donde
    cae el pulgar, y antes ese gesto no hacía nada. */
-let drag = null;
+let drag = null, ignoreUp = false;
+
+/* En Android, mantener presionado abre el menú contextual; eso cancela
+   el toque a los ~0,5 s y cortaba el video apenas empezaba. */
+shutter.addEventListener('contextmenu', e => e.preventDefault());
+$('viewport').addEventListener('contextmenu', e => e.preventDefault());
+
 shutter.addEventListener('pointerdown', e => {
   if (busy) return;
   e.preventDefault();
+  /* Grabando sin el dedo encima (el sistema canceló el gesto): un toque
+     detiene. El pointerup de ese toque no debe tomar además una foto. */
+  if (recorder && !held) { ignoreUp = true; finishRec(); return; }
+  /* Con captura, el pointerup llega aunque el dedo se salga del círculo. */
+  try { shutter.setPointerCapture(e.pointerId); } catch (_e) {}
   held = false;
   drag = { x: e.clientX, left: $('rail').scrollLeft, moved: false };
   /* En modo tira el gesto largo no aplica: siempre son 4 fotos. */
@@ -2159,24 +2093,34 @@ shutter.addEventListener('pointermove', e => {
   $('rail').scrollLeft = drag.left - dx;
 });
 
+/* Termina la grabación. Si duró menos de 0,8 s fue un toque lento, no un
+   video: antes eso no daba ni foto ni video; ahora toma la foto. */
+async function finishRec() {
+  busy = true; shutter.disabled = true;
+  const r = await stopRec();
+  busy = false; shutter.disabled = false;
+  if (r === 'short') runShot();
+}
+
 async function endHold(e) {
   if (e) e.preventDefault();
   clearTimeout(holdTimer);
+  if (ignoreUp) { ignoreUp = false; return; }
   const dr = drag; drag = null;
   if (dr && dr.moved) {
     $('rail').style.scrollSnapType = '';
     centerThumb(closestThumb(), true);
     return;
   }
-  if (held) { held = false; busy = true; shutter.disabled = true; await stopRec(); busy = false; shutter.disabled = false; }
-  else if (!recorder && e && e.type === 'pointerup') { runShot(); }
+  /* Si el sistema cancela el gesto a media grabación, el video sigue y se
+     detiene con otro toque, en vez de cortarse solo. */
+  if (held && e && e.type === 'pointercancel') { held = false; toast(t('tapToStop')); return; }
+  if (held) { held = false; await finishRec(); }
+  else if (!recorder && e && e.type === 'pointerup') runShot();
 }
 shutter.addEventListener('pointerup', endHold);
 shutter.addEventListener('pointercancel', endHold);
-/* Si el dedo se sale del botón, el pointerup ya no llega al elemento:
-   sin esto la grabación se quedaría corriendo para siempre. */
-shutter.addEventListener('lostpointercapture', endHold);
-window.addEventListener('pointerup', () => { if (held || recorder) endHold(); });
+window.addEventListener('pointerup', e => { if (held && e.target !== shutter) endHold(e); });
 
 /* ── Deslizar sobre la cámara cambia de filtro ────────────────── */
 let swipe = null;
@@ -2210,6 +2154,31 @@ $('btn-timer').onclick = () => {
 $('btn-flip').onclick = async () => {
   facing = facing === 'user' ? 'environment' : 'user';
   if (!await startCamera()) { facing = facing === 'user' ? 'environment' : 'user'; await startCamera(); }
+};
+
+$('tag-handles').innerHTML = INSTAGRAM
+  .map(h => '<a href="https://www.instagram.com/' + h + '/" target="_blank" rel="noopener">@' + h + '</a>')
+  /* Con espacios alrededor del punto: sin ellos no hay dónde partir la
+     línea y en teléfonos angostos la última cuenta se salía de la pantalla. */
+  .join(' <span>·</span> ');
+
+/* Copiar las cuentas para pegarlas en el sticker de mención. Instagram no
+   recibe texto desde la web, así que es lo más cerca de "etiquetar solo".
+   execCommand queda de respaldo para navegadores sin portapapeles
+   moderno (o sin permiso). */
+$('btn-copy').onclick = async () => {
+  const text = INSTAGRAM.map(h => '@' + h).join(' ');
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t('copied'));
+  } catch (_e) {
+    const ta = Object.assign(document.createElement('textarea'), { value: text });
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand && document.execCommand('copy');
+    ta.remove();
+    toast(ok ? t('copied') : t('copyfail'));
+  }
 };
 
 $('btn-share').onclick = share;
