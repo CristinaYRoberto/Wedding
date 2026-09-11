@@ -147,11 +147,15 @@
     margin-top:12px; height:18px; line-height:18px; text-align:center;
     font-family:'Cinzel',serif; font-size:0.76rem; letter-spacing:0.18em; text-transform:uppercase;
   }
+  /* Flechitas junto al nombre: dicen, sin palabras, que se desliza. */
+  #filter-name::before, #filter-name::after { content:'‹'; opacity:0.45; margin:0 12px; font-family:'Lato',sans-serif; }
+  #filter-name::after { content:'›'; }
   .rail-wrap { position:relative; height:92px; margin-top:4px; }
   #rail {
     position:relative; display:flex; align-items:center; gap:14px; height:100%;
     overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;
     padding-inline:calc(50% - 28px);
+    touch-action:pan-x;
     -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%);
             mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%);
   }
@@ -196,7 +200,17 @@
     content:''; position:absolute; left:50%; bottom:1px; width:5px; height:5px; margin-left:-2.5px;
     border-radius:50%; background:var(--gold-hi);
   }
-  .shoot-hint { text-align:center; font-size:0.7rem; color:rgba(245,240,232,0.45); min-height:16px; }
+  .shoot-hint {
+    width:fit-content; max-width:92%; margin:6px auto 0; padding:7px 14px;
+    text-align:center; font-size:0.8rem; line-height:1.35; color:var(--cream);
+    background:rgba(245,240,232,0.08); border:1px solid rgba(245,240,232,0.16); border-radius:14px;
+  }
+  .shoot-hint:empty { display:none; }
+  /* Al abrir la cámara el círculo late tres veces: ahí se toca. */
+  #shutter.nudge { animation:nudge 1.1s ease-in-out 3; }
+  @keyframes nudge {
+    50% { box-shadow:0 0 0 12px rgba(230,197,99,0.45), 0 6px 22px rgba(0,0,0,0.45); }
+  }
 
   /* ── Resultado ──────────────────────────────────────────────── */
   #result { text-align:center; padding-top:4px; }
@@ -301,7 +315,7 @@
   <div class="actions">
     <button type="button" class="btn btn-primary full" id="btn-share">
       <svg class="i" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
-      <span data-es="Compartir" data-en="Share">Compartir</span>
+      <span data-es="Compartir en redes" data-en="Share to social">Compartir en redes</span>
     </button>
     <a class="btn btn-ghost" id="btn-save">
       <svg class="i" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 21h14"/></svg>
@@ -371,50 +385,22 @@ const STR = {
     insecure:'La cámara solo funciona en una dirección https://. Abre esta página desde el enlace de la boda.',
     unsupported:'Este navegador no permite usar la cámara. Prueba con Chrome o Safari.',
     saved:'Listo, revisa tus descargas',
-    sharefail:'No se pudo abrir el menú de compartir. Usa Guardar.',
+    sharefail:'No se abrió el menú de compartir; la guardamos en tu teléfono',
+    shotfail:'No se pudo tomar la foto. Intenta de nuevo.',
     tag:'Compártela con <span class="hashtag">' + HASHTAG + '</span>',
     savehint:'Guárdala y súbela desde Instagram, Facebook o WhatsApp.',
     iosSave:'Para guardarla en tu galería: <b>Compartir</b> → <b>Guardar imagen</b> o <b>Guardar video</b>.',
     date:DATE_ES,
     mPhoto:'Foto', mStrip:'Tira',
     stripHint:'Cuatro fotos seguidas. ¡Cambia de pose!',
-    holdHint:'Toca para foto · mantén presionado para video',
-    tapHint:'Toca una vez: se toman 4 fotos',
+    holdHint:'Toca una vez el círculo del filtro para tomar foto, o mantenlo presionado para grabar un video',
+    tapHint:'Toca una vez el círculo del filtro: se toman 4 fotos seguidas',
     recording:'Grabando… suelta para terminar',
     tooShort:'Muy corto. Mantén presionado más tiempo.',
     faceHint:'Acerca tu cara a la cámara',
     faceLoad:'Preparando el filtro…',
     faceOff:'Este filtro no funciona en este teléfono',
-    tapPhrase:'Toca la pantalla para cambiar la frase',
     danceTip:'Para tomar a otros, cambia a la cámara de atrás',
-    /* Frases de los filtros chistosos. Se pueden cambiar, quitar o
-       agregar sin tocar nada más: los filtros las toman de aquí. */
-    signs:[
-      'Oficialmente fuera del mercado',
-      'Ya no hay devoluciones',
-      'Yo vine por el pastel',
-      '¿Y para cuándo el bebé?',
-      'Aquí se baila hasta que salga el sol',
-      'Aprobado por la suegra',
-      'Ella dijo que sí. Él no tuvo opción',
-      'Team Cristina',
-      'Team Roberto',
-      'Barra libre = amor eterno',
-      'Hasta que la muerte (o el wifi) nos separe',
-      'Soltería: 0 · Amor: 1'
-    ],
-    bubbles:[
-      '¿A qué hora es la comida?',
-      'Ese ramo es mío',
-      'Yo siempre dije que duraban',
-      'Mañana no me levanto',
-      'Nadie me saca de la pista',
-      'La que sigue soy yo',
-      '¿Ya me puedo quitar los zapatos?',
-      'Esta canción es mía',
-      'Yo los presenté',
-      'Otra ronda, por favor'
-    ],
     arcade:{ score:'PUNTOS', level:'NIVEL: CASADOS', cont:'¿CONTINUAR?', yes:'SÍ, PARA SIEMPRE' }
   },
   en: {
@@ -425,48 +411,22 @@ const STR = {
     insecure:'The camera only works over https://. Open this page from the wedding link.',
     unsupported:'This browser cannot use the camera. Try Chrome or Safari.',
     saved:'Done — check your downloads',
-    sharefail:'Could not open the share sheet. Use Save instead.',
+    sharefail:'The share sheet did not open; we saved it to your phone',
+    shotfail:'Could not take the photo. Try again.',
     tag:'Share it with <span class="hashtag">' + HASHTAG + '</span>',
     savehint:'Save it and upload it from Instagram, Facebook or WhatsApp.',
     iosSave:'To keep it in your photos: <b>Share</b> → <b>Save Image</b> or <b>Save Video</b>.',
     date:DATE_EN,
     mPhoto:'Photo', mStrip:'Strip',
     stripHint:'Four shots in a row. Switch poses!',
-    holdHint:'Tap for a photo · hold for video',
-    tapHint:'Tap once: 4 shots are taken',
+    holdHint:'Tap the filter circle once to take a photo, or hold it to record a video',
+    tapHint:'Tap the filter circle once: 4 photos are taken in a row',
     recording:'Recording… let go to finish',
     tooShort:'Too short. Hold the button longer.',
     faceHint:'Bring your face closer',
     faceLoad:'Getting the filter ready…',
     faceOff:'This filter does not work on this phone',
-    tapPhrase:'Tap the screen to change the phrase',
     danceTip:'To shoot others, switch to the back camera',
-    signs:[
-      'Officially off the market',
-      'No returns, no refunds',
-      'I’m just here for the cake',
-      'So… when’s the baby?',
-      'Dancing till sunrise',
-      'Mother-in-law approved',
-      'She said yes. He had no choice',
-      'Team Cristina',
-      'Team Roberto',
-      'Open bar = eternal love',
-      'Till death (or wifi) do us part',
-      'Single life: 0 · Love: 1'
-    ],
-    bubbles:[
-      'When do we eat?',
-      'That bouquet is mine',
-      'I always knew they’d make it',
-      'Not waking up tomorrow',
-      'Nobody’s getting me off this floor',
-      'I’m next',
-      'Can I take my shoes off yet?',
-      'This is my song',
-      'I introduced them',
-      'One more round, please'
-    ],
     arcade:{ score:'SCORE', level:'LEVEL: MARRIED', cont:'CONTINUE?', yes:'YES, FOREVER' }
   }
 };
@@ -630,7 +590,7 @@ const spread = s => s.split('').join(' ');
    encima; el degradado sí baja hasta el borde. */
 function signature(c, W, H) {
   const pad  = W * 0.075;
-  const safe = H * 0.115;
+  const safe = H * 0.07;
   const top  = H - pad * 3.4 - safe;
   const g = c.createLinearGradient(0, top, 0, H);
   g.addColorStop(0, 'rgba(20,19,18,0)');
@@ -684,6 +644,16 @@ function hq(c, key, x, y, w) {
    f = { x, y, d, a }: centro entre los ojos, distancia entre ojos,
    inclinación. Todo se mide en múltiplos de d para que el adorno
    crezca con la cara. */
+/* Proporciones de cada cara en distancias entre ojos. Las miniaturas
+   no traen cara real y usan los valores típicos. */
+const noseY  = f => f.ny || 0.7;
+const mouthY = f => f.my || 1.15;
+const headW  = f => f.hw || 2.4;
+/* Coronilla: los ojos quedan a media cabeza, así que hacia arriba hay
+   más o menos lo mismo que de los ojos a la barbilla (~1,5 veces la
+   distancia ojos-boca). */
+const headTop = f => -mouthY(f) * 1.5;
+
 function faceSpace(c, f, fn, tt) {
   c.save(); c.translate(f.x, f.y); c.rotate(f.a);
   fn(c, f.d, tt);
@@ -705,6 +675,7 @@ function petal5(c, x, y, r, fill) {
 
 function flowerCrown(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    c.translate(0, (headTop(f) * 0.8 + 1.2) * d);          /* sobre el nacimiento del pelo */
     if (hq(c, 'flowercrown', 0, -d * 1.35, d * 4)) return;
     for (let k = 0; k <= 16; k++) {
       const u = -1 + (k / 16) * 2;
@@ -737,6 +708,7 @@ function heartPath(c, r) {
 
 function heartGlasses(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    const gs = headW(f) / 2.4; c.scale(gs, gs);            /* ancho de la cabeza */
     if (hq(c, 'heartglasses', 0, 0, d * 3.3)) return;
     const beat = 1 + Math.sin(tt * 4) * 0.07;
     const r = d * 0.52 * beat;
@@ -769,6 +741,7 @@ function lensPath(c, w, h) {
 
 function sunglasses(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    const gs = headW(f) / 2.4; c.scale(gs, gs);            /* ancho de la cabeza */
     if (hq(c, 'sunglasses', 0, d * 0.05, d * 3.6)) return;
     const w = d * 0.98, h = d * 0.66;
     /* Patillas */
@@ -802,6 +775,7 @@ function sunglasses(c, f, i, tt) {
 
 function veil(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
+    c.translate(0, (headTop(f) * 0.82 + 1.28) * d);        /* tiara en la coronilla */
     if (hq(c, 'veil', 0, d * 1.0, d * 6.5)) return;
     const sway = Math.sin(tt * 1.2) * d * 0.18;
     c.fillStyle = 'rgba(250,247,242,0.3)';
@@ -820,7 +794,9 @@ function veil(c, f, i, tt) {
 function topHat(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     c.rotate(Math.sin(tt * 1.1) * 0.03);
-    if (hq(c, 'tophat', 0, -d * 2.3, d * 4.2)) return;
+    c.translate(0, (headTop(f) * 0.95 + 1.58) * d);        /* ala sobre la coronilla */
+    /* El ala del PNG queda al 94% de su alto: se sube para que apoye ahí. */
+    if (hq(c, 'tophat', 0, -1.58 * d - d * 4.2 * 0.44, d * 4.2)) return;
     c.fillStyle = '#24221f';
     c.fillRect(-d * 2.1, -d * 1.58, d * 4.2, d * 0.2);
     c.fillRect(-d * 1.18, -d * 3.1, d * 2.36, d * 1.55);
@@ -835,7 +811,7 @@ function ringHalo(c, f, i, tt) {
     const im = img(A.rings[0]); if (!im) return;
     const s = d * 1.5, w = s * im.naturalWidth / im.naturalHeight;
     c.save();
-    c.translate(0, -d * 2.1);
+    c.translate(0, (headTop(f) - 0.4) * d);
     c.rotate(Math.sin(tt * 1.3) * 0.25);
     c.scale(Math.cos(tt * 1.1) * 0.35 + 0.65, 1);   /* giro fingido en 3D */
     c.drawImage(im, -w / 2, -s / 2, w, s);
@@ -1043,10 +1019,13 @@ function cannons(c, W, H, tt) {
 function danceCrown(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     const beat = Math.abs(Math.sin(tt * Math.PI * 2));
-    c.translate(0, -d * 1.35 - beat * d * 0.12);
+    c.translate(0, headTop(f) * 0.9 * d - beat * d * 0.12);   /* base sobre la coronilla */
     c.rotate(Math.sin(tt * Math.PI * 2) * 0.05);
-    if (hq(c, 'crown', 0, -d * 0.65, d * 3.3)) return;
-    const w = d * 3.1, h = d * 1.3;
+    /* La base de la corona del PNG está al 93% de su alto: el centro se
+       sube para que esa base, y no el centro, quede sobre la cabeza. */
+    const cw = headW(f) * d * 1.35;
+    if (hq(c, 'crown', 0, -cw * 0.43, cw)) return;
+    const w = headW(f) * d * 1.25, h = w * 0.42;
     c.beginPath();
     c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -h * 0.55); c.lineTo(-w * 0.25, -h * 0.2);
     c.lineTo(0, -h); c.lineTo(w * 0.25, -h * 0.2); c.lineTo(w / 2, -h * 0.55); c.lineTo(w / 2, 0);
@@ -1067,130 +1046,23 @@ function danceCrown(c, f, i, tt) {
 
 /* ── Chistosos ───────────────────────────────────────────────── */
 
-/* Rectángulo redondeado a mano: c.roundRect no existe en iOS 15. */
-function rrect(c, x, y, w, h, r) {
-  c.beginPath();
-  c.moveTo(x + r, y);
-  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r);         c.arcTo(x, y, x + w, y, r);
-  c.closePath();
-}
-
-/* Parte un texto en líneas que caben en maxW con la fuente ya puesta. */
-function wrapText(c, text, maxW) {
-  const lines = [];
-  let line = '';
-  for (const w of text.split(' ')) {
-    const test = line ? line + ' ' + w : w;
-    if (line && c.measureText(test).width > maxW) { lines.push(line); line = w; }
-    else line = test;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-/* Texto centrado que se achica hasta caber en la caja (máximo 3 líneas). */
-function fitText(c, text, cx, cy, maxW, maxH, size, weight, family, color) {
-  let lines;
-  for (;;) {
-    c.font = weight + ' ' + size + 'px ' + family;
-    lines = wrapText(c, text, maxW);
-    const fits = lines.length <= 3 && lines.length * size * 1.18 <= maxH &&
-                 lines.every(l => c.measureText(l).width <= maxW);
-    if (fits || size < 8) break;
-    size *= 0.9;
-  }
-  c.fillStyle = color; c.textAlign = 'center'; c.textBaseline = 'middle';
-  const lh = size * 1.18, top = cy - (lines.length - 1) * lh / 2;
-  lines.forEach((l, k) => c.fillText(l, cx, top + k * lh));
-}
-
-/* Frase en turno. k desfasa para que cada cara del grupo diga algo
-   distinto; tocar la pantalla avanza phraseIx. */
-let bubbleRects = [];                       /* burbujas ya puestas en este cuadro */
-const phrase = (key, k) => { const list = STR[lang][key]; return list[(phraseIx + (k || 0)) % list.length]; };
-
-/* Rebote al cambiar de frase (ease-out-back, ~0,26 s). */
-function popScale() {
-  const p = Math.min(1, (performance.now() - phraseAt) / 260), q = p - 1, k = 1.70158;
-  return q * q * ((k + 1) * q + k) + 1;
-}
-
-/* Letrero de photobooth en palito, abajo a la izquierda. */
-function funnySign(c, W, H, tt, text, sc) {
-  const bw = W * 0.52, bh = W * 0.31;
-  c.save();
-  c.translate(W * 0.31, H * 0.615 + bh);             /* pivote en la mano */
-  c.rotate(-0.07 + Math.sin(tt * 1.4) * 0.03);
-  c.scale(sc, sc);
-  c.translate(0, -bh);
-  c.fillStyle = '#b8894e'; c.fillRect(-W * 0.013, bh * 0.4, W * 0.026, H * 0.3);
-  c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = W * 0.03; c.shadowOffsetY = W * 0.01;
-  c.fillStyle = '#fbf6ec'; rrect(c, -bw / 2, -bh / 2, bw, bh, W * 0.03); c.fill();
-  c.shadowColor = 'transparent';
-  c.strokeStyle = '#b89a6a'; c.lineWidth = W * 0.008; c.stroke();
-  fitText(c, text, 0, 0, bw * 0.84, bh * 0.8, W * 0.06, '700', 'Lato, sans-serif', '#2c2c2c');
-  c.restore();
-}
-
-/* Burbuja de diálogo sobre una cara, derecha y sin espejo (el texto se
-   tiene que poder leer). f viene ya en coordenadas de pantalla. */
-function speechBubble(c, f, i, tt, W, H, text, sc) {
-  const size = W * 0.042;
-  c.font = '700 ' + size + 'px Lato, sans-serif';
-  /* Líneas parejas: sin esto "Nadie me saca de la / pista" deja una
-     palabra sola abajo. */
-  let lines = wrapText(c, text, W * 0.5);
-  if (lines.length > 1) lines = wrapText(c, text, c.measureText(text).width / lines.length * 1.12);
-  const tw = Math.max.apply(null, lines.map(l => c.measureText(l).width));
-  const bw = tw + size * 1.4, bh = lines.length * size * 1.2 + size;
-  const m = W * 0.04;
-  const side = i % 2 ? -1 : 1;
-  const bx = Math.max(m + bw / 2, Math.min(W - m - bw / 2, f.x + side * f.d * 1.2));
-  const top = H * 0.12, gap = size * 0.4;
-  let by = Math.max(top + bh / 2, f.y - f.d * 2.5 - bh / 2);
-  /* En grupo las burbujas chocaban. Cada una se acomoda respecto a las
-     ya puestas en este cuadro: arriba de la que estorba o, si ya no
-     cabe arriba, debajo. */
-  for (let tries = 0; tries < 6; tries++) {
-    const hit = bubbleRects.find(r => Math.abs(r.x - bx) < (r.w + bw) / 2 + gap &&
-                                      Math.abs(r.y - by) < (r.h + bh) / 2 + gap);
-    if (!hit) break;
-    const up = hit.y - (hit.h + bh) / 2 - gap;
-    by = up - bh / 2 >= top ? up : hit.y + (hit.h + bh) / 2 + gap;
-  }
-  bubbleRects.push({ x: bx, y: by, w: bw, h: bh });
-  const tipX = f.x, tipY = Math.max(f.y - f.d * 1.5, by + bh / 2 + size);
-  c.save();
-  c.translate(bx, by); c.scale(sc, sc); c.translate(-bx, -by);
-  c.shadowColor = 'rgba(0,0,0,0.3)'; c.shadowBlur = W * 0.02;
-  c.fillStyle = '#ffffff';
-  rrect(c, bx - bw / 2, by - bh / 2, bw, bh, Math.min(size, bh * 0.35)); c.fill();
-  const baseX = Math.max(bx - bw / 2 + size, Math.min(bx + bw / 2 - size, tipX));
-  c.beginPath();
-  c.moveTo(baseX - size * 0.5, by + bh / 2 - 1); c.lineTo(tipX, tipY); c.lineTo(baseX + size * 0.5, by + bh / 2 - 1);
-  c.closePath(); c.fill();
-  c.shadowColor = 'transparent';
-  c.fillStyle = '#2c2c2c'; c.textAlign = 'center'; c.textBaseline = 'middle';
-  const lh = size * 1.2, ty = by - (lines.length - 1) * lh / 2;
-  lines.forEach((l, k) => c.fillText(l, bx, ty + k * lh));
-  c.restore();
-}
-
 /* Bigote o labios en palito, como los accesorios de photobooth. Alterna
    por cara: en pareja, uno bigote y otro labios. */
 function mustacheStick(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     c.rotate(Math.sin(tt * 2 + i) * 0.04);
     const lips = i % 2 === 1;
+    /* Entre la punta de la nariz y la boca, un poco más cerca de la boca:
+       ahí queda el bigote pegado a la nariz. */
+    const mY = noseY(f) + (mouthY(f) - noseY(f)) * 0.55;
     c.save();
-    c.translate(lips ? -d * 0.2 : d * 0.2, lips ? d * 1.2 : d * 1.0);
+    c.translate(lips ? -d * 0.2 : d * 0.2, (lips ? mouthY(f) + 0.05 : mY) * d);
     c.rotate(lips ? 0.35 : -0.35);
     c.fillStyle = '#b8894e'; c.fillRect(-d * 0.05, 0, d * 0.1, d * 3.2);
     c.restore();
     if (!lips) {
-      if (hq(c, 'mustache', 0, d * 0.95, d * 2.7)) return;
-      c.save(); c.translate(0, d * 0.9); c.scale(1.3, 1.3); c.fillStyle = '#2b1d15';
+      if (hq(c, 'mustache', 0, mY * d, d * 2.4)) return;
+      c.save(); c.translate(0, mY * d); c.scale(1.05, 1.05); c.fillStyle = '#2b1d15';
       for (const sx of [1, -1]) {
         c.save(); c.scale(sx, 1);
         c.beginPath();
@@ -1204,8 +1076,9 @@ function mustacheStick(c, f, i, tt) {
       }
       c.restore();
     } else {
-      if (hq(c, 'lips', 0, d * 1.2, d * 2.1)) return;
-      c.save(); c.translate(0, d * 1.15); c.scale(1.25, 1.25);
+      /* Los labios del PNG están un poco abajo del centro (56%). */
+      if (hq(c, 'lips', 0, (mouthY(f) - 0.12) * d, d * 2.0)) return;
+      c.save(); c.translate(0, mouthY(f) * d); c.scale(1.15, 1.15);
       c.fillStyle = '#d0344a';
       c.beginPath();
       c.moveTo(-d * 0.62, 0);
@@ -1228,28 +1101,6 @@ function pixelHeart(c, x, y, p, color) {
   const rows = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
   c.fillStyle = color;
   rows.forEach((r, j) => { for (let k = 0; k < r.length; k++) if (r[k] === 'X') c.fillRect(x + k * p, y + j * p, p, p); });
-}
-
-function ballAndChain(c, W, H, tt) {
-  const bx = W * 0.2, by = H * 0.69, r = W * 0.075;
-  const ex = W * 1.04, ey = H * 0.63;                 /* la cadena sale del cuadro */
-  const sag = H * 0.05 + Math.sin(tt * 1.3) * H * 0.008;
-  const ang = Math.atan2(ey - by, ex - bx);
-  c.lineWidth = W * 0.009; c.strokeStyle = '#3d3d42';
-  for (let k = 0; k <= 11; k++) {
-    const u = k / 11;
-    c.save();
-    c.translate(bx + (ex - bx) * u, by + (ey - by) * u + Math.sin(u * Math.PI) * sag);
-    c.rotate(ang);
-    c.beginPath(); c.ellipse(0, 0, W * 0.024, W * (k % 2 ? 0.008 : 0.014), 0, 0, Math.PI * 2); c.stroke();
-    c.restore();
-  }
-  const g = c.createRadialGradient(bx - r * 0.35, by - r * 0.35, r * 0.1, bx, by, r);
-  g.addColorStop(0, '#7a7a80'); g.addColorStop(1, '#1b1b1f');
-  c.fillStyle = g; c.beginPath(); c.arc(bx, by, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#e6c563'; c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.font = (W * 0.022) + 'px ' + PIXEL;
-  c.fillText('1000', bx, by - r * 0.05); c.fillText('KG', bx, by + r * 0.35);
 }
 
 function arcade(c, W, H, tt) {
@@ -1281,7 +1132,6 @@ function arcade(c, W, H, tt) {
     c.beginPath(); c.moveTo(ax, ay - opt * 0.45); c.lineTo(ax + opt * 0.7, ay); c.lineTo(ax, ay + opt * 0.45);
     c.closePath(); c.fill();
   }
-  ballAndChain(c, W, H, tt);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1291,9 +1141,7 @@ function arcade(c, W, H, tt) {
    puede traer:
      face  → adorno sobre cada cara detectada (va espejeado con el
              video, para que caiga donde la persona se ve)
-     faceText → como face, pero sin espejo: para lo que lleva letras
      echo  → la imagen deja estela (ver updateEcho)
-     tap   → tocar la pantalla cambia la frase
      backTip → sugiere la cámara de atrás (filtros para tomar a otros)
      scene → capa sobre el video, sin espejo (sprites, partículas)
      frame → marco y firma, siempre lo último
@@ -1330,8 +1178,8 @@ const FILTERS = [
     needs: A.moments,
     thumb:{ src:A.moments[6], fit:'cover' },
     scene:(c, W, H, tt) => {
-      filmStrip(c, W, H, A.moments,                   H * 0.2,  tt, -1, -0.05);
-      filmStrip(c, W, H, A.moments.slice().reverse(), H * 0.64, tt,  1,  0.04);
+      /* Una sola tira arriba: la segunda tapaba la cara. */
+      filmStrip(c, W, H, A.moments, H * 0.165, tt, -1, 0);
     },
     frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
   },
@@ -1434,32 +1282,6 @@ const FILTERS = [
   },
 
   /* ── Chistosos ───────────────────────────────────────────── */
-  {
-    label:{ es:'Letreros', en:'Funny signs' },
-    tap: true,
-    thumb:{ draw:(c, S) => {
-      c.fillStyle = '#b8894e'; c.fillRect(S * 0.47, S * 0.6, S * 0.06, S * 0.4);
-      rrect(c, S * 0.12, S * 0.22, S * 0.76, S * 0.42, S * 0.05);
-      c.fillStyle = '#fbf6ec'; c.fill();
-      c.strokeStyle = '#b89a6a'; c.lineWidth = S * 0.025; c.stroke();
-      fitText(c, 'JAJA', S / 2, S * 0.43, S * 0.6, S * 0.3, S * 0.2, '700', 'Lato, sans-serif', '#2c2c2c');
-    } },
-    scene:(c, W, H, tt) => funnySign(c, W, H, tt, phrase('signs'), popScale()),
-    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
-  },
-  {
-    label:{ es:'Burbujas', en:'Speech bubbles' },
-    tap: true,
-    thumb:{ draw:(c, S) => {
-      c.fillStyle = '#ffffff';
-      rrect(c, S * 0.14, S * 0.2, S * 0.72, S * 0.42, S * 0.14); c.fill();
-      c.beginPath(); c.moveTo(S * 0.36, S * 0.6); c.lineTo(S * 0.3, S * 0.8); c.lineTo(S * 0.5, S * 0.6); c.fill();
-      c.fillStyle = '#2c2c2c';
-      [0.35, 0.5, 0.65].forEach(x => { c.beginPath(); c.arc(S * x, S * 0.41, S * 0.045, 0, Math.PI * 2); c.fill(); });
-    } },
-    faceText:(c, f, i, tt, W, H) => speechBubble(c, f, i, tt, W, H, phrase('bubbles', i), popScale()),
-    frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
-  },
   {
     label:{ es:'Bigote y labios', en:'Mustache & lips' },
     thumb:{ draw:(c, S) => mustacheStick(c, { x:S / 2, y:S * 0.2, d:S * 0.36, a:0 }, 0, 0) },
@@ -1602,7 +1424,7 @@ const vctx = viewCv.getContext('2d');
 let stream = null, facing = 'user', raf = 0;
 let detector = null, arState = 'load';   /* load | on | off */
 let faces = [], smooth = [], lastTs = -1, lastFaceAt = 0, shownHint = null;
-let phraseIx = 0, phraseAt = 0, selectedAt = 0, danceTipShown = false;
+let danceTipShown = false;
 let mode = 'photo';                      /* photo | strip */
 let shotBlob = null, shotUrl = null, shotName = 'CristinaYRoberto.jpg';
 let timerOn = false, busy = false;
@@ -1678,7 +1500,7 @@ function selectFilter(i, scroll) {
   i = Math.max(0, Math.min(FILTERS.length - 1, i));
   if (i !== filterIx) {
     filterIx = i;
-    lastFaceAt = selectedAt = performance.now();
+    lastFaceAt = performance.now();
     tileHits = []; smooth = [];
     if (FILTERS[i].needs) preload(FILTERS[i].needs);
     if (FILTERS[i].backTip && facing === 'user' && !danceTipShown) {
@@ -1787,7 +1609,11 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } }
+      /* En horizontal a propósito: los teléfonos describen su cámara en
+         horizontal y giran el video solos al estar en vertical. Pedir
+         1080x1920 hacía que Android eligiera un modo chico, y ese video
+         recortado a 9:16 salía borroso y 3 veces más cerca. */
+      video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
     });
   } catch (e) {
     introError(e.name === 'NotAllowedError' || e.name === 'SecurityError' ? t('denied')
@@ -1822,10 +1648,32 @@ async function loadDetector() {
   }
 }
 
-/* Encaje "cover" del video dentro del lienzo destino. */
-function coverFit(vw, vh, W, H) {
-  const s = Math.max(W / vw, H / vh);
-  return { s, dx: (W - vw * s) / 2, dy: (H - vh * s) / 2 };
+/* Encaje del video en el cuadro 9:16. Llenarlo completo ("cover") con
+   una cámara de 16:9 o 4:3 recorta hasta dos tercios del ancho y la cara
+   se ve 2 o 3 veces más cerca de lo normal. El acercamiento se limita a
+   MAX_ZOOM sobre "cabe completo"; si queda espacio, se rellena con el
+   mismo video desenfocado, como hacen las historias de Instagram. Una
+   cámara vertical 3:4 (lo común en teléfonos) sí llena sin barras. */
+const MAX_ZOOM = 1.35;
+function videoFit(vw, vh, W, H) {
+  const cover = Math.max(W / vw, H / vh), contain = Math.min(W / vw, H / vh);
+  const s = Math.min(cover, contain * MAX_ZOOM);
+  return { s, dx: (W - vw * s) / 2, dy: (H - vh * s) / 2, bars: s < cover - 1e-6 };
+}
+
+/* Fondo desenfocado: el video reducido a 27x48 y vuelto a ampliar en dos
+   pasos. Más barato que un filtro de desenfoque, que además Safari no
+   soporta en canvas. */
+const blurSmall = Object.assign(document.createElement('canvas'), { width: 27,  height: 48 });
+const blurMid   = Object.assign(document.createElement('canvas'), { width: 108, height: 192 });
+function blurFill(c, W, H) {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const sc = Math.max(27 / vw, 48 / vh);
+  const a = blurSmall.getContext('2d'), b = blurMid.getContext('2d');
+  a.drawImage(video, (27 - vw * sc) / 2, (48 - vh * sc) / 2, vw * sc, vh * sc);
+  b.imageSmoothingEnabled = true; b.drawImage(blurSmall, 0, 0, 108, 192);
+  c.imageSmoothingEnabled = true; c.drawImage(blurMid, 0, 0, W, H);
+  c.fillStyle = 'rgba(20,19,18,0.35)'; c.fillRect(0, 0, W, H);
 }
 
 /* ── Caras en grupo ──────────────────────────────────────────────
@@ -1857,12 +1705,24 @@ const tileCtx = tileCv.getContext('2d');
 function detToFace(det, sx, sy, rw, rh) {
   const k = det.keypoints;
   if (!k || k.length < 2) return null;
-  const a = { x: sx + k[0].x * rw, y: sy + k[0].y * rh };
-  const b = { x: sx + k[1].x * rw, y: sy + k[1].y * rh };
+  const kp = i => k[i] ? { x: sx + k[i].x * rw, y: sy + k[i].y * rh } : null;
+  const a = kp(0), b = kp(1);
+  const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
+  const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  /* Nariz y boca medidas hacia abajo en el eje de la cara (ya sin la
+     inclinación) y en distancias entre ojos. Antes todo se colgaba de
+     proporciones fijas: el bigote caía en la boca y la corona en la
+     frente, sobre todo con la cara cerca. */
+  const cos = Math.cos(-ang), sin = Math.sin(-ang);
+  const down = p => p ? ((p.x - x) * sin + (p.y - y) * cos) / d : null;
+  const clamp = (v, lo, hi, def) => v === null || !isFinite(v) ? def : Math.max(lo, Math.min(hi, v));
+  const e1 = kp(4), e2 = kp(5);
   return {
-    x: (a.x + b.x) / 2, y: (a.y + b.y) / 2,
-    d: Math.hypot(b.x - a.x, b.y - a.y) || 1,
-    a: Math.atan2(b.y - a.y, b.x - a.x),
+    x, y, d, a: ang,
+    ny: clamp(down(kp(2)), 0.3, 1.2, 0.7),                      /* punta de la nariz */
+    my: clamp(down(kp(3)), 0.7, 1.8, 1.15),                     /* centro de la boca */
+    hw: clamp(e1 && e2 ? Math.hypot(e2.x - e1.x, e2.y - e1.y) / d : null, 1.6, 3.4, 2.4),  /* oreja a oreja */
     s: det.categories && det.categories[0] ? det.categories[0].score : 0.5
   };
 }
@@ -1931,7 +1791,8 @@ function smoothFaces(list) {
     /* El ángulo se interpola por seno y coseno: así -179° y 179° no se
        promedian en 0°. */
     const ang = Math.atan2(L(Math.sin(o.a), Math.sin(n.a)), L(Math.cos(o.a), Math.cos(n.a)));
-    out.push({ x: L(o.x, n.x), y: L(o.y, n.y), d: L(o.d, n.d), a: ang });
+    out.push({ x: L(o.x, n.x), y: L(o.y, n.y), d: L(o.d, n.d), a: ang,
+               ny: L(o.ny, n.ny), my: L(o.my, n.my), hw: L(o.hw, n.hw) });
   }
   smooth = out;
   /* De izquierda a derecha: el orden no cambia mientras nadie se cruce,
@@ -1949,18 +1810,18 @@ function render(c, W, H, facesPx, tt, mirror, bare) {
   const vw = video.videoWidth, vh = video.videoHeight;
 
   if (vw && vh) {
-    const fit = coverFit(vw, vh, W, H);
+    const fit = videoFit(vw, vh, W, H);
     /* La estela ya trae el espejo y el encuadre aplicados. */
     const echo = F.echo && echoReady;
     if (echo) c.drawImage(echoCv, 0, 0, W, H);
     c.save();
     if (mirror) { c.translate(W, 0); c.scale(-1, 1); }
-    if (!echo) c.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
+    if (!echo) {
+      if (fit.bars) blurFill(c, W, H);
+      c.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
+    }
     if (F.face) facesPx.forEach((fc, i) => F.face(c, fc, i, tt));
     c.restore();
-    bubbleRects = [];
-    if (F.faceText) facesPx.forEach((fc, i) =>
-      F.faceText(c, mirror ? { x: W - fc.x, y: fc.y, d: fc.d, a: -fc.a } : fc, i, tt, W, H));
   }
   if (F.scene) F.scene(c, W, H, tt);
   /* bare = las tomas de la tira: llevan los efectos del filtro pero no
@@ -1970,7 +1831,7 @@ function render(c, W, H, facesPx, tt, mirror, bare) {
   else if (F.frame) F.frame(c, W, H, tt);
 }
 
-const usesFaces = F => !!(F.face || F.faceText);
+const usesFaces = F => !!F.face;
 
 /* ── Estela ──────────────────────────────────────────────────────
    Cada cuadro se pinta al 30% encima del anterior: lo que se mueve deja
@@ -1982,17 +1843,18 @@ const echoCv = document.createElement('canvas'), echoCtx = echoCv.getContext('2d
 let echoReady = false;
 function updateEcho(W, H, vw, vh) {
   if (echoCv.width !== W || echoCv.height !== H) { echoCv.width = W; echoCv.height = H; echoReady = false; }
-  const fit = coverFit(vw, vh, W, H);
+  const fit = videoFit(vw, vh, W, H);
   echoCtx.save();
   echoCtx.globalAlpha = echoReady ? 0.3 : 1;
   if (facing === 'user') { echoCtx.translate(W, 0); echoCtx.scale(-1, 1); }
+  if (fit.bars) blurFill(echoCtx, W, H);
   echoCtx.drawImage(video, fit.dx, fit.dy, vw * fit.s, vh * fit.s);
   echoCtx.restore();
   echoReady = true;
 }
 
 /* Aviso sobre la cámara. Solo aparece cuando sirve: un filtro de cara
-   sin cara a la vista, o recién elegido un filtro de frases. */
+   sin cara a la vista. */
 function updateFaceHint(time) {
   const F = FILTERS[filterIx];
   let hint = '';
@@ -2001,7 +1863,6 @@ function updateFaceHint(time) {
     if (arState === 'off') hint = t('faceOff');
     else if (time - lastFaceAt > 1500) hint = arState === 'load' ? t('faceLoad') : t('faceHint');
   }
-  if (!hint && F.tap && time - selectedAt < 3500) hint = t('tapPhrase');
   if (hint !== shownHint) {
     shownHint = hint;
     $('face-hint').textContent = hint;
@@ -2022,9 +1883,9 @@ function loop(time) {
   if (detector && usesFaces(FILTERS[filterIx]) && video.currentTime !== lastTs) {
     lastTs = video.currentTime;
     try {
-      const fit = coverFit(vw, vh, W, H);
+      const fit = videoFit(vw, vh, W, H);
       const raw = detectFaces(vw, vh).map(f =>
-        ({ x: fit.dx + f.x * fit.s, y: fit.dy + f.y * fit.s, d: f.d * fit.s, a: f.a }));
+        ({ x: fit.dx + f.x * fit.s, y: fit.dy + f.y * fit.s, d: f.d * fit.s, a: f.a, ny: f.ny, my: f.my, hw: f.hw }));
       faces = smoothFaces(raw);
     } catch (_e) { /* un cuadro perdido no importa */ }
   } else if (!usesFaces(FILTERS[filterIx])) {
@@ -2043,7 +1904,7 @@ function drawShot(W, H, bare) {
   /* Las caras se midieron para el lienzo de pantalla: se reescalan al
      del archivo, que es más grande. */
   const k = W / (viewCv.width || W);
-  const scaled = faces.map(f => ({ x: f.x * k, y: f.y * k, d: f.d * k, a: f.a }));
+  const scaled = faces.map(f => Object.assign({}, f, { x: f.x * k, y: f.y * k, d: f.d * k }));
   render(cv.getContext('2d'), W, H, scaled, performance.now() / 1000, facing === 'user', bare);
   return cv;
 }
@@ -2182,7 +2043,7 @@ function flash() {
 
 /* ── Resultado ───────────────────────────────────────────────── */
 function showResult(blob, name) {
-  if (!blob || !blob.size) { toast(t('sharefail')); return; }
+  if (!blob || !blob.size) { toast(t('shotfail')); return; }
   if (shotUrl) URL.revokeObjectURL(shotUrl);
   shotBlob = blob; shotName = name; shotUrl = URL.createObjectURL(blob);
 
@@ -2215,10 +2076,19 @@ async function share() {
   if (!shotBlob) return;
   const file = new File([shotBlob], shotName, { type: shotBlob.type });
   try {
-    await navigator.share({ files: [file], text: NAMES + ' · ' + HASHTAG });
+    /* Solo el archivo. Instagram ignora el texto, y en algunos Android
+       pedir texto junto con archivos hace fallar el menú de compartir. */
+    await navigator.share({ files: [file] });
   } catch (e) {
     if (e && e.name === 'AbortError') return;      /* el invitado canceló */
-    toast(t('sharefail'));
+    console.warn('Compartir falló:', e && e.name, e && e.message);
+    /* Si el menú no abre, que al menos se lleve la foto: se descarga y el
+       aviso dice cómo subirla. El nombre del error va entre paréntesis
+       para poder diagnosticar teléfonos que no tenemos a la mano. */
+    $('btn-save').click();
+    toast(t('sharefail') + ' (' + ((e && e.name) || 'error') + ')');
+    $('save-hint').innerHTML = t('savehint');
+    $('save-hint').hidden = false;
   }
 }
 
@@ -2229,6 +2099,7 @@ function show(name) {
   if (name !== 'result') $('shot-video').pause();
   setBack();
   if (name === 'stage') {
+    if (!show.nudged) { show.nudged = true; $('shutter').classList.add('nudge'); }
     fitViewport();
     centerThumb(filterIx, false);
     if (!raf) raf = requestAnimationFrame(loop);
@@ -2256,23 +2127,47 @@ async function runShot() {
     if (mode === 'strip') { await captureStrip(); }
     else                  { await countdown(3); flash(); await capturePhoto(); }
   } catch (e) {
-    console.warn(e); toast(t('sharefail'));
+    console.warn(e); toast(t('shotfail'));
   }
   busy = false; shutter.disabled = false;
 }
 
+/* Arrastrar desde el obturador también mueve el carrusel: es justo donde
+   cae el pulgar, y antes ese gesto no hacía nada. */
+let drag = null;
 shutter.addEventListener('pointerdown', e => {
   if (busy) return;
   e.preventDefault();
   held = false;
+  drag = { x: e.clientX, left: $('rail').scrollLeft, moved: false };
   /* En modo tira el gesto largo no aplica: siempre son 4 fotos. */
   if (mode === 'strip' || !recMime) return;
   holdTimer = setTimeout(() => { held = true; startRec(); }, HOLD_MS);
 });
 
+shutter.addEventListener('pointermove', e => {
+  if (!drag || held) return;
+  const dx = e.clientX - drag.x;
+  if (!drag.moved && Math.abs(dx) < 10) return;
+  if (!drag.moved) {
+    drag.moved = true;
+    clearTimeout(holdTimer);
+    /* Con el imán del carrusel activo, cada cambio de posición saltaría
+       a una miniatura; se apaga mientras el dedo arrastra. */
+    $('rail').style.scrollSnapType = 'none';
+  }
+  $('rail').scrollLeft = drag.left - dx;
+});
+
 async function endHold(e) {
   if (e) e.preventDefault();
   clearTimeout(holdTimer);
+  const dr = drag; drag = null;
+  if (dr && dr.moved) {
+    $('rail').style.scrollSnapType = '';
+    centerThumb(closestThumb(), true);
+    return;
+  }
   if (held) { held = false; busy = true; shutter.disabled = true; await stopRec(); busy = false; shutter.disabled = false; }
   else if (!recorder && e && e.type === 'pointerup') { runShot(); }
 }
@@ -2294,10 +2189,6 @@ $('viewport').addEventListener('pointerup', e => {
   const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
   swipe = null;
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) selectFilter(filterIx + (dx < 0 ? 1 : -1), true);
-  else if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && FILTERS[filterIx].tap) {
-    phraseIx++; phraseAt = performance.now();
-    selectedAt = 0;                       /* ya sabe tocar: fuera el aviso */
-  }
 });
 $('viewport').addEventListener('pointercancel', () => { swipe = null; });
 
