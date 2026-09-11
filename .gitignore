@@ -5,3 +5,11 @@
 # Renders and batch output produced while checking a sheet by eye.
 *.zip
 Plantilla_*.csv
+
+# Archivos de trabajo que no forman parte del sitio publicado: arte fuente
+# (pesa ~93 MB), scripts de un solo uso que editaron game.html y versiones
+# viejas del juego. Se quedan en la computadora, no en el repositorio.
+*.psd
+patch*.py
+game_oldVersion.html
+wedding_game.html
