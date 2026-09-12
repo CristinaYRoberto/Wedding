@@ -468,9 +468,7 @@ const t = k => STR[lang][k];
    cuando el invitado elige el filtro que los usa.
    ════════════════════════════════════════════════════════════════ */
 const A = {
-  /* Los novios, en sus tres animaciones. Cada filtro usa una sola. */
-  dancing  : ['assets/characters/novios_dancing01.png', 'assets/characters/novios_dancing02.png',
-              'assets/characters/novios_dancing03.png'],
+  /* Los novios, en dos animaciones. Cada filtro usa una sola. */
   kiss     : ['assets/characters/novios_kiss01.png', 'assets/characters/novios_kiss02.png'],
   win      : ['assets/characters/novios_win01.png', 'assets/characters/novios_win02.png'],
   rings    : ['assets/props/weddingStuff05.png'],
@@ -648,7 +646,6 @@ function signature(c, W, H) {
    tamaño sobre la cara ya están calculados: no hay que tocar nada más.
    Sin la línea el archivo no se pide, así no hay errores 404. */
 const HQ = {
-  lips:         'assets/ar/stickers/lips.png',
   discoball:    'assets/ar/stickers/discoball.png'
   // mustache:     'assets/ar/stickers/mustache.png',
   // heartglasses: 'assets/ar/stickers/heart-glasses.png',
@@ -702,7 +699,10 @@ function petal5(c, x, y, r, fill) {
 function flowerCrown(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     c.translate(0, (headTop(f) * 0.8 + 1.2) * d);          /* sobre el nacimiento del pelo */
-    if (hq(c, 'flowercrown', 0, -d * 1.35, d * 4)) return;
+    if (hq(c, 'flowercrown', 0, -d * 1.35, d * 3)) return;
+    /* Al 75% desde la base: a tamaño completo, en selfie cubría más que la
+       cabeza. */
+    c.translate(0, -d * 1.2); c.scale(0.75, 0.75); c.translate(0, d * 1.2);
     for (let k = 0; k <= 16; k++) {
       const u = -1 + (k / 16) * 2;
       const x = u * d * 1.85;
@@ -755,14 +755,17 @@ function heartGlasses(c, f, i, tt) {
 function veil(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
     c.translate(0, (headTop(f) * 0.82 + 1.28) * d);        /* tiara en la coronilla */
-    if (hq(c, 'veil', 0, d * 1.0, d * 6.5)) return;
-    const sway = Math.sin(tt * 1.2) * d * 0.18;
+    if (hq(c, 'veil', 0, d * 1.0, d * 4.2)) return;
+    /* Al 80% desde la tiara y con la caída más angosta: en una selfie de
+       cerca el velo cubría toda la pantalla. */
+    c.translate(0, -d * 1.28); c.scale(0.8, 0.8); c.translate(0, d * 1.28);
+    const sway = Math.sin(tt * 1.2) * d * 0.14;
     c.fillStyle = 'rgba(250,247,242,0.3)';
     c.beginPath();
     c.moveTo(-d * 1.5, -d * 1.25);
-    c.bezierCurveTo(-d * 3.1 + sway, d * 0.6, -d * 2.6 + sway, d * 3.4, -d * 1.7 + sway, d * 3.6);
-    c.lineTo(d * 1.7 + sway, d * 3.6);
-    c.bezierCurveTo(d * 2.6 + sway, d * 3.4, d * 3.1 + sway, d * 0.6, d * 1.5, -d * 1.25);
+    c.bezierCurveTo(-d * 2.4 + sway, d * 0.4, -d * 2.1 + sway, d * 2.6, -d * 1.6 + sway, d * 2.8);
+    c.lineTo(d * 1.6 + sway, d * 2.8);
+    c.bezierCurveTo(d * 2.1 + sway, d * 2.6, d * 2.4 + sway, d * 0.4, d * 1.5, -d * 1.25);
     c.closePath(); c.fill();
     c.strokeStyle = 'rgba(230,197,99,0.95)'; c.lineWidth = d * 0.11;
     c.beginPath(); c.ellipse(0, -d * 1.28, d * 1.45, d * 0.62, 0, Math.PI, 0); c.stroke();
@@ -857,27 +860,43 @@ function filmStrip(c, W, H, list, cy, tt, dir, tilt, size) {
    PNG con el mismo nombre. */
 const PROP_DIR = 'assets/ar/stickers/props/';
 const PROPS = {
-  /* w se mide contra la distancia de oreja a oreja, que no incluye el pelo:
-     la cabeza con pelo mide ~1,7 veces eso. dy calibrado sobre una foto
-     real: con el borde justo en las cejas los sombreros de frente se veían
-     flotando, porque la parte que abraza la cabeza queda más arriba que el
-     borde del ala. */
-  capH:         { src:PROP_DIR + 'cap-h.png',              at:'brow', anchor:1.0,  w:1.75, dy:0.2 },
-  truckerPink:  { src:PROP_DIR + 'trucker-pink.png',       at:'brow', anchor:1.0,  w:1.65, dy:0.2 },
-  truckerBlack: { src:PROP_DIR + 'trucker-black.png',      at:'brow', anchor:1.0,  w:1.7,  dy:0.2 },
-  visorPink:    { src:PROP_DIR + 'visor-pink.png',         at:'brow', anchor:0.95, w:1.8,  dy:0.15 },
-  captainHat:   { src:PROP_DIR + 'captain-hat.png',        at:'brow', anchor:1.0,  w:1.95, dy:0.15 },
-  brideHat:     { src:PROP_DIR + 'bride-hat.png',          at:'brow', anchor:0.95, w:2.3,  dy:0.1 },   /* más alto que los otros vaqueros: con su mismo ajuste tapaba los ojos */
-  cowboyBrown:  { src:PROP_DIR + 'cowboy-brown.png',       at:'brow', anchor:0.95, w:2.7,  dy:0.35 },
-  cowboyBlack:  { src:PROP_DIR + 'cowboy-black-pink.png',  at:'brow', anchor:0.95, w:2.7,  dy:0.35 },
-  cowboyWhite:  { src:PROP_DIR + 'cowboy-white.png',       at:'brow', anchor:0.95, w:2.7,  dy:0.35 },
-  fedoraWhite:  { src:PROP_DIR + 'fedora-white.png',       at:'brow', anchor:0.95, w:2.5,  dy:0.35 },
-  topHat:       { src:PROP_DIR + 'top-hat-band.png',       at:'top',  anchor:1.0,  w:1.8,  dy:1.5 },
-  crown:        { src:PROP_DIR + 'crown-king.png',         at:'top',  anchor:1.0,  w:1.55, dy:1.1 },
-  sunglasses:   { src:PROP_DIR + 'sunglasses-classic.png', at:'eyes', anchor:0.5,  w:1.3,  dy:0 },
-  glassesElton: { src:PROP_DIR + 'glasses-elton.png',      at:'eyes', anchor:0.55, w:1.3,  dy:0 },
+  /* w se mide contra la distancia de oreja a oreja. Calibrado con diez
+     fotos de frente (hombres y mujeres, barba, lentes, grupos): de frente
+     las orejas quedan a ~2.1 distancias entre ojos y no a 2.4, así que
+     con los valores de la foto de tres cuartos todo salía más ancho que
+     la cara y las viseras tapaban las cejas. Los sombreros anclan su
+     borde de abajo, así que achicarlos no los hace flotar. */
+  capH:         { src:PROP_DIR + 'cap-h.png',              at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  truckerPink:  { src:PROP_DIR + 'trucker-pink.png',       at:'brow', anchor:1.0,  w:1.25, dy:-0.15 },
+  truckerBlack: { src:PROP_DIR + 'trucker-black.png',      at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  captainHat:   { src:PROP_DIR + 'captain-hat.png',        at:'brow', anchor:1.0,  w:1.35, dy:-0.1 },
+  brideHat:     { src:PROP_DIR + 'bride-hat.png',          at:'brow', anchor:0.95, w:1.4,  dy:-0.35 },
+  topHat:       { src:PROP_DIR + 'top-hat-band.png',       at:'top',  anchor:1.0,  w:1.45, dy:1.0 },
+  crown:        { src:PROP_DIR + 'crown-king.png',         at:'top',  anchor:1.0,  w:1.1,  dy:1.1 },
+  sunglasses:   { src:PROP_DIR + 'sunglasses-classic.png', at:'eyes', anchor:0.5,  w:1.15, dy:0 },
+  glassesElton: { src:PROP_DIR + 'glasses-elton.png',      at:'eyes', anchor:0.55, w:1.15, dy:0 },
   necklaceGold: { src:PROP_DIR + 'necklace-gold.png',      at:'neck', anchor:0.0,  w:1.2,  dy:1.0 },
-  necklaces:    { src:PROP_DIR + 'necklaces-mixed.png',    at:'neck', anchor:0.0,  w:1.35, dy:1.0 }
+  necklaces:    { src:PROP_DIR + 'necklaces-mixed.png',    at:'neck', anchor:0.0,  w:1.35, dy:1.0 },
+  raybanSilver: { src:PROP_DIR + 'rayban-silver.png',      at:'eyes', anchor:0.5,  w:1.15, dy:0 },
+  raybanGreen:  { src:PROP_DIR + 'rayban-green.png',       at:'eyes', anchor:0.5,  w:1.15, dy:0 },
+  wayfarer:     { src:PROP_DIR + 'wayfarer.png',           at:'eyes', anchor:0.5,  w:1.1,  dy:0 },
+  capLakers:    { src:PROP_DIR + 'cap-lakers.png',         at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capBulls:     { src:PROP_DIR + 'cap-bulls.png',          at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capDallas:    { src:PROP_DIR + 'cap-dallas.png',         at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capManUtd:    { src:PROP_DIR + 'cap-manutd.png',         at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capAllStar:   { src:PROP_DIR + 'cap-allstar.png',        at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capMexico:    { src:PROP_DIR + 'cap-mexico.png',         at:'brow', anchor:1.0,  w:1.35, dy:-0.15 },
+  capCO:        { src:PROP_DIR + 'cap-co.png',             at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capMascot:    { src:PROP_DIR + 'cap-mascot.png',         at:'brow', anchor:1.0,  w:1.3,  dy:-0.15 },
+  capNFL:       { src:PROP_DIR + 'cap-nfl.png',            at:'brow', anchor:1.0,  w:1.35, dy:-0.15 },
+  /* Visor en los ojos; la correa de arriba sobresale sobre la frente. */
+  vrHeadset:    { src:PROP_DIR + 'vr-headset.png',         at:'eyes', anchor:0.62, w:1.25, dy:0 },
+  /* La diadema pasa sobre la cabeza y las copas quedan en las orejas,
+     que están un poco abajo de la línea de los ojos. split abre las
+     copas hacia afuera (ver drawProp). */
+  phonesBlue:   { src:PROP_DIR + 'headphones-blue.png',    at:'eyes', anchor:0.75, w:1.5,  dy:0.4, split:0.55 },
+  phonesPastel: { src:PROP_DIR + 'headphones-pastel.png',  at:'eyes', anchor:0.75, w:1.5,  dy:0.4, split:0.55 },
+  phonesSilver: { src:PROP_DIR + 'headphones-silver.png',  at:'eyes', anchor:0.75, w:1.45, dy:0.4, split:0.55 }
 };
 const propSrc = (...keys) => keys.map(k => PROPS[k].src);
 
@@ -894,15 +913,27 @@ function drawProp(c, f, key, tt, beat) {
     const w = P.w * headW(f) * d, h = w * im.naturalHeight / im.naturalWidth;
     let y = ref - P.anchor * h + (P.dy || 0) * d;
     if (beat) y -= Math.abs(Math.sin(tt * Math.PI * 2)) * d * 0.12;
-    c.drawImage(im, -w / 2, y, w, h);
+    if (!P.split) { c.drawImage(im, -w / 2, y, w, h); return; }
+    /* split: el PNG de frente trae las copas juntas y caen sobre los
+       cachetes. Cada mitad se abre hasta que el borde interior de su copa
+       (a 0.15 del ancho desde el centro) llega a P.split cabezas del
+       centro, y la diadema se estira en el hueco. */
+    const s = Math.max(0, P.split * headW(f) * d - 0.15 * w), nw = im.naturalWidth / 2, nh = im.naturalHeight;
+    c.drawImage(im, 0, 0, nw, nh, -w / 2 - s, y, w / 2 + 1, h);
+    c.drawImage(im, nw, 0, nw, nh, s - 1, y, w / 2 + 1, h);
+    c.drawImage(im, nw - 1, 0, 2, nh * 0.35, -s - 1, y, 2 * s + 2, h * 0.35);
   }, tt);
 }
 
 /* Disfraces: un sombrero distinto por persona, de izquierda a derecha, y
    a algunas también lentes o collares. */
-const COSTUMES = ['cowboyBrown', 'capH', 'brideHat', 'topHat', 'captainHat', 'truckerPink',
-                  'cowboyBlack', 'visorPink', 'cowboyWhite', 'fedoraWhite', 'truckerBlack', 'crown'];
-const COSTUME_EXTRAS = ['glassesElton', null, 'necklaces', 'sunglasses', null, 'necklaceGold'];
+const COSTUMES = ['capH', 'brideHat', 'topHat', 'captainHat', 'capLakers', 'truckerPink', 'capBulls', 'crown'];
+const COSTUME_EXTRAS = ['raybanSilver', null, 'necklaces', 'raybanGreen', null, 'necklaceGold', 'wayfarer'];
+
+/* Gorras deportivas: cada persona empieza con una distinta y cambia cada
+   3 s, así una selfie sola también las recorre. */
+const SPORT_CAPS = ['capLakers', 'capBulls', 'capMexico', 'capNFL', 'capAllStar', 'capManUtd', 'capDallas', 'capCO', 'capMascot'];
+const PHONES = ['phonesBlue', 'phonesPastel', 'phonesSilver'];
 
 /* ── Para la pista ───────────────────────────────────────────── */
 
@@ -1015,50 +1046,40 @@ function cannons(c, W, H, tt) {
 
 /* Bigote o labios en palito, como los accesorios de photobooth. Alterna
    por cara: en pareja, uno bigote y otro labios. */
-function mustacheStick(c, f, i, tt) {
+/* Bigotes de tres estilos, uno por persona de izquierda a derecha:
+   manubrio, grueso y delgado. Van sin palito, pegados bajo la nariz. */
+function mustaches(c, f, i, tt) {
   faceSpace(c, f, (c, d) => {
-    c.rotate(Math.sin(tt * 2 + i) * 0.04);
-    const lips = i % 2 === 1;
+    c.rotate(Math.sin(tt * 2 + i) * 0.03);
     /* Entre la punta de la nariz y la boca, más cerca de la nariz: a la
        mitad se veía caído, casi sobre el labio. */
     const mY = noseY(f) + (mouthY(f) - noseY(f)) * 0.38;
-    c.save();
-    c.translate(lips ? -d * 0.2 : d * 0.2, (lips ? mouthY(f) + 0.05 : mY) * d);
-    c.rotate(lips ? 0.35 : -0.35);
-    c.fillStyle = '#b8894e'; c.fillRect(-d * 0.05, 0, d * 0.1, d * 3.2);
-    c.restore();
-    if (!lips) {
-      if (hq(c, 'mustache', 0, mY * d, d * 2.4)) return;
-      c.save(); c.translate(0, mY * d); c.scale(1.05, 1.05); c.fillStyle = '#2b1d15';
-      for (const sx of [1, -1]) {
-        c.save(); c.scale(sx, 1);
-        c.beginPath();
+    if (hq(c, 'mustache', 0, mY * d, d * 1.9)) return;
+    const style = i % 3;
+    c.save(); c.translate(0, mY * d); c.scale(0.8, 0.8); c.fillStyle = '#2b1d15';
+    for (const sx of [1, -1]) {
+      c.save(); c.scale(sx, 1);
+      c.beginPath();
+      if (style === 0) {            /* manubrio */
         c.moveTo(0, -d * 0.06);
         c.bezierCurveTo(d * 0.3, -d * 0.3, d * 0.62, -d * 0.12, d * 0.72, d * 0.02);
         c.bezierCurveTo(d * 0.86, d * 0.1, d * 1.02, -d * 0.05, d * 0.98, -d * 0.3);
         c.bezierCurveTo(d * 1.12, -d * 0.02, d * 0.95, d * 0.3, d * 0.62, d * 0.24);
         c.bezierCurveTo(d * 0.38, d * 0.2, d * 0.16, d * 0.12, 0, d * 0.2);
-        c.closePath(); c.fill();
-        c.restore();
+      } else if (style === 1) {     /* grueso */
+        c.moveTo(0, -d * 0.14);
+        c.bezierCurveTo(d * 0.3, -d * 0.2, d * 0.62, -d * 0.1, d * 0.76, d * 0.12);
+        c.quadraticCurveTo(d * 0.8, d * 0.3, d * 0.6, d * 0.3);
+        c.bezierCurveTo(d * 0.4, d * 0.3, d * 0.18, d * 0.2, 0, d * 0.24);
+      } else {                      /* delgado */
+        c.moveTo(0, -d * 0.02);
+        c.quadraticCurveTo(d * 0.38, -d * 0.1, d * 0.66, d * 0.02);
+        c.quadraticCurveTo(d * 0.4, d * 0.04, 0, d * 0.07);
       }
-      c.restore();
-    } else {
-      /* Los labios del PNG están un poco abajo del centro (56%). */
-      if (hq(c, 'lips', 0, (mouthY(f) - 0.12) * d, d * 2.0)) return;
-      c.save(); c.translate(0, mouthY(f) * d); c.scale(1.15, 1.15);
-      c.fillStyle = '#d0344a';
-      c.beginPath();
-      c.moveTo(-d * 0.62, 0);
-      c.bezierCurveTo(-d * 0.35, -d * 0.32, -d * 0.12, -d * 0.3, 0, -d * 0.16);
-      c.bezierCurveTo(d * 0.12, -d * 0.3, d * 0.35, -d * 0.32, d * 0.62, 0);
-      c.bezierCurveTo(d * 0.35, d * 0.4, -d * 0.35, d * 0.4, -d * 0.62, 0);
       c.closePath(); c.fill();
-      c.strokeStyle = 'rgba(120,20,35,0.6)'; c.lineWidth = d * 0.04;
-      c.beginPath(); c.moveTo(-d * 0.55, d * 0.01); c.quadraticCurveTo(0, d * 0.08, d * 0.55, d * 0.01); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,0.35)';
-      c.beginPath(); c.ellipse(-d * 0.22, d * 0.14, d * 0.12, d * 0.04, 0, 0, Math.PI * 2); c.fill();
       c.restore();
     }
+    c.restore();
   }, tt);
 }
 
@@ -1137,17 +1158,6 @@ const FILTERS = [
 
   /* ── Los novios ────────────────────────────────────────────
      Uno solo por filtro, cada uno con su animación del juego. */
-  {
-    label:{ es:'Los novios bailan', en:'The couple dances' },
-    needs: A.dancing,
-    thumb:{ src:A.dancing[0] },
-    scene:(c, W, H, tt) => {
-      const bob = Math.sin(tt * 6) * H * 0.01;
-      drawSprite(c, anim(A.dancing, 6, tt), W * 0.74, H * 0.645 + bob, W * 0.4, Math.sin(tt * 3) * 0.06);
-      flakes(c, W, H, tt, { n:14, speed:0.1, size:0.018, colors:['#e6c563','#f5f0e8','#e0798c'] });
-    },
-    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
-  },
   {
     label:{ es:'El beso', en:'The kiss' },
     needs: A.kiss,
@@ -1250,13 +1260,6 @@ const FILTERS = [
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
-    label:{ es:'Sombrero vaquero', en:'Cowboy hat' },
-    needs: propSrc('cowboyBrown'),
-    thumb:{ src:PROPS.cowboyBrown.src },
-    face:(c, f, i, tt) => drawProp(c, f, 'cowboyBrown', tt),
-    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
-  },
-  {
     label:{ es:'Bride', en:'Bride' },
     needs: propSrc('brideHat'),
     thumb:{ src:PROPS.brideHat.src },
@@ -1270,12 +1273,19 @@ const FILTERS = [
     face:(c, f, i, tt) => drawProp(c, f, 'captainHat', tt),
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
   },
+  {
+    label:{ es:'Gorras deportivas', en:'Sports caps' },
+    needs: propSrc(...SPORT_CAPS),
+    thumb:{ src:PROPS.capLakers.src },
+    face:(c, f, i, tt) => drawProp(c, f, SPORT_CAPS[(i + Math.floor(tt / 3)) % SPORT_CAPS.length], tt),
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
 
   /* ── Chistosos ───────────────────────────────────────────── */
   {
-    label:{ es:'Bigote y labios', en:'Mustache & lips' },
-    thumb:{ draw:(c, S) => mustacheStick(c, { x:S / 2, y:S * 0.2, d:S * 0.36, a:0 }, 0, 0) },
-    face: mustacheStick,
+    label:{ es:'Bigotes', en:'Mustaches' },
+    thumb:{ draw:(c, S) => mustaches(c, { x:S / 2, y:S * 0.3, d:S * 0.42, a:0 }, 0, 0) },
+    face: mustaches,
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
@@ -1293,7 +1303,7 @@ const FILTERS = [
   /* ── Sobre la cara ───────────────────────────────────────── */
   {
     label:{ es:'Corona de flores', en:'Flower crown' },
-    thumb:{ draw:(c, S) => flowerCrown(c, { x:S / 2, y:S * 0.8, d:S * 0.24, a:0 }, 0, 1) },
+    thumb:{ draw:(c, S) => flowerCrown(c, { x:S / 2, y:S * 0.82, d:S * 0.3, a:0 }, 0, 1) },
     face: flowerCrown,
     scene:(c, W, H, tt) => sparkles(c, W, H, tt, 10, '#fdf1e0'),
     frame:(c, W, H) => { vignette(c, W, H); signature(c, W, H); }
@@ -1314,11 +1324,48 @@ const FILTERS = [
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
   },
   {
+    label:{ es:'Ray-Ban', en:'Ray-Ban' },
+    needs: propSrc('raybanSilver', 'raybanGreen'),
+    thumb:{ src:PROPS.raybanSilver.src },
+    face:(c, f, i, tt) => drawProp(c, f, i % 2 ? 'raybanGreen' : 'raybanSilver', tt),
+    scene:(c, W, H, tt) => sparkles(c, W, H, tt, 6),
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Sombreros y Ray-Ban', en:'Hats & Ray-Ban' },
+    /* Alterna por cara: sombrero de copa con aviador plateado, y sombrero
+       de novia con aviador verde. Los lentes van primero para que el ala
+       del sombrero quede encima. */
+    needs: propSrc('topHat', 'brideHat', 'raybanSilver', 'raybanGreen'),
+    thumb:{ src:PROPS.raybanGreen.src },
+    face:(c, f, i, tt) => {
+      drawProp(c, f, i % 2 ? 'raybanGreen' : 'raybanSilver', tt);
+      drawProp(c, f, i % 2 ? 'brideHat' : 'topHat', tt);
+    },
+    frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Realidad virtual', en:'Virtual reality' },
+    needs: propSrc('vrHeadset'),
+    thumb:{ src:PROPS.vrHeadset.src },
+    face:(c, f, i, tt) => drawProp(c, f, 'vrHeadset', tt),
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
+  {
+    label:{ es:'Audífonos', en:'Headphones' },
+    needs: propSrc(...PHONES),
+    thumb:{ src:PROPS.phonesPastel.src },
+    face:(c, f, i, tt) => drawProp(c, f, PHONES[i % PHONES.length], tt, true),
+    frame:(c, W, H) => { thinFrame(c, W, H); signature(c, W, H); }
+  },
+  {
     label:{ es:'Velo y sombrero', en:'Veil & hat' },
     /* Alterna por cara: la primera lleva velo, la segunda sombrero de copa.
        Con dos personas en el cuadro sale la pareja. */
     needs: propSrc('topHat'),
-    thumb:{ src:PROPS.topHat.src },
+    /* El velo es blanco al 30%: sobre el fondo oscuro de la miniatura sale
+       gris. Tres capas lo vuelven blanco. */
+    thumb:{ draw:(c, S) => { for (let k = 0; k < 3; k++) veil(c, { x:S / 2, y:S * 0.62, d:S * 0.26, a:0 }, 0, 1); } },
     face:(c, f, i, tt) => (i % 2 === 0 ? veil(c, f, i, tt) : drawProp(c, f, 'topHat', tt)),
     frame:(c, W, H) => { goldFrame(c, W, H); signature(c, W, H); }
   },

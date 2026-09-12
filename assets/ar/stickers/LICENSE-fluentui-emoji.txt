@@ -1,9 +1,7 @@
-Los archivos de esta carpeta (no los de props/) vienen de Fluent Emoji
-(Microsoft), estilo 3D:
+discoball.png (no los de props/) viene de Fluent Emoji (Microsoft), estilo 3D:
 https://github.com/microsoft/fluentui-emoji
 
   discoball.png   <- assets/Mirror ball/3D/mirror_ball_3d.png
-  lips.png        <- assets/Mouth/3D/mouth_3d.png
 
 La carpeta props/ tiene los accesorios de la boda, recortados de la
 colección propia; no están cubiertos por esta licencia.
